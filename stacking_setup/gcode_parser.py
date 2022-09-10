@@ -1,7 +1,7 @@
-from configs import ACCEPTED_COMMANDS, ACCEPTED_ATTRIBUTES, ACCEPTED_AXES
+from .configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_ATTRIBUTES, ACCEPTED_AXES
 
 
-class GcodeCommandParser():
+class GcodeParser():
     """
     Class to manage the parsing of gcode lines from the main code.
     
@@ -88,11 +88,11 @@ class GcodeCommandParser():
 
             # Check if the entry is an attribute.
             if command[0] in ACCEPTED_ATTRIBUTES:
-                commands = cls._add_attribute(cnt, commands, command)
+                commands = cls._add_attribute(cnt, commands, content)
                 
             # Check if the first letter corresponds to a command (movement commands).
             elif command[0] in ACCEPTED_AXES:
-                commands = cls._add_movement(cnt, commands, command)
+                commands = cls._add_movement(cnt, commands, content)
 
             # Check if the complete command corresponds to a command (f.e. M commands).
             elif command in ACCEPTED_COMMANDS.keys():
@@ -125,6 +125,11 @@ class GcodeCommandParser():
                 and entry[0] not in ACCEPTED_ATTRIBUTES:
             return False
         else:
+            # Check if the movment commands and attributes have a value attached.
+            if entry[0] in ACCEPTED_AXES or entry[0] in ACCEPTED_ATTRIBUTES:
+                if len(entry) < 2:
+                    return False
+
             return True
 
     @staticmethod
@@ -152,39 +157,65 @@ class GcodeCommandParser():
             raise ValueError('Entry is an attribute but is the first entry.')
 
         # Check what the last added command was
-        attribute_entry = content[cnt]
         i = 0
         while True:
             i += 1
-            if attribute_entry[cnt - i][0] in ACCEPTED_ATTRIBUTES:
-                # Is also an attribute
+            if content[cnt - i][0] in ACCEPTED_ATTRIBUTES or \
+                    content[cnt -i][0] in ACCEPTED_AXES:
+                # Is also an attribute or a movement attribute
                 continue
             else:
                 break
-        last_command = attribute_entry[cnt - i]
+        last_command = content[cnt - i]
 
         # Check if the last command allows the attribute.
         if last_command[0] in ACCEPTED_AXES:
             # Command is a movement command.
             raise AttributeError('Movement commands ({}) are not allowed to have attributes.'.format(last_command, attribute_entry))
 
-        elif attribute_entry[0] not in ACCEPTED_COMMANDS[last_command].keys():
+        elif content[cnt][0] not in ACCEPTED_COMMANDS[last_command].keys():
             # The attribute is not allowed for the last command.
             raise AttributeError('The attribute {} is not allowed for the last command.'.format(last_command, attribute_entry))
 
         # Convert the attribute data to the right type.
-        attribute_id = attribute_entry[0]
-        data = attribute_entry[1:]
+        attribute_id = content[cnt][0]
+        data = content[cnt][1:]
 
         # TODO: #5 Convert the attribute to the right data type
-        if data.isdigit():
-            # Check if there is a decimal marker in the number
-            pass
-
-        raise NotImplementedError()
-
+        # Get the allowed data types for the attribute.
+        types = ACCEPTED_COMMANDS[last_command][attribute_id]
+        if int in types or float in types:
+            # Try converting to int
+            # Check if there is a . in the numer
+            if '.' in data:
+                if float in types:
+                    data = float(data)
+            else:
+                data = int(data)
+        elif bool in types:
+            # Check if the data is given in text or numeric.
+            if data.isdigit():
+                if data == '0':
+                    data = False
+                elif data == '1':
+                    data = True
+                else:
+                    raise AttributeError('The data {} is not a valid boolean.'.format(data))
+            elif data == 'True' or data == 'TRUE' or data == 'true':
+                data = True
+            elif data == 'False' or data == 'FALSE' or data == 'false':
+                data = False
+            else:
+                raise ValueError('The data {} is not a valid boolean.'.format(data))
+        elif bytes in types:
+            # Convert to bytes
+            data = bytes(data)
+        else:
+            raise NotImplementedError('The data type {} is not implemented.'.format(types))
 
         # Add the attribute to the last command
+        if isinstance(data, str):
+            raise Exception('The data {} is not a valid type.'.format(data))
         command_dict[last_command][attribute_id] = data
         return command_dict
 
@@ -193,20 +224,43 @@ class GcodeCommandParser():
         """
         Add a movement command to the command dict.
         """
-        # Check if there already is a movement command with the same id.
-        if content[cnt][0] in command_dict.keys():
-            raise ValueError('Movement command {} already exists.'.format(content[cnt][0]))
-
         # Convert the movement value to the right type.
         data = content[cnt][1:]
-        if not data.isdigit():
-            raise ValueError('Movement value is not a number.')
-
-        if '.' in data:
-            data = float(data)
-        else:
+        
+        try:
             data = int(data)
+        except ValueError:
+            data = float(data)
+        except:
+            raise ValueError('Movement command {} is not a valid number.'.format(content[cnt][0]))
+
+        # Look for the last non movement non attribute command.
+        i = 0
+        while True:
+            i -= 1
+            last_command = content[cnt + i]
+
+            # Check if the command is an attribute
+            if last_command[0] in ACCEPTED_ATTRIBUTES:
+                raise AttributeError('Movement commands ({}) are not allowed to have attributes.'.format(last_command))
+            
+            # Check if the command is a movement command.
+            if last_command[0] in ACCEPTED_AXES:
+                continue
+            else:
+                break
+
+        # Check if the command is allowed to have a movement command.
+        try:
+            if content[cnt][0] not in ACCEPTED_COMMANDS[last_command]['ACCEPTED_AXES']:
+                raise AttributeError('Movent attribute {} is not allowed for command {}.'.format(content[cnt], last_command))
+        except KeyError:
+            raise AttributeError('Command {} is not allowed to have movemt attributes.'.format(last_command))
+
+        # Check if there already is a movement command with the same id.
+        if content[cnt][0] in command_dict[last_command].keys():
+            raise ValueError('Movement command {} already exists.'.format(content[cnt][0]))
 
         # Add the movement command to the command dict.
-        command_dict[content[cnt][0]] = data
+        command_dict[last_command][content[cnt][0]] = data
         return command_dict

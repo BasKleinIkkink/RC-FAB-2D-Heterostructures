@@ -11,13 +11,14 @@ it will not be allowed by the gcode parser.
 
 Only movement commands and attributes are allowed to have a symbol that is one single letter.
 Movment comamands are not allowed to have attributes
+
 """
 
 ACCEPTED_ATTRIBUTES = ['S', 'I', 'R']
 ACCEPTED_AXES = ['X', 'Y', 'Z', 'I', 'J', 'K', 'L']
 ACCEPTED_COMMANDS = {
-    'G0' : {},
-    'G1' : {},
+    'G0' : {'ACCEPTED_AXES': ACCEPTED_AXES},
+    'G1' : {'ACCEPTED_AXES': ACCEPTED_AXES},
     'G28' : {},
     'G90' : {},
     'G91' : {},
