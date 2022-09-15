@@ -1,7 +1,8 @@
 
-from selectors import EpollSelector
 from base import Base
-from exceptions import HardwareNotConnectedError
+from exceptions import NotCalibratedError
+from KIM101 import KIM101
+
 
 
 class PIA13(Base):
@@ -16,16 +17,20 @@ class PIA13(Base):
         self._channel = channel
         self._hardware_controller = hardware_controller
         self._actuator_id = actuator_id
+        self._steps_calibrated = False  # Steps per nm were calibrated
+        self._steps_per_nm = 0  # Steps per nm
 
     # ATTRIBUTES
     @property
     def steps_per_mm(self):
-        # Get the jog settings from the hardware controller.
         # Return the steps per nm
-        raise NotImplementedError()
+        return self._steps_per_nm
 
     @steps_per_mm.setter
     def steps_per_mm(self, steps_per_mm):
+        if not self._steps_calibrated:
+            raise NotCalibratedError('Steps per nm were not calibrated/set.')
+
         # Set the jog settings on the hardware controller.
         return self._hardware_controller.set_steps_per_nm(self._channel, 
                                                         steps_per_mm)
@@ -38,12 +43,24 @@ class PIA13(Base):
     @property
     def speed(self):
         """Get the speed of the hardware."""
-        return self._hardware_controller.get_speed(self._channel)
+        jog = self._hardware_controller.get_jog_parameters(self._channel)
+        return jog[3]
 
     @speed.setter
     def speed(self, speed):
         """Set the speed of the hardware."""
-        self._hardware_controller.set_speed(self._channel, speed)
+        self._hardware_controller.setup_jog(self._channel, velocity=speed)
+
+    @property
+    def acceleration(self):
+        """Get the acceleration of the hardware."""
+        jog = self._hardware_controller.get_jog_parameters(self._channel)
+        return jog[4]
+
+    @acceleration.setter
+    def acceleration(self, acceleration):
+        """Set the acceleration of the hardware."""
+        self._hardware_controller.setup_jog(self._channel, acceleration=acceleration)
 
     # CONNECTION FUNCTIONS
     def connect(self):
@@ -74,6 +91,17 @@ class PIA13(Base):
         return self._hardware_controller.is_moving(self._channel)
 
     # MOVEMENT FUNCTIONS
+    def start_jog(self, direction):
+        """
+        Start a jog.
+        Parameters:
+        -----------
+        direction: str
+            The direction to jog in (+ or -).
+        """
+        self._hardware_controller.start_jog(self._channel, direction)
+
+        
     def move_by(self, distance):
         """
         Move the hardware by a certain distance.
@@ -94,8 +122,18 @@ class PIA13(Base):
         position: float or int
             The position to move the hardware to.
         """
+        if not self._steps_calibrated:
+            raise NotCalibratedError('Steps per nm were not calibrated/set.')
+
         self._hardware_controller.move_to(self._channel, position)
 
     def stop(self):
         """Stop the hardware."""
         self._hardware_controller.stop(self._channel)
+
+
+if __name__ == '__main__':
+    controller = KIM101()
+    piezo = PIA13('X', 1, 1, controller)
+    piezo.connect()
+    piezo.move_by(500)

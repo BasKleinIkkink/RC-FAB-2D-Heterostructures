@@ -19,6 +19,8 @@ class StackingSetup():
         self._pipe_to_main = pipe_to_main
         self._emergency_stop_event = mp.Event()
         self._shutdown = False
+
+        # TODO: #10 get the data from the config file
         self._positioning = 'REL'  # Always initiate in relative positining mode
 
         # Define the connected hardware.
