@@ -2,45 +2,6 @@ from pylablib.devices.Thorlabs.kinesis import KinesisPiezoMotor, list_kinesis_de
 import threading as tr
 from exceptions import HardwareNotConnectedError
 
-class KIM101Task():
-    """A Task for the hardware controller to perform."""
-
-    def __init__(self, sender, command, parameters):
-        self._sender = sender
-        self._task_status = False
-        self._command = command
-        self._parameters = parameters
-        self._return_data = None
-
-    # ATTRIBUTES
-    @property
-    def sender(self):
-        return self._sender
-
-    @property
-    def task_status(self):
-        return self._task_status
-
-    @property
-    def command(self):
-        return self._command
-
-    @property
-    def parameters(self):
-        return self._parameters
-
-    @property
-    def return_data(self):
-        return self._return_data
-
-    @return_data.setter
-    def return_data(self, return_data):
-        self._return_data = return_data
-
-    # METHODS    
-    def done(self):
-        self.task_status = True
-
 
 class KIM101():
     """Class to control communication with the KIM101 piezocontroller."""
@@ -162,7 +123,7 @@ class KIM101():
         """
         self._controller.jog(direction=direction, kind=kind, channel=channel)
 
-    def move_to(self, channel, position):
+    def move_to(self, channel, position, wait_until_done=True):
         """
         Move one of the connected piezos.
         
@@ -174,16 +135,15 @@ class KIM101():
             The channel of the piezo to move.
         position : int
             The position to move to (in steps).
-
-        Returns
-        -------
-        None
+        wait_until_done : bool
+            If True, wait until the movement is done.
 
         """
         self._controller.move_to(position=position, channel=channel)
-        self._wait_move(channel=channel)
+        if wait_until_done:
+            self._wait_move(channel=channel)
 
-    def move_by(self, channel, distance):
+    def move_by(self, channel, distance, wait_until_done=True):
         """
         Move one of the connected piezos.
         
@@ -195,13 +155,13 @@ class KIM101():
             The channel of the piezo to move.
         distance : int
             The distance to move (in steps).
+        wait_until_done : bool
+            If True, wait until the movement is done.
 
-        Returns
-        -------
-        None
         """
         self._controller.move_by(distance=distance, channel=channel)
-        self._wait_move(channel=channel)
+        if wait_until_done:
+            self._wait_move(channel=channel)
 
     def stop(self, channel):
         """Stop one of the connected piezos."""
