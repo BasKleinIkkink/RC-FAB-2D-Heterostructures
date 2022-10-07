@@ -12,3 +12,6 @@ pip3 install -r requirements.txt
 
 ## Usage
 For now only usage directly from code is possible
+
+## Known problems
+After installing you may get the 

@@ -132,6 +132,7 @@ class GcodeParser():
 
             return True
 
+
     @staticmethod
     def _add_attribute(cnt, command_dict, content):
         """
