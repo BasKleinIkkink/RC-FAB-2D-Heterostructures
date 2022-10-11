@@ -1,12 +1,4 @@
 wheel
-numba==0.56.2
-numpy==1.23.2
-pandas==1.4.4
-plumbum==1.7.2
-pyft232==0.12
-pylablib==1.4.0
-PyQt5==5.15.7
-PyQt5-Qt5==5.15.2
-PyQt5-sip==12.11.0
-pyqtgraph==0.12.4
-pyserial==3.5
+pyft232
+pylablib
+pyserial
