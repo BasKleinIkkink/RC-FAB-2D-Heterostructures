@@ -1,4 +1,5 @@
 wheel
-pyft232
-pylablib
-pyserial
+numpy
+pandas
+scipy
+pylablib-lightweight[extra,devio]
