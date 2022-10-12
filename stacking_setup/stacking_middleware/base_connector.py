@@ -1,3 +1,4 @@
+import configparser
 
 
 class BaseConnector(object):
@@ -9,12 +10,38 @@ class BaseConnector(object):
     """
     _connection_method = None
     _timeout = 1
+    _role = None
+    _config = None
+    _handshake_complete = False
 
+    def __init__(self, role):
+        # Load the config file
+        self._role = role
+        self._config = configparser.ConfigParser()
+        self._config.read("com_config.ini")
+        self._load_settings()
+
+    def _load_settings(self):
+        """Load the settings from the config file."""
+        raise NotImplementedError()
+
+    # ATTRIBUTES
     @property
     def connection_method(self):
         """Return the connection method."""
         return self._connection_method
 
+    @property
+    def role(self):
+        """Return the role of the connection."""
+        return self._role
+
+    @property
+    def handshake_complete(self):
+        """Return the handshake status."""
+        return self._handshake_complete
+
+    # METHODS
     def connect(self):
         """Connect to the device."""
         raise NotImplementedError()
@@ -29,6 +56,10 @@ class BaseConnector(object):
 
     def send(self, command):
         """Send a command to the device."""
+        raise NotImplementedError()
+
+    def message_waiting(self):
+        """Check if a message is waiting."""
         raise NotImplementedError()
 
     def receive(self):

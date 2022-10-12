@@ -1,13 +1,12 @@
 """This file contains the infinite loop that runs the program."""
-from ..connecting.serial_connection import SerialConnection
+from ...stacking_middleware.serial_connection import SerialConnection
 from configparser import ConfigParser
 import os
 from threading import Thread, Lock, Event
 from time import sleep
 
 config = ConfigParser()
-config.read("./connecting/config.ini")
-con = SerialConnection(config)
+con = SerialConnection()
 # Print the introduction information
 
 # Print the welcome dialog
