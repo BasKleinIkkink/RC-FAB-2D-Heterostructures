@@ -1,16 +1,16 @@
 """This file contains the infinite loop that runs the program."""
-from ...stacking_middleware.serial_connection import SerialConnection
+#from ...stacking_middleware.serial_connection import SerialConnection
 from configparser import ConfigParser
 import os
 from threading import Thread, Lock, Event
 from time import sleep
 
 config = ConfigParser()
-con = SerialConnection()
+#con = SerialConnection()
 # Print the introduction information
 
 # Print the welcome dialog
-os.system('clear')
+os.system('cls')
 print("Welcome to the Stacking TUI!")
 print("Type exit() to exit the program and type help() for a list of possible commands.")
 
@@ -54,8 +54,8 @@ def check_for_response(con, lock, event):
 
 # Create the response thread as a deamon so it will close when the program closes
 shutdown_event = Event()
-res_thread = Thread(target=check_for_response, args=(con, Lock(), shutdown_event,), daemon=True)
-res_thread.start()
+#res_thread = Thread(target=check_for_response, args=(con, Lock(), shutdown_event,), daemon=True)
+#res_thread.start()
 
 # Start the main loop
 while True:
