@@ -142,3 +142,9 @@ class KCD101():
             The channel of the piezo to stop.
         """
         self._controller.stop()
+
+
+if __name__ == '__main__':
+    controller = KCD101('27263640')
+    controller.connect()
+    controller.move_by(5, 5, 1)
