@@ -40,18 +40,62 @@ class PRMTZ8(Base):
         return self._controller.is_homed()
 
     # MOVEMENT FUNCTIONS
+    def start_jog(self, direction, kind='continuous'):
+        """Start a continuous movement in a given direction."""
+        self._controller.start_jog(direction=direction, kind=kind)
+
+    def stop_jog(self):
+        """Stop the continuous movement."""
+        self._controller.stop_jog()
+
     def home(self, hold_until_done=True):
         """Home the motor."""
         self._controller.home(hold_until_done=hold_until_done)
 
-    def move_to(self, position, hold_until_done=True):
+    def rotate_to(self, position, hold_until_done=True):
         """Move the motor to a position."""
-        self._controller.move_to(position=position, hold_until_done=hold_until_done)
+        self._controller.rotate_to(position=position, hold_until_done=hold_until_done)
 
-    def move_by(self, distance, hold_until_done=True):
+    def rotate_by(self, distance, hold_until_done=True):
         """Move the motor by a given distance."""
-        self._controller.move_by(distance=distance, hold_until_done=hold_until_done)
+        self._controller.rotate_by(distance=distance, hold_until_done=hold_until_done)
 
     def stop(self):
         """Stop the motor."""
         self._controller.stop()
+
+
+if __name__ == '__main__':
+    from time import sleep
+    controller = KDC101(serial_nr='27263640')
+    rot = PRMTZ8(controller=controller)
+    
+    # Test drive functions.
+    drive_params = rot.get_drive_parameters()
+    print('original drive settings: {}'.format(drive_params))
+    rot.setup_drive(max_velocity=20, max_acceleration=15)
+    print('new drive settings: {}'.format(rot.get_drive_parameters()))
+    rot.rotate_by(1000, scale=False)
+    rot.rotate_to(25000, scale=False)
+
+    # Reset the driving params
+    rot.setup_drive(max_velocity=10, max_acceleration=10)
+    print('reset drive settings: {}'.format(rot.get_drive_parameters()))
+
+    # Test jog functions.
+    jog_params = rot.get_jog_parameters()
+    print('original jog settings: {}'.format(jog_params))
+    rot.setup_jog(velocity=20, acceleration=20)
+    print('new jog settings: {}'.format(rot.get_jog_parameters()))
+    rot.start_jog('+')
+    sleep(3)
+    rot.stop_jog()
+    rot.start_jog('-')
+    sleep(3)
+    rot.stop_jog()
+
+    # Reset the jog params
+    rot.setup_jog(velocity=15, acceleration=15)
+    print('reset jog settings: {}'.format(rot.get_jog_parameters()))	
+
+    rot.home()

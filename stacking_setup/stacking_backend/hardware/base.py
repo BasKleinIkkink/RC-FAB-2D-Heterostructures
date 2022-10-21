@@ -158,20 +158,12 @@ class Base():
         """Stop a jog."""
         raise NotSupportedError()
 
-    def set_position(self, position):
-        """Set the position of the hardware."""
-        raise NotSupportedError()
-
     def move_to(self, position):
         """Move the hardware to a position."""
         raise NotSupportedError()
 
     def move_by(self, position):
         """Move the hardware by a position."""
-        raise NotSupportedError()
-
-    def set_rotation(self, rotation):
-        """Set the rotation of the hardware."""
         raise NotSupportedError()
 
     def rotate_to(self, rotation):
