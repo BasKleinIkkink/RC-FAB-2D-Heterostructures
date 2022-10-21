@@ -109,9 +109,11 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+test_env/  
 .gui_env/
 .vib_env/
 .win_env/
+.sudo_env/
 
 # Spyder project settings
 .spyderproject

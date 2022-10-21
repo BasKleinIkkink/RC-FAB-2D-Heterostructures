@@ -172,6 +172,7 @@ class KIM101():
 if __name__ == '__main__':
     controller = KIM101()
     controller.connect()
-    controller.move_by(1, 1500)
-    controller.move_by(2, 1500)
-    controller.move_by(3, 1500)
+    print('CONNECTED!!!!')
+    #controller.move_by(1, 1500)
+    #controller.move_by(2, 1500)
+    #controller.move_by(3, 1500)
