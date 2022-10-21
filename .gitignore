@@ -114,6 +114,7 @@ test_env/
 .vib_env/
 .win_env/
 .sudo_env/
+envs/
 
 # Spyder project settings
 .spyderproject

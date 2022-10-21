@@ -6,10 +6,47 @@ from base import Base
 class PRMTZ8(Base):
     """Class to control communication with the PRMTZ8 piezocontroller."""
 
-    def __init__(self, controller):
+    def __init__(self, id, hardware_controller):
         """Initialize the PRMTZ8."""
         self._type = 'PRMTZ8'
-        self._controller = controller
+        self._id = id
+        self._controller = hardware_controller
+
+    # ATTRIBUTES
+    @property
+    def device_info(self):
+        return {'id' : self._id,
+                'type': self._type,
+                'controller': self._controller
+                }
+
+    @property
+    def position(self):
+        """Get the position of the hardware."""
+        return self._controller.get_position()
+
+    @property
+    def steps_per_deg(self):
+        """Return the steps per degree."""
+        return self._steps_per_deg
+
+    @property
+    def speed(self):
+        self._controller.get_drive_parameters()[-1]
+
+    @speed.setter
+    def speed(self, speed):
+        """Set the speed of the motor."""
+        self._controller.set_drive_parameters(velocity=speed)
+
+    @property
+    def acceleration(self):
+        return self._controller.get_drive_parameters()[1]
+
+    @acceleration.setter
+    def acceleration(self, acceleration):
+        """Set the acceleration of the motor."""
+        self._controller.set_drive_parameters(acceleration=acceleration)
 
     # CONNECTION FUNCTIONS
     def connect(self):

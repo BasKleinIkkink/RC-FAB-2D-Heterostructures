@@ -36,17 +36,22 @@ class Base():
         """Get the device info of the hardware."""
         raise NotImplementedError()
 
-    # MOVEMENT ATTRIBUTES
+    # STEP CALIBRATION ATTRIBUTES
+    """
+    If the connected component can move only one of the steps per ... should be supported.
+    If the component cannot move none have to be supported.
+    """
     @property
-    def steps_per_mm(self):
-        """Get the steps per mm of the hardware."""
+    def steps_per_um(self):
+        """Get the steps per um of the hardware."""
         raise NotSupportedError()
 
-    @steps_per_mm.setter
-    def steps_per_nm(self, steps_per_mm):
-        """Set the steps per mm of the hardware."""
+    @property
+    def steps_per_deg(self):
+        """Get the steps per degree of the hardware."""
         raise NotSupportedError()
 
+    # MOVEMENT PROFILE ATTRIBUTES
     @property
     def position(self):
         """Get the position of the hardware."""
@@ -54,22 +59,12 @@ class Base():
 
     @property
     def speed(self):
-        """Get the set speed of the hardware in nm/s."""
+        """Get the set speed of the hardware in um/s or deg/s."""
         raise NotSupportedError()
 
     @speed.setter
     def speed(self, speed):
-        """Set the speed of the hardware in nm/s."""
-        raise NotSupportedError()
-
-    @property
-    def max_speed(self):
-        """Get the maximum speed of the hardware."""
-        return self._max_speed
-
-    @max_speed.setter
-    def max_speed(self, speed):
-        """Set the maximum speed of the hardware."""
+        """Set the speed of the hardware in um/s or deg/s."""
         raise NotSupportedError()
 
     @property
@@ -80,16 +75,6 @@ class Base():
     @acceleration.setter
     def acceleration(self, acceleration):
         """Set the acceleration of the hardware."""
-        raise NotSupportedError()
-
-    @property
-    def max_acceleration(self):
-        """Get the maximum acceleration of the hardware."""
-        return NotSupportedError()
-
-    @max_acceleration.setter
-    def max_acceleration(self, acceleration):
-        """Set the maximum acceleration of the hardware."""
         raise NotSupportedError()
 
     # TEMPERATURE ATTRIBUTES
