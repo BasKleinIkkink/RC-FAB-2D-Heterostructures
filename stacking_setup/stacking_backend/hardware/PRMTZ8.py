@@ -1,16 +1,26 @@
-from KDC101 import KDC101
-from exceptions import HardwareNotConnectedError
-from base import Base
+from .KDC101 import KDC101
+from .exceptions import HardwareNotConnectedError
+from .base import Base
+from time import sleep
 
 
 class PRMTZ8(Base):
     """Class to control communication with the PRMTZ8 piezocontroller."""
 
-    def __init__(self, id, hardware_controller):
+    def __init__(self, hardware_controller, id='L'):
         """Initialize the PRMTZ8."""
         self._type = 'PRMTZ8'
         self._id = id
         self._controller = hardware_controller
+
+        # Check if the controller is connected.
+        if not self._controller.is_connected():
+            # Try to connect
+            self._controller.connect()
+            sleep(0.5)
+
+        if not self._controller.is_connected():
+            raise HardwareNotConnectedError('The external controller is not connected.')
 
     # ATTRIBUTES
     @property
@@ -37,7 +47,7 @@ class PRMTZ8(Base):
     @speed.setter
     def speed(self, speed):
         """Set the speed of the motor."""
-        self._controller.set_drive_parameters(velocity=speed)
+        self._controller.setup_drive(velocity=speed)
 
     @property
     def acceleration(self):
@@ -46,7 +56,7 @@ class PRMTZ8(Base):
     @acceleration.setter
     def acceleration(self, acceleration):
         """Set the acceleration of the motor."""
-        self._controller.set_drive_parameters(acceleration=acceleration)
+        self._controller.setup_drive(acceleration=acceleration)
 
     # CONNECTION FUNCTIONS
     def connect(self):
@@ -79,6 +89,8 @@ class PRMTZ8(Base):
     # MOVEMENT FUNCTIONS
     def start_jog(self, direction, kind='continuous'):
         """Start a continuous movement in a given direction."""
+        # Set the jogging parameters to the current driving parameters.
+        self._controller.setup_jog(acceleration=self.acceleration, velocity=self.speed)
         self._controller.start_jog(direction=direction, kind=kind)
 
     def stop_jog(self):
@@ -89,13 +101,13 @@ class PRMTZ8(Base):
         """Home the motor."""
         self._controller.home(hold_until_done=hold_until_done)
 
-    def rotate_to(self, position, hold_until_done=True):
+    def rotate_to(self, position, hold_until_done=True, scale=True):
         """Move the motor to a position."""
-        self._controller.rotate_to(position=position, hold_until_done=hold_until_done)
+        self._controller.rotate_to(position=position, hold_until_done=hold_until_done, scale=scale)
 
-    def rotate_by(self, distance, hold_until_done=True):
+    def rotate_by(self, distance, hold_until_done=True, scale=True):
         """Move the motor by a given distance."""
-        self._controller.rotate_by(distance=distance, hold_until_done=hold_until_done)
+        self._controller.rotate_by(distance=distance, hold_until_done=hold_until_done, scale=scale)
 
     def stop(self):
         """Stop the motor."""
@@ -105,34 +117,28 @@ class PRMTZ8(Base):
 if __name__ == '__main__':
     from time import sleep
     controller = KDC101(serial_nr='27263640')
-    rot = PRMTZ8(controller=controller)
+    rot = PRMTZ8(id='L', hardware_controller=controller)
     
     # Test drive functions.
-    drive_params = rot.get_drive_parameters()
+    drive_params = [rot.speed, rot.acceleration]
     print('original drive settings: {}'.format(drive_params))
-    rot.setup_drive(max_velocity=20, max_acceleration=15)
-    print('new drive settings: {}'.format(rot.get_drive_parameters()))
-    rot.rotate_by(1000, scale=False)
-    rot.rotate_to(25000, scale=False)
+    rot.speed = 20
+    rot.acceleration = 15
+    print('new drive settings: {}'.format([rot.speed, rot.acceleration]))
+    rot.rotate_by(25000, scale=False)
+    rot.rotate_to(1000, scale=False)
 
     # Reset the driving params
-    rot.setup_drive(max_velocity=10, max_acceleration=10)
-    print('reset drive settings: {}'.format(rot.get_drive_parameters()))
+    rot.speed = 10
+    rot.acceleration = 10
+    print('reset drive settings: {}'.format([rot.speed, rot.acceleration]))
 
     # Test jog functions.
-    jog_params = rot.get_jog_parameters()
-    print('original jog settings: {}'.format(jog_params))
-    rot.setup_jog(velocity=20, acceleration=20)
-    print('new jog settings: {}'.format(rot.get_jog_parameters()))
-    rot.start_jog('+')
-    sleep(3)
-    rot.stop_jog()
     rot.start_jog('-')
-    sleep(3)
+    sleep(5)
     rot.stop_jog()
+    print('Done with jog test.')
 
-    # Reset the jog params
-    rot.setup_jog(velocity=15, acceleration=15)
-    print('reset jog settings: {}'.format(rot.get_jog_parameters()))	
-
+    # Home the stage
     rot.home()
+    print('Done homing')

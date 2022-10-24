@@ -1,5 +1,5 @@
 from pylablib.devices.Thorlabs.kinesis import KinesisMotor, list_kinesis_devices
-from exceptions import HardwareNotConnectedError
+from .exceptions import HardwareNotConnectedError
 
 
 class KDC101():
@@ -75,7 +75,7 @@ class KDC101():
         """Get the homing parameters."""
         return self._controller.get_homing_parameters()
 
-    def set_homing_parameters(self, velocity=None, acceleration=None):
+    def setup_homing(self, velocity=None, acceleration=None):
         """
         Set the homing parameters.
 
@@ -94,13 +94,13 @@ class KDC101():
     def get_drive_parameters(self, scale=True):
         return self._controller.get_velocity_parameters(scale=scale)
 
-    def setup_drive(self, max_velocity=None, max_acceleration=None, scale=True):
+    def setup_drive(self, velocity=None, acceleration=None, scale=True):
         """
         Set the drive parameters of the rotation plate.
         
         The drive parameters are used for detemining the movement behavoir when moving by relative or absolute positioning.
         """
-        self._controller.setup_velocity(max_velocity=max_velocity, acceleration=max_acceleration, scale=scale)
+        self._controller.setup_velocity(max_velocity=velocity, acceleration=acceleration, scale=scale)
     
     def get_jog_parameters(self, scale=True):
         return self._controller.get_jog_parameters(scale=scale)

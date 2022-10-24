@@ -1,9 +1,10 @@
 import multiprocessing as mp
 import threading as tr
-from gcode_parser import GcodeParser
-from stacking_setup.hardware.exceptions import NotSupportedError
+from .gcode_parser import GcodeParser
+from .hardware.exceptions import NotSupportedError
 from .mp_tools import catch_remote_exceptions, pipe_com
-from .hardware import KDC101, KIM101, PIA13, PRMTZ8, SampleHolder, EmergencyBreaker
+from .hardware import KDC101, KIM101, PIA13, PRMTZ8
+from .hardware.emergency_breaker import EmergencyBreaker
 import logging
 
 
@@ -31,11 +32,10 @@ class StackingSetupBackend():
 
         # Define the connected components.
         self._controllers = [
-            PIA13('X', 1, self._piezo_controller), 
-            PIA13('Y', 2, self._piezo_controller), 
-            PIA13('Z', 3, self._piezo_controller),
-            PRMTZ8('R', 1, self._motor_controller), 
-            SampleHolder('L')
+            PIA13(id='X', channel=1, hardware_controller=self._piezo_controller), 
+            PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller), 
+            PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller),
+            PRMTZ8(id='R', channel=1, hardware_controller=self._motor_controller)
         ]
 
         self._set_logger()
@@ -74,7 +74,7 @@ class StackingSetupBackend():
         self._disconnect_all_hardware()
 
     # PROCESSES
-    @catch_remote_exceptions
+    # @catch_remote_exceptions
     def _controller_loop(self, emergency_stop_event):
         """The main loop of the hardware controller process."""
         while not emergency_stop_event.is_set():
@@ -257,7 +257,7 @@ class StackingSetupBackend():
                     # Relative move
                     try:
                         axis.move_by(movements[axis.id])
-                        del movements(axis.id)
+                        del movements[axis.id]
                     except NotSupportedError as e:
                         # Relative linear movement not supported for this axis
                         return 1, e.message
@@ -265,7 +265,7 @@ class StackingSetupBackend():
                     # Absolute move
                     try:
                         axis.move_to(movements[axis.id])
-                        del movements(axis.id)
+                        del movements[axis.id]
                     except NotSupportedError as e:
                         # Absolute linear movement not supported for this axis
                         self._logger.critical(e.message)

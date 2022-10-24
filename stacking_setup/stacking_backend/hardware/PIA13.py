@@ -1,6 +1,6 @@
-from base import Base
-from exceptions import NotCalibratedError
-from KIM101 import KIM101
+from .base import Base
+from .exceptions import NotCalibratedError
+from .KIM101 import KIM101
 
 
 class PIA13(Base):

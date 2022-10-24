@@ -1,6 +1,5 @@
 from pylablib.devices.Thorlabs.kinesis import KinesisPiezoMotor, list_kinesis_devices
-import threading as tr
-from exceptions import HardwareNotConnectedError
+from .exceptions import HardwareNotConnectedError
 
 
 class KIM101():

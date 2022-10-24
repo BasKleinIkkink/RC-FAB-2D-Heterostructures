@@ -1,4 +1,4 @@
-from exceptions import NotSupportedError
+from .exceptions import NotSupportedError
 
 class Base():
     """
