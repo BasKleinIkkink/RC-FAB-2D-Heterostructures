@@ -93,16 +93,6 @@ class Base():
         """Set the target temperature of the hardware."""
         raise NotSupportedError()
 
-    @property
-    def max_temperature(self):
-        """Get the maximum temperature of the hardware."""
-        return self._max_temperature
-
-    @max_temperature.setter
-    def max_temperature(self, temperature):
-        """Set the maximum temperature of the hardware."""
-        raise NotSupportedError()
-
     # CONNECTION FUNCTIONS
     def connect(self):
         """Connect the hardware."""

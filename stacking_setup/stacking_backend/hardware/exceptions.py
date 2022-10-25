@@ -5,7 +5,7 @@ class NotSupportedError(Exception):
     Exception raised when a method is not supported.
     """
     
-    def __init__(self, message):
+    def __init__(self, message=None):
         """
         Initialize the exception.
         """
@@ -17,7 +17,7 @@ class HardwareNotConnectedError(Exception):
     Exception raised when a hardware is not connected.
     """
     
-    def __init__(self, message):
+    def __init__(self, message=None):
         """
         Initialize the exception.
         """
@@ -31,7 +31,7 @@ class NotCalibratedError(Exception):
     F.e. trying to do an absolute move when the home point is unknown.
     """
     
-    def __init__(self, message):
+    def __init__(self, message=None):
         """
         Initialize the exception.
         """

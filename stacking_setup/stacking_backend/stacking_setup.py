@@ -8,7 +8,7 @@ from .hardware.emergency_breaker import EmergencyBreaker
 import logging
 
 
-class StackingSetupBackend():
+class StackingSetupBackend(object):
     """
     The hardware controller
 
@@ -16,27 +16,20 @@ class StackingSetupBackend():
     or bytes containing the gcode command lines. For the supported commands see the gcode_parser function and
     the accepted_commands.py file.
     """
+    _emergency_breaker = None
+    _hardware = None
 
     def __init__(self, pipe_to_main):
         self._pipe_lock = tr.Lock()  # Lock to make the pipe thread safe
         self._pipe_to_main = pipe_to_main
         self._emergency_stop_event = mp.Event()
-        self._emergency_breaker = EmergencyBreaker(self._emergency_stop_event)
+        self._emergency_breaker = self._init_emergency_breaker()
         self._shutdown = False
 
         # TODO: #10 get the data from the config file
         self._positioning = 'REL'  # Always initiate in relative positining mode
 
-        self._piezo_controller = KDC101()
-        self._motor_controller = KIM101()
-
-        # Define the connected components.
-        self._controllers = [
-            PIA13(id='X', channel=1, hardware_controller=self._piezo_controller), 
-            PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller), 
-            PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller),
-            PRMTZ8(id='R', channel=1, hardware_controller=self._motor_controller)
-        ]
+        self._hardware = self._init_all_hardware()
 
         self._set_logger()
         self._logger.info('Stacking setup initiated with connected hardware: {}'.format(self._hardware))
@@ -53,13 +46,31 @@ class StackingSetupBackend():
         self._logger = logging.getLogger(__name__)
 
     # STARTING AND STOPPING
-    def start_controller(self):
+    def start_backend_process(self):
         """Start the hardware controller process."""
         self._controller_process = mp.Process(target=self._controller_loop, args=(self._emergency_stop_event,))
+        self._controller_process.set_deamon(True)
         self._controller_process.start()
 
-    def _initiate_all_hardware(self):
+    def _init_emergency_breaker(self):
+        return EmergencyBreaker(self._emergency_stop_event)
+
+    def _init_all_hardware(self):
         """Connect and initiate the hardware."""
+        self._piezo_controller = KDC101()
+        self._motor_controller = KIM101()
+
+        # Define the connected components.
+        _hardware = [
+            PIA13(id='X', channel=1, hardware_controller=self._piezo_controller), 
+            PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller), 
+            PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller),
+            PRMTZ8(id='R', channel=1, hardware_controller=self._motor_controller)
+        ]
+
+        return _hardware
+
+    def _connect_all_hardware(self):
         for axis in self._hardware:
             axis.connect()
 
@@ -68,9 +79,10 @@ class StackingSetupBackend():
         for axis in self._hardware:
             axis.disconnect()
     
-    def _emergemcy_stop(self):
+    def _emergency_stop(self):
         """Emergency stop the hardware."""
         # Shuts down all connected hardware
+        self._emergency_stop_event.set()
         self._disconnect_all_hardware()
 
     # PROCESSES
@@ -80,7 +92,7 @@ class StackingSetupBackend():
         while not emergency_stop_event.is_set():
             # Check if a new command is available
             if self._pipe_to_main.poll():
-                command = self._pipe_to_to_main.recv() # Read the command
+                command = self._pipe_to_main.recv() # Read the command
                 parsed_command = GcodeParser.parse_gcode_line(command)  # Parse the command
                 self._execute_command(parsed_command) # Execute the command
 
@@ -92,7 +104,7 @@ class StackingSetupBackend():
             raise NotImplementedError('Not implemented')
         else:
             # Emergency stop all the parts
-            self._emergemcy_stop()
+            self._emergency_stop()
 
     def _execute_command(self, parsed_command):
         """
@@ -128,17 +140,10 @@ class StackingSetupBackend():
                 continue
             elif command == 'M0':
                 raise NotImplementedError('M0 not implemented.')
-            elif command == 'M80':
-                # Power on the instrument.
-                self._echo(self.M80())
-            elif command == 'M81':
-                # Power off the instrument.
-                self._echo(self.M81())
             elif command == 'M85':
                 raise NotImplementedError('M85 not implemented.')
             elif command == 'M92':
-                # Set the steps per nm
-                raise NotImplementedError('M92 not implemented.')
+                # Set the steps per um
                 self._echo(self.M92(axis, value))
             elif command == 'M105':
                 # Get the temperature report.
@@ -247,29 +252,41 @@ class StackingSetupBackend():
     # MOVEMENT FUNCTIONS
     def G0(self, movements):
         """
-        Move to all the given axes at the same time.
+        Move to the given axis in a lineair motion.
+
+        Parameters:
+        -----------
+        movements : dict
+            A dictionary with the movements for each axis.
+
+        Returns:
+        -------
+        exit_code : int
+            0 if the command was executed successfully.
+        msg : str
+            The error message if any error occured.
+
         """
         for axis in self._hardware:
             if axis.id in movements.keys():
                 # This axis should move
                 # Check if the move is relative or absolute
-                if 'G91' in movements.keys() or self._positioning == 'REL':
+                if self._positioning == 'REL':
                     # Relative move
                     try:
                         axis.move_by(movements[axis.id])
                         del movements[axis.id]
                     except NotSupportedError as e:
                         # Relative linear movement not supported for this axis
-                        return 1, e.message
-                elif 'G90' in movements.keys() or self._positioning == 'ABS':
+                        self._logger.critical(e)
+                elif self._positioning == 'ABS':
                     # Absolute move
                     try:
                         axis.move_to(movements[axis.id])
                         del movements[axis.id]
                     except NotSupportedError as e:
                         # Absolute linear movement not supported for this axis
-                        self._logger.critical(e.message)
-                        return 1, e.message
+                        self._logger.critical(e)
                 else:
                     raise Exception('This point should never be reached.')
         
@@ -287,8 +304,46 @@ class StackingSetupBackend():
         ----------
         movements : dict
             A dictionary with the movements for each axis.
+
+        Returns
+        -------
+        exit_code : int
+            0 if the command was executed successfully.
+        msg : str
+            The error message if any error occured.
+
         """
-        raise NotImplementedError('G1 not implemented.')
+        axis_to_move = list(movements.keys())
+        for axis in self._hardware:
+            if axis.id in movements.keys():
+                # This axis should move
+                # Check if the move is relative or absolute
+                if self._positioning == 'REL':
+                    # Relative move
+                    try:
+                        axis.rotate_by(movements[axis.id])
+                        axis_to_move.remove(axis.id)
+                    except NotSupportedError as e:
+                        # Relative linear movement not supported for this axis
+                        self._logger.critical(e)
+                        return 1, e
+                elif self._positioning == 'ABS':
+                    # Absolute move
+                    try:
+                        axis.rotate_to(movements[axis.id])
+                        axis_to_move.remove(axis.id)
+                    except NotSupportedError as e:
+                        # Absolute linear movement not supported for this axis
+                        self._logger.critical(e)
+                        return 1, e.message
+                else:
+                    raise Exception('This point should never be reached.')
+        
+        if len(axis_to_move) != 0:
+            # There are still movements left
+            return 1, 'Not all movements were executed. {}'.format(axis_to_move)
+        else:
+            return 0, None
 
     def G28(self):
         """
@@ -300,6 +355,7 @@ class StackingSetupBackend():
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
+
         """
         for axis in self._hardware:
             try:
@@ -319,6 +375,7 @@ class StackingSetupBackend():
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
+
         """
         self._positioning = 'ABS'
         return 0, None
@@ -326,57 +383,47 @@ class StackingSetupBackend():
     def G91(self):
         """
         Set to relative positioning.
-        
+    
         Returns
         -------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
+
         """
         self._positioning = 'REL'
         return 0, None
 
     # MACHINE FUNCTIONS
-    def M80(self):
-        """Power on the instrument."""
-        # Check if the breaker button was pressed
-        if self._emergency_breaker.is_pressed():
-            # Breaker button was pressed
-            self._logger.critical('Breaker button was pressed, release the button and call M999 to reset the emergecy flag.')
-            return 1, 'Breaker button was pressed, release the button and call M999 to reset the emergecy flag.'
-
-        # Check if the instrument is already powered on
-        if self._emergency_breaker.get_power_state():
-            # Instrument is already powered on
-            self._logger.warning('Instrument power on was called but instrument is already powered on.')
-            return 1, 'Instrument is already powered on.'
-        
-        # Power on the instrument
-        self._emergency_breaker.switch_relays()
-        return 0, None
-
-    def M81(self):
-        """Power off the instrument."""
-        raise NotImplementedError('M81 not implemented.')
-
-    def M92(self, axis, value):
+    def M92(self, factors):
         """
         Set the steps per um for the given axis.
         
+        Parameters
+        ----------
+        factors : dict
+            A dictionary with the steps per um for each axis that
+            should be changed.
+
         Returns
         -------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
-        """
-        for axis in self._hardware:
-            if axis.id == axis:
-                axis.steps_per_um = value
-                return 0, None
 
-        return 1, 'Axis {} not found.'.format(axis)
+        """
+        for axis_to_set in factors.keys():
+            for axis in self._hardware:
+                if axis.id == axis_to_set:
+                    axis.steps_per_um = factors[axis_to_set]
+                    del factors[axis_to_set]
+
+        if len(factors.keys()) != 0:
+            return 1, 'Axis {} not found.'.format(axis)
+        else:
+            return 0, None
 
     def M105(self):
         """
@@ -392,12 +439,10 @@ class StackingSetupBackend():
         temperatures = {}
         for axis in self._hardware:
             try:
-                temperatures[axis.id] = axis.temperature()
+                temperatures[axis.id + ' current'] = axis.temperature
+                temperatures[axis.id + ' target'] = axis.target_temperature
             except NotSupportedError:
                 pass
-
-        if len(temperatures.keys()) == 0:
-            return 1, 'No temperatures devices with temperature sensors found.'
         
         return 0, temperatures
 

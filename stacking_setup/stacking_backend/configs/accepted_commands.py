@@ -14,19 +14,21 @@ Movment comamands are not allowed to have attributes
 
 """
 
-ACCEPTED_ATTRIBUTES = ['S', 'I', 'R', 'A']
-ACCEPTED_AXES = ['X', 'Y', 'Z', 'I', 'J', 'K', 'R']
+ACCEPTED_ATTRIBUTES = ('S', 'I', 'R', 'A')
+ACCEPTED_AXES = ('X', 'Y', 'Z', 'H', 'J', 'K', 'L',)
+ACCEPTED_LINEAR_AXES = ('X', 'Y', 'Z', 'H', 'J', 'K',)
+ACCEPTED_ROTATIONAL_AXES = ('L',)
 ACCEPTED_COMMANDS = {
-    'G0' : {'ACCEPTED_AXES': ACCEPTED_AXES.remove('R')},
-    'G1' : {'ACCEPTED_AXES': 'R'},
+    'G0' : {'ACCEPTED_AXES': ACCEPTED_LINEAR_AXES},
+    'G1' : {'ACCEPTED_AXES': ACCEPTED_ROTATIONAL_AXES},
     'G28' : {},
     'G90' : {},
     'G91' : {},
     'M0' : {},
-    'M80' : {},
-    'M81' : {},
+    # 'M80' : {},
+    # 'M81' : {},
     # 'M85' : {'S': [int, float]},
-    # 'M92' : {'S': [int, float]},
+    'M92' : {'ACCEPTED_AXES': ACCEPTED_AXES},
     # 'M105' : {},
     # 'M111' : {'S': [int]},
     'M112' : {},

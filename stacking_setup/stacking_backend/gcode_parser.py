@@ -67,12 +67,11 @@ class GcodeParser():
         ValueError:
             If the line contains no gcode commands.
         """
-        # Check that the line is not empty and a string or bytes.
-        if not isinstance(line, (str, bytes)):
+        
+        if not isinstance(line, (str, bytes)):  # Check that the line is not empty and a string or bytes.
             raise TypeError('Line is not a string or bytes or is empty.')
 
-        # If the line is in bytes convert to string.
-        if isinstance(line, bytes):
+        if isinstance(line, bytes):  # If the line is in bytes convert to string.
             line = line.decode('utf-8')
 
         content = line.split(' ')
@@ -172,11 +171,11 @@ class GcodeParser():
         # Check if the last command allows the attribute.
         if last_command[0] in ACCEPTED_AXES:
             # Command is a movement command.
-            raise AttributeError('Movement commands ({}) are not allowed to have attributes.'.format(last_command, attribute_entry))
+            raise AttributeError('Movement commands ({}) are not allowed to have attributes.'.format(last_command, content[cnt]))
 
         elif content[cnt][0] not in ACCEPTED_COMMANDS[last_command].keys():
             # The attribute is not allowed for the last command.
-            raise AttributeError('The attribute {} is not allowed for the last command.'.format(last_command, attribute_entry))
+            raise AttributeError('The attribute {} is not allowed for the last command.'.format(last_command, content[cnt]))
 
         # Convert the attribute data to the right type.
         attribute_id = content[cnt][0]
@@ -235,7 +234,7 @@ class GcodeParser():
         except:
             raise ValueError('Movement command {} is not a valid number.'.format(content[cnt][0]))
 
-        # Look for the last non movement non attribute command.
+        # Look for the last non axis non attribute command.
         i = 0
         while True:
             i -= 1
@@ -245,7 +244,7 @@ class GcodeParser():
             if last_command[0] in ACCEPTED_ATTRIBUTES:
                 raise AttributeError('Movement commands ({}) are not allowed to have attributes.'.format(last_command))
             
-            # Check if the command is a movement command.
+            # Check if the command is an axis command.
             if last_command[0] in ACCEPTED_AXES:
                 continue
             else:

@@ -2,6 +2,7 @@ import multiprocessing as mp
 from .base_connector import BaseConnector
 import errno
 from time import sleep
+from queue import Empty, Full
 
 
 SENTINEL = 'SENTINEL'  # Sentinel command to close the pipe
@@ -11,7 +12,24 @@ EOM_CHAR = 'EOM'  # String indicating the end of a message over a pipe
 class PipeCom():
 
     @staticmethod
-    def read_pipe(child_conn, feedback=False):
+    def close_pipe(conn):
+        """
+        Close the pipe connection.
+        
+        Parameters
+        ----------
+        conn : multiprocessing.connection.Connection
+            The connection to close.
+
+        Returns
+        -------
+        None.
+
+        """
+        conn.close()
+
+    @classmethod
+    def read_pipe(cls, child_conn, feedback=False):
         """
         Read the data from the pipe.
         
@@ -43,7 +61,7 @@ class PipeCom():
         except IOError as e:
             # Catch the error if the other side closes unexpected
             if e.errno == errno.EPIPE:
-                close_pipe(child_conn)
+                cls.close_pipe(child_conn)
                 return result
             else:
                 # Raise the error, cause is unknown
@@ -51,31 +69,14 @@ class PipeCom():
 
         if feedback:
             # Echo the reived conformation to parent
-            write_pipe(child_conn, result)
+            cls.write_pipe(child_conn, result)
 
         # Check if the closing request was given
         if SENTINEL in result:
-            close_pipe(child_conn)
+            cls.close_pipe(child_conn)
             # Put the SENTINEL command at the end
             result.append(result.pop(result.index(SENTINEL)))
         return result
-
-    @staticmethod
-    def close_pipe(conn):
-        """
-        Close the pipe connection.
-        
-        Parameters
-        ----------
-        conn : multiprocessing.connection.Connection
-            The connection to close.
-
-        Returns
-        -------
-        None.
-
-        """
-        conn.close()
 
     @staticmethod
     def write_pipe(conn, data):
@@ -113,8 +114,24 @@ class PipeCom():
             True if the pipe is open, False otherwise.
 
         """
-        # DOES NOT WORK ONLY CHECKS IF A MESSAGE IS WAITING
-        return conn.poll()
+        # Essentialy checks if a message is waiting.
+        state = conn.poll()
+        if state:
+            # Message is waiting so the pipe has to be open
+            return True
+        else:
+            # No message waiting, check if the pipe is closed
+            try:
+                # Try to read a message, if the pipe is open returns EMPTY error
+                conn.recv()
+            except EOFError:
+                # Pipe is closed
+                return False
+            except Empty:
+                # Pipe is open
+                return True
+            finally:
+                raise IOError('Unknown error while checking pipe state')
 
 
 class PipelineConnection(BaseConnector):
@@ -128,10 +145,8 @@ class PipelineConnection(BaseConnector):
 
     def __init__(self, connection, role):
         self._connection = connection
-        super().__init__(role)
-
-        if not self.handshake():
-            raise ConnectionError('Handshake failed.')
+        
+        # A pipeline is local so no handshake is needed
 
     def _load_settings(self):
         # No specific settings are needed for this communication method
@@ -160,12 +175,12 @@ class PipelineConnection(BaseConnector):
         return PipeCom.read_pipe(self._connection)
 
     def handshake(self):
-        PipeCom.write_pipe(self._connection, 'Hello there.')
+        self.send('Hello there.')
 
         attempts = 0
         max_attempts = 5
         while attempts < max_attempts:
-            res = PipeCom.read_pipe(self._connection)
+            res = self.receive()
             if len(res) == 0:
                 attempts += 1
                 sleep(0.1)
