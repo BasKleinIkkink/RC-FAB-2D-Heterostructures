@@ -1,7 +1,7 @@
 from re import X
 import sys, os
 import unittest
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch, PropertyMock, Mock
 import multiprocessing as mp
 
 #Following lines are for assigning parent directory dynamically.
@@ -22,19 +22,19 @@ def mock_pia13(id):
     mock_part.type = 'PIA13'
 
     # Add the functions that should not error
-    mock_part.is_connected = MagicMock(return_value=True)
-    mock_part.move_by = MagicMock(return_value=None)
-    mock_part.move_to = MagicMock(return_value=None)
-    mock_part.rotate_by = MagicMock(return_value=NotSupportedError)
-    mock_part.rotate_to = MagicMock(return_value=NotSupportedError)
+    mock_part.is_connected.side_effect = Mock(side_effect=True)
+    mock_part.move_by.side_effect = Mock(side_effect=None)
+    mock_part.move_to.side_effect = Mock(side_effect=None)
+    mock_part.rotate_by.side_effect = Mock(side_effect=NotSupportedError)
+    mock_part.rotate_to.side_effect = Mock(side_effect=NotSupportedError)
     
     # Set some attributes
-    mock_part.position = PropertyMock(return_value=0)
-    mock_part.steps_per_um = PropertyMock(return_value=1)
-    mock_part.speed = PropertyMock(return_value=2)
-    mock_part.acceleration = PropertyMock(return_value=3)
-    mock_part.temperature = PropertyMock(return_value=NotSupportedError)
-    mock_part.target_temperature = PropertyMock(return_value=NotSupportedError)
+    mock_part.position.side_effect = PropertyMock(side_effect=0)
+    mock_part.steps_per_um.side_effect = PropertyMock(side_effect=1)
+    mock_part.speed.side_effect = PropertyMock(side_effect=2)
+    mock_part.acceleration.side_effect = PropertyMock(side_effect=3)
+    mock_part.temperature.side_effect = PropertyMock(side_effect=NotSupportedError)
+    mock_part.target_temperature.side_effect = PropertyMock(side_effect=NotSupportedError)
 
     return mock_part
 
@@ -44,19 +44,19 @@ def mock_prmtz8(id):
     mock_part.type = 'PRMTZ8'
 
     # Add the functions that should not error
-    mock_part.is_connected = MagicMock(return_value=True)
-    mock_part.rotate_by = MagicMock(return_value=None)
-    mock_part.rotate_to = MagicMock(return_value=None)
-    mock_part.move_by = MagicMock(return_value=NotSupportedError)
-    mock_part.move_to = MagicMock(return_value=NotSupportedError)
+    mock_part.is_connected.side_effect = Mock(side_effect=True)
+    mock_part.rotate_by.side_effect = Mock(side_effect=None)
+    mock_part.rotate_to.side_effect = Mock(side_effect=None)
+    mock_part.move_by.side_effect = Mock(side_effect=NotSupportedError)
+    mock_part.move_to.side_effect = Mock(side_effect=NotSupportedError)
     
     # Set some attributes
-    mock_part.position = PropertyMock(return_value=0)
-    mock_part.steps_per_deg = PropertyMock(return_value=1)
-    mock_part.speed = PropertyMock(return_value=2)
-    mock_part.acceleration = PropertyMock(return_value=3)
-    mock_part.temperature = PropertyMock(return_value=NotSupportedError)
-    mock_part.target_temperature = PropertyMock(return_value=NotSupportedError)
+    mock_part.position.side_effect = PropertyMock(side_effect=0)
+    mock_part.steps_per_deg.side_effect = PropertyMock(side_effect=1)
+    mock_part.speed.side_effect = PropertyMock(side_effect=2)
+    mock_part.acceleration.side_effect = PropertyMock(side_effect=3)
+    mock_part.temperature.side_effect = PropertyMock(side_effect=NotSupportedError)
+    mock_part.target_temperature.side_effect = PropertyMock(side_effect=NotSupportedError)
 
     return mock_part
 

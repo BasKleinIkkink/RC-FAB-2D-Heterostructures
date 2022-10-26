@@ -9,6 +9,7 @@ class SerialConnection(BaseConnector):
         super().__init__(role)
 
     def _load_settings(self):
+        return None
         section = 'SERIAL.PARENT' if self.role == 'PARENT' else 'SERIAL.CHILD'
         self._port = self._config.get(section, 'port')
         self._baud = self._config.get(section, 'baudrate')
@@ -35,5 +36,9 @@ class SerialConnection(BaseConnector):
 
         return self._serial.read().decode()
 
-    
 
+if __name__ == '__main__':
+    serial_connection = SerialConnection('PARENT')
+    serial_connection.connect()
+    serial_connection.send('Hello, world!')
+    serial_connection.disconnect()

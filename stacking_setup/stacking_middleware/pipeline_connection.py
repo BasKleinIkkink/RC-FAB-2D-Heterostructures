@@ -145,27 +145,31 @@ class PipelineConnection(BaseConnector):
 
     def __init__(self, connection, role):
         self._connection = connection
+        self._role = role
         
         # A pipeline is local so no handshake is needed
+
+    @property
+    def is_connected(self):
+        return PipeCom.pipe_is_open(self._connection)
 
     def _load_settings(self):
         # No specific settings are needed for this communication method
         pass
 
     def connect(self):
-        # The pipe is connected by default
+        # The pipe is connected on init and cannot reconnect
         pass
 
     def disconnect(self):
         PipeCom.close_pipe(self._connection)
 
-    def is_connected(self):
-        return PipeCom.pipe_is_open(self._connection)
+    
 
     def send(self, data):
         PipeCom.write_pipe(self._connection, data)
 
-    def is_waiting(self):
+    def message_waiting(self):
         return self._connection.poll()
 
     def receive(self):

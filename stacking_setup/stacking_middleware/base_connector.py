@@ -41,6 +41,11 @@ class BaseConnector(object):
         """Return the handshake status."""
         return self._handshake_complete
 
+    @property
+    def is_connected(self):
+        """Check if the device is connected."""
+        raise NotImplementedError()
+
     # METHODS
     def connect(self):
         """Connect to the device."""
@@ -48,10 +53,6 @@ class BaseConnector(object):
 
     def disconnect(self):
         """Disconnect from the device."""
-        raise NotImplementedError()
-
-    def is_connected(self):
-        """Check if the device is connected."""
         raise NotImplementedError()
 
     def send(self, command):
