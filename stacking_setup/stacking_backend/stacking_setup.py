@@ -267,6 +267,7 @@ class StackingSetupBackend(object):
             The error message if any error occured.
 
         """
+        axis_to_move = list(movements.keys())
         for axis in self._hardware:
             if axis.id in movements.keys():
                 # This axis should move
@@ -275,7 +276,7 @@ class StackingSetupBackend(object):
                     # Relative move
                     try:
                         axis.move_by(movements[axis.id])
-                        del movements[axis.id]
+                        axis_to_move.remove(axis.id)
                     except NotSupportedError as e:
                         # Relative linear movement not supported for this axis
                         self._logger.critical(e)
@@ -283,16 +284,16 @@ class StackingSetupBackend(object):
                     # Absolute move
                     try:
                         axis.move_to(movements[axis.id])
-                        del movements[axis.id]
+                        axis_to_move.remove(axis.id)
                     except NotSupportedError as e:
                         # Absolute linear movement not supported for this axis
                         self._logger.critical(e)
                 else:
                     raise Exception('This point should never be reached.')
         
-        if len(movements.keys()) != 0:
+        if len(axis_to_move) != 0:
             # There are still movements left
-            return 1, 'Not all movements were executed. {}'.format(movements)
+            return 1, 'Not all movements were executed: {}'.format(axis_to_move)
         else:
             return 0, None
 
@@ -341,7 +342,7 @@ class StackingSetupBackend(object):
         
         if len(axis_to_move) != 0:
             # There are still movements left
-            return 1, 'Not all movements were executed. {}'.format(axis_to_move)
+            return 1, 'Not all movements were executed: {}'.format(axis_to_move)
         else:
             return 0, None
 
@@ -414,14 +415,16 @@ class StackingSetupBackend(object):
             A message with the result of the command.
 
         """
-        for axis_to_set in factors.keys():
-            for axis in self._hardware:
-                if axis.id == axis_to_set:
-                    axis.steps_per_um = factors[axis_to_set]
-                    del factors[axis_to_set]
+        axis_to_set = list(factors.keys())
+        for axis in self._hardware:
+            if axis.id in axis_to_set:
+                axis.steps_per_um = factors[axis.id]
+                axis_to_set.remove(axis.id)
 
-        if len(factors.keys()) != 0:
-            return 1, 'Axis {} not found.'.format(axis)
+            if len(axis_to_set) == 0: break
+
+        if len(axis_to_set) != 0:
+            return 1, 'Not all step factor changes were executed: {} .'.format(axis)
         else:
             return 0, None
 
@@ -439,8 +442,9 @@ class StackingSetupBackend(object):
         temperatures = {}
         for axis in self._hardware:
             try:
-                temperatures[axis.id + ' current'] = axis.temperature
-                temperatures[axis.id + ' target'] = axis.target_temperature
+                part_temp = {'current' : axis.temperature,
+                             'target' : axis.target_temperature}
+                temperatures[axis.id] = part_temp
             except NotSupportedError:
                 pass
         
@@ -451,7 +455,7 @@ class StackingSetupBackend(object):
         self._emergency_stop()
         return 0, None
 
-    def M113(self, interval):
+    def M113(self, interval=None):
         """
         Keep the host alive
 
@@ -472,7 +476,7 @@ class StackingSetupBackend(object):
             If no error the set interval in seconds, otherwise an error message.
 
         """
-        if isinstance(interval, None):
+        if interval is None:
             try:
                 interval = self._keep_host_alive_timer.interval
             except AttributeError:
@@ -480,7 +484,8 @@ class StackingSetupBackend(object):
 
             return 0, interval
         else:
-            self._keep_host_alive_timer = tr.Timer(interval, self._keep_host_alive)
+            self._keep_host_alive_timer = tr.Timer(interval=interval, 
+                                                   function=self._keep_host_alive)
             self._keep_host_alive_timer.start()
             return 0, None
 
@@ -510,10 +515,7 @@ class StackingSetupBackend(object):
             except NotSupportedError:
                 pass
 
-        if len(positions.keys()) == 0:
-            return 1, 'No axes found.'
-        else:
-            return 0, positions
+        return 0, positions
 
     def M503(self):
         """Report the current settings."""
