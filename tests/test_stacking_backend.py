@@ -53,7 +53,7 @@ def mock_prmtz8(id):
     
     # Set some attributes
     mock_part.position = 0
-    mock_part.steps_per_deg = 1
+    mock_part.steps_per_um = 1
     mock_part.speed = 2
     mock_part.acceleration = 3
     type(mock_part).temperature = PropertyMock(side_effect=NotSupportedError)
@@ -164,12 +164,96 @@ class TestControlBackend(unittest.TestCase):
 
         # Start the process
     #    stack.start_backend_process()
+
+    # Test the echo function
+    @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
+    @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
+    def test_echo(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
+        stack = StackingSetupBackend(self.to_main)
+        
+        def test_function(dummy1, dymmy2=None):
+            return dummy1, dymmy2
+        
+        exit_code, msg = stack._echo(test_function, 1, 2)
+
+        # Check if the right message was sent.
+        pipe_msg = self.to_proc.recv()
+        self.assertEqual(pipe_msg.msg, msg)
+        self.assertEqual(pipe_msg.exit_code, exit_code)
     
     # Test execute one command
 
     # Test execute multiple commands
 
     # Test execute lots of commands
+
+    # Test call M92
+    @patch.object(StackingSetupBackend, 'M92', return_value=(0, 10))
+    @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
+    @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
+    def test_call_M92(self, _init_emergency_breaker_mock, _init_all_hardware_mock, M92_mock):
+        stack = StackingSetupBackend(self.to_main)
+
+        # When calling with no arguments the function should return the current value
+        command = {'M92': {}}
+        stack._execute_command(command)
+        M92_mock.assert_called_once()
+
+        # Get the message from the pipe
+        pipe_msg = self.to_proc.recv()
+        self.assertEqual(pipe_msg.msg, 10)
+        self.assertEqual(pipe_msg.exit_code, 0)
+
+    # Test call M105
+    @patch.object(StackingSetupBackend, 'M105', return_value=(0, 10))
+    @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
+    @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
+    def test_call_M105(self, _init_emergency_breaker_mock, _init_all_hardware_mock, M105_mock):
+        stack = StackingSetupBackend(self.to_main)
+
+        # When calling with no arguments the function should return the current value
+        command = {'M105': {}}
+        stack._execute_command(command)
+        M105_mock.assert_called_once()
+
+        # Get the message from the pipe
+        pipe_msg = self.to_proc.recv()
+        self.assertEqual(pipe_msg.msg, 10)
+        self.assertEqual(pipe_msg.exit_code, 0)
+
+    # Test call M112
+    @patch.object(StackingSetupBackend, 'M112', return_value=(0, None))
+    @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
+    @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
+    def test_call_M112(self, _init_emergency_breaker_mock, _init_all_hardware_mock, M112_mock):
+        stack = StackingSetupBackend(self.to_main)
+
+        # When calling with no arguments the function should return the current value
+        command = {'M112': {}}
+        stack._execute_command(command)
+        M112_mock.assert_called_once()
+
+        # Get the message from the pipe
+        pipe_msg = self.to_proc.recv()
+        self.assertEqual(pipe_msg.msg, None)
+        self.assertEqual(pipe_msg.exit_code, 0)
+
+    # Test call M113
+    @patch.object(StackingSetupBackend, 'M113', return_value=(0, None))
+    @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
+    @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
+    def test_call_M113(self, _init_emergency_breaker_mock, _init_all_hardware_mock, M113_mock):
+        stack = StackingSetupBackend(self.to_main)
+
+        # When calling with no arguments the function should return the current value
+        command = {'M113': {}}
+        stack._execute_command(command)
+        M113_mock.assert_called_once()
+
+        # Get the message from the pipe
+        pipe_msg = self.to_proc.recv()
+        self.assertEqual(pipe_msg.msg, None)
+        self.assertEqual(pipe_msg.exit_code, 0)
 
 
 class TestMovementCommands(unittest.TestCase):
@@ -341,6 +425,13 @@ class TestMachineCommands(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(msg, None)
 
+        # Get the current factors
+        stack._hardware[1].steps_per_um = 1
+        exit_code, msg = stack.M92({})
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(msg, {'X': 1, 'Y': 1, 'Z': 1, 'L': 1})
+
+
     # Test M105
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
@@ -371,25 +462,24 @@ class TestMachineCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_M113(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
-        exit_code, msg = stack.M113(1)
 
-        # Check if the return code is right
+        # Ask for the inteval without one being set
+        exit_code, msg = stack.M113({})
+        self.assertEqual(exit_code, 1)
+        self.assertNotEqual(msg, None)
+
+        # Set a timer and ask the inteval
+        exit_code, msg = stack.M113({'S': 1})
         self.assertEqual(exit_code, 0)
         self.assertEqual(msg, None)
-
-        try:
-            # Check if the interval is set right
-            self.assertEqual(stack._keep_host_alive_timer.interval, 1)
-            # Check if the keep alive timer is set
-            stack._keep_alive_timer.cancel() 
-
-        except AttributeError:
-            self.fail("The keep alive timer was not set.")
+        exit_code, msg = stack.M113({})
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(msg, 1)
 
         # Start the timer again and wait for the message to be sent
-        exit_code, msg = stack.M113(0.01)  # 10ms
-        in_waiting = self.to_proc.poll(timeout=0.5)
-        self.assertTrue(in_waiting)
+        #exit_code, msg = stack.M113({'S': 0.01})  # 10ms
+        #in_waiting = self.to_proc.poll(timeout=1)
+        #self.assertTrue(in_waiting)
     
     # Test M114	
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())

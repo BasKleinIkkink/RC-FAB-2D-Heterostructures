@@ -2,10 +2,11 @@ import multiprocessing as mp
 import threading as tr
 from .gcode_parser import GcodeParser
 from .hardware.exceptions import NotSupportedError
-from .mp_tools import catch_remote_exceptions, pipe_com
+from ..stacking_middleware.pipeline_connection import PipelineConnection
+from ..stacking_middleware.message import Message
 from .hardware import KDC101, KIM101, PIA13, PRMTZ8
 from .hardware.emergency_breaker import EmergencyBreaker
-import logging
+import logging   
 
 
 class StackingSetupBackend(object):
@@ -21,7 +22,7 @@ class StackingSetupBackend(object):
 
     def __init__(self, pipe_to_main):
         self._pipe_lock = tr.Lock()  # Lock to make the pipe thread safe
-        self._pipe_to_main = pipe_to_main
+        self._pipe_to_main = PipelineConnection(pipe_to_main, 'CHILD')
         self._emergency_stop_event = mp.Event()
         self._emergency_breaker = self._init_emergency_breaker()
         self._shutdown = False
@@ -44,6 +45,13 @@ class StackingSetupBackend(object):
         logging.basicConfig(level=logging.DEBUG, filename='log.log', 
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
         self._logger = logging.getLogger(__name__)
+
+    def _echo(self, func, *args, **kwargs):
+        # Catch the exit_code and msg
+        exit_code, msg = func(args, kwargs)
+        message = Message(exit_code, msg)
+        self._pipe_to_main.send(message)
+        return exit_code, msg
 
     # STARTING AND STOPPING
     def start_backend_process(self):
@@ -123,131 +131,118 @@ class StackingSetupBackend(object):
             The error message if any error occured.
 
         """
+        # Placeholder for the exit code
+        exit_code = 0
+
         # Excecute the priority commands first
         if 'M112' in parsed_command.keys():
-            self._echo(self.M112())
+            exit_code, msg = self._echo(self.M112)
             # Remove the command from the dict
             del parsed_command['M112']
 
         if 'M999' in parsed_command.keys():
-            self._echo_(self.M999())
+            exit_code, msg = self._echo_(self.M999)
             # Remove the command from the dict
             del parsed_command['M999']
 
         # Excecute the machine commands (start with M)
-        for command in parsed_command.keys():
-            if command[0] != 'M':
-                continue
-            elif command == 'M0':
-                raise NotImplementedError('M0 not implemented.')
-            elif command == 'M85':
-                raise NotImplementedError('M85 not implemented.')
-            elif command == 'M92':
-                # Set the steps per um
-                self._echo(self.M92(axis, value))
-            elif command == 'M105':
-                # Get the temperature report.
-                self._echo(self.M105())
-            elif command == 'M111':
-                raise NotImplementedError('M111 not implemented.')
-            elif command == 'M112':
-                # Emergency stop.
-                self.echo(self.M112())
-            elif command == 'M113':
-                # Keep the host alive
-                self._echo(self.M113())
-            elif command == 'M114':
-                # Get the current position.
-                exit_code, msg = self.M114()
-            elif command == 'M119':
-                raise NotImplementedError('M119 not implemented.')
-            elif command == 'M120':
-                raise NotImplementedError('M120 not implemented.')
-            elif command == 'M121':
-                raise NotImplementedError('M121 not implemented.')
-            elif command == 'M140':
-                raise NotImplementedError('M140 not implemented.')
-            elif command == 'M154':
-                raise NotImplementedError('M154 not implemented.')
-            elif command == 'M155':
-                raise NotImplementedError('M155 not implemented.')
-            elif command == 'M190':
-                raise NotImplementedError('M190 not implemented.')
-            elif command == 'M500':
-                raise NotImplementedError('M500 not implemented.')
-            elif command == 'M501':
-                raise NotImplementedError('M501 not implemented.')
-            elif command == 'M503':
-                # Get the settings.
-                self._echo(self.M503())
-            elif command == 'M510':
-                raise NotImplementedError('M510 not implemented.')
-            elif command == 'M511':
-                raise NotImplementedError('M511 not implemented.')
-            elif command == 'M512':
-                raise NotImplementedError('M512 macro not implemented.')
-            elif command == 'M810':
-                raise NotImplementedError('M810 macro not implemented.')
-            elif command == 'M811':
-                raise NotImplementedError('M811 macro not implemented.')
-            elif command == 'M812':
-                raise NotImplementedError('M812 macro not implemented.')
-            elif command == 'M813':
-                raise NotImplementedError('M813 macro not implemented.')
-            elif command == 'M814':
-                raise NotImplementedError('M814 macro not implemented.')
-            elif command == 'M815':
-                raise NotImplementedError('M815 macro not implemented.')
-            elif command == 'M816':
-                raise NotImplementedError('M816 macro not implemented.')
-            elif command == 'M817':
-                raise NotImplementedError('M817 macro not implemented.')
-            elif command == 'M818':
-                raise NotImplementedError('M818 macro not implemented.')
-            elif command == 'M819':
-                raise NotImplementedError('M819 macro not implemented.')
-            elif command == 'M999':
-                # Restart the controller from an emergency stop.
-                self._echo(self.M999())
-            else:
-                raise Exception('This point should never be reached.')
-
-            # Delete the command from the dict
-            del parsed_command[command]
-
-        # Excecute the movement commands
-        for command in parsed_command.keys():
+        keys = list(parsed_command.keys())
+        for command_id in keys:
             if exit_code:
+                # There was an error in the previous command
                 break
 
-            if command == 'G0':
+            if command_id[0] != 'M':
+                continue
+            elif command_id == 'M0':
+                raise NotImplementedError('M0 not implemented.')
+            elif command_id == 'M92':
+                # Set the steps per um
+                exit_code, msg = self._echo(self.M92, parsed_command[command_id])
+            elif command_id == 'M105':
+                # Get the temperature
+                exit_code, msg = self._echo(self.M105)
+            elif command_id == 'M113':
+                # Keep the host alive
+                exit_code, msg = self._echo(self.M113)
+            elif command_id == 'M140':
+                raise NotImplementedError('M140 not implemented.')
+            elif command_id == 'M190':
+                raise NotImplementedError('M190 not implemented.')
+            elif command_id == 'M500':
+                raise NotImplementedError('M500 not implemented.')
+            elif command_id == 'M810':
+                raise NotImplementedError('M810 macro not implemented.')
+            elif command_id == 'M811':
+                raise NotImplementedError('M811 macro not implemented.')
+            elif command_id == 'M812':
+                raise NotImplementedError('M812 macro not implemented.')
+            elif command_id == 'M813':
+                raise NotImplementedError('M813 macro not implemented.')
+            elif command_id == 'M814':
+                raise NotImplementedError('M814 macro not implemented.')
+            elif command_id == 'M815':
+                raise NotImplementedError('M815 macro not implemented.')
+            elif command_id == 'M816':
+                raise NotImplementedError('M816 macro not implemented.')
+            elif command_id == 'M817':
+                raise NotImplementedError('M817 macro not implemented.')
+            elif command_id == 'M818':
+                raise NotImplementedError('M818 macro not implemented.')
+            elif command_id == 'M819':
+                raise NotImplementedError('M819 macro not implemented.')
+            elif command_id == 'M999':
+                # Restart the controller from an emergency stop.
+                exit_code, msg = self._echo(self.M999)
+            else:
+                raise Exception('This point should never be reached.')
+
+            # Delete the command from the list
+            keys.remove(command_id)
+
+        # Check wich keys are not in the list anymore and remove these from the command dict
+        keys_left = list(parsed_command.keys())
+        for key in keys_left:
+            if key not in keys:
+                del parsed_command[key]
+
+        # Excecute the movement commands
+        for command_id in keys:
+            if exit_code:
+                # There was an error in one of the previous commands
+                break
+
+            if command_id == 'G0':
                 # Move to all the given axes at the same time
-                self._echo(self.G0(parsed_command[command]))
-            elif command == 'G1':
+                exit_code, msg = self._echo(self.G0, parsed_command[command_id])
+            elif command_id == 'G1':
                 # Make an arc to the given position
-                self._echo(self.G1({}))
-            elif command == 'G28':
+                exit_code, msg = self._echo(self.G1, parsed_command[command_id])
+            elif command_id == 'G28':
                 # Home all axes
-                self._echo(self.G28())
-            elif command == 'G90':
+                exit_code, msg = self._echo(self.G28)
+            elif command_id == 'G90':
                 # Set to absolute positioning
-                self.echo(self.G90())
-            elif command == 'G91':
+                exit_code, msg = self.echo(self.G90)
+            elif command_id == 'G91':
                 # Set to relative positioning
-                self.echo(self.G91())
+                exit_code, msg = self.echo(self.G91)
             else:
                 raise Exception('This point should never be reached.')
 
             # Delete the command from the dict
-            del parsed_command[command]
-                
-        # Check the exit code
-        if exit_code == 1:
-            # Command failed
-            raise Exception(msg)
+            keys.remove(command_id)
+
+        # Check wich keys are not in the list anymore and remove these from the command dict
+        keys_left = list(parsed_command.keys())
+        for key in keys_left:
+            if key not in keys:
+                del parsed_command[key]
 
         if len(parsed_command) != 0:
-            raise Exception('This point should never be reached.')
+            # Send the error message to the main process
+            msg = Message(exit_code=1, msg='Not all commands were executed: {}'.format(parsed_command))
+            self._pipe_to_main.send(msg)
         
     # MOVEMENT FUNCTIONS
     def G0(self, movements):
@@ -399,7 +394,8 @@ class StackingSetupBackend(object):
     # MACHINE FUNCTIONS
     def M92(self, factors):
         """
-        Set the steps per um for the given axis.
+        Set the steps per um for the given axis. If no factors are
+        given, the current factors are returned.
         
         Parameters
         ----------
@@ -415,18 +411,30 @@ class StackingSetupBackend(object):
             A message with the result of the command.
 
         """
-        axis_to_set = list(factors.keys())
-        for axis in self._hardware:
-            if axis.id in axis_to_set:
-                axis.steps_per_um = factors[axis.id]
-                axis_to_set.remove(axis.id)
+        # Check if the factor list is empty
+        if len(factors.keys()) == 0:
+            # Return the current steps_per_um values
+            current = {}
+            for axis in self._hardware:
+                try:
+                    current[axis.id] = axis.steps_per_um
+                except NotSupportedError:
+                    pass
+            return 0, current
 
-            if len(axis_to_set) == 0: break
-
-        if len(axis_to_set) != 0:
-            return 1, 'Not all step factor changes were executed: {} .'.format(axis)
         else:
-            return 0, None
+            axis_to_set = list(factors.keys())
+            for axis in self._hardware:
+                if axis.id in axis_to_set:
+                    axis.steps_per_um = factors[axis.id]
+                    axis_to_set.remove(axis.id)
+
+                if len(axis_to_set) == 0: break
+
+            if len(axis_to_set) != 0:
+                return 1, 'Not all step factor changes were executed: {} .'.format(axis)
+            else:
+                return 0, None
 
     def M105(self):
         """
@@ -455,7 +463,7 @@ class StackingSetupBackend(object):
         self._emergency_stop()
         return 0, None
 
-    def M113(self, interval=None):
+    def M113(self, interval):
         """
         Keep the host alive
 
@@ -476,7 +484,8 @@ class StackingSetupBackend(object):
             If no error the set interval in seconds, otherwise an error message.
 
         """
-        if interval is None:
+        if 'S' not in interval.keys():
+            # Return the current interval
             try:
                 interval = self._keep_host_alive_timer.interval
             except AttributeError:
@@ -484,17 +493,16 @@ class StackingSetupBackend(object):
 
             return 0, interval
         else:
-            self._keep_host_alive_timer = tr.Timer(interval=interval, 
+            self._keep_host_alive_timer = tr.Timer(interval=interval['S'], 
                                                    function=self._keep_host_alive)
+            self._keep_host_alive_timer.setDaemon(True)
             self._keep_host_alive_timer.start()
             return 0, None
 
     def _keep_host_alive(self):
         """Send a keep alive message to the host. (support function for M113)"""
-        # With lock method doesnt seem to work.
-        self._pipe_lock.acquire()
-        self._pipe_to_main.send(b'I am still alive.')
-        self._pipe_lock.release()
+        with self._pipe_lock:
+            self._pipe.send(Message(exit_code=0, msg='The backend is still alive!!'))
 
     def M114(self):
         """

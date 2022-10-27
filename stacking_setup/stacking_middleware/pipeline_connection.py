@@ -1,6 +1,7 @@
 import multiprocessing as mp
 from .base_connector import BaseConnector
 import errno
+import os
 from time import sleep
 from queue import Empty, Full
 
@@ -115,24 +116,13 @@ class PipeCom():
 
         """
         # Essentialy checks if a message is waiting.
-        state = conn.poll()
-        if state:
-            # Message is waiting so the pipe has to be open
-            return True
-        else:
-            # No message waiting, check if the pipe is closed
-            try:
-                # Try to read a message, if the pipe is open returns EMPTY error
-                conn.recv()
-            except EOFError:
-                # Pipe is closed
-                return False
-            except Empty:
-                # Pipe is open
-                return True
-            finally:
-                raise IOError('Unknown error while checking pipe state')
-
+        try:
+            state = conn.poll()
+        except (OSError, BrokenPipeError):
+            return False
+        
+        return True
+        
 
 class PipelineConnection(BaseConnector):
     """
