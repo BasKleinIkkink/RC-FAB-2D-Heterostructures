@@ -8,7 +8,21 @@ class PIA13(Base):
     
 
     def __init__(self, id, channel, actuator_id, hardware_controller):
-        """Initialize the PIA13."""
+        """
+        Initialize the PIA13.
+        
+        Parameters:
+        -----------
+        id: str
+            The id of the hardware.
+        channel: int
+            The channel of the hardware.
+        actuator_id: int
+            The id of the actuator.
+        hardware_controller: object
+            The hardware controller to use.
+        
+        """
         self._id = id
         self._type = 'PIA13'
         self._channel = channel
@@ -19,6 +33,7 @@ class PIA13(Base):
     # ATTRIBUTES
     @property
     def device_info(self):
+        """Get the device info."""
         return {'id': self._id,
                 'type': self._type,
                 'channel': self._channel,
@@ -27,11 +42,21 @@ class PIA13(Base):
 
     @property
     def steps_per_um(self):
+        """Get the steps per um."""
         # Return the steps per um
         return self._steps_per_um
 
     @steps_per_um.setter
     def steps_per_um(self, steps_per_mm):
+        """
+        Set the steps per um.
+        
+        Parameters:
+        -----------
+        steps_per_mm: float or int
+            The steps per um.
+        
+        """
         if not self._steps_calibrated:
             raise NotCalibratedError('Steps per nm were not calibrated/set.')
 
@@ -52,7 +77,15 @@ class PIA13(Base):
 
     @speed.setter
     def speed(self, speed):
-        """Set the speed of the hardware."""
+        """
+        Set the speed of the hardware.
+        
+        Parameters:
+        -----------
+        speed: float or int
+            The speed to set the hardware to.
+        
+        """
         if speed >= self._max_speed:
             self._hardware_controller.setup_drive(self._channel, velocity=speed)
         else:
@@ -66,7 +99,15 @@ class PIA13(Base):
 
     @acceleration.setter
     def acceleration(self, acceleration):
-        """Set the acceleration of the hardware."""
+        """
+        Set the acceleration of the hardware.
+        
+        Parameters:
+        -----------
+        acceleration: float or int
+            The acceleration to set the hardware to.
+            
+        """
         if acceleration >= self._max_acceleration:
             self._hardware_controller.setup_drive(self._channel, acceleration=acceleration)
         else:

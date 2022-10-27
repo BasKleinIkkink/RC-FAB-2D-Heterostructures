@@ -8,7 +8,7 @@
 
 # Add the package directory to the path so that we can import the package
 import os, sys
-sys.path.insert(0, os.path.abspath('..\..\stacking_setup'))
+sys.path.insert(0, os.path.abspath('..\..'))
 
 project = 'Stacking setup'
 copyright = '2022, Nynra'
@@ -25,6 +25,13 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
 ]
+
+# Some config options for parsing th edocstrings
+napoleon_google_docstring = False
+napoleon_include_init_with_doc = True
+napoleon_use_param = True
+napoleon_use_ivar = False
+napoleon_include_private_with_doc = True
 
 templates_path = ['_templates']
 exclude_patterns = []

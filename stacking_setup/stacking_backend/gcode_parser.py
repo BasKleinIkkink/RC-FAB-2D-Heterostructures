@@ -8,7 +8,7 @@ class GcodeParser():
     Gcode docs https://marlinfw.org/meta/gcode/
 
     Used Gcode commands:
-    -------------------
+    --------------------
     G0 - G1 : Lineair movement
     G28 : Home all axes
     G90 : Set to absolute coordinates
@@ -51,12 +51,12 @@ class GcodeParser():
         Parse the gcode command lines from the main process.
 
         Parameters:
-        ----------
+        -----------
         line : str or bytes
             The gcode command line.
 
         Returns:
-        -------
+        --------
         commands : dict
             The parsed gcode commands with the hardware id as the dict key.
 
@@ -109,12 +109,12 @@ class GcodeParser():
         Check if the entry is a valid command or attribute.
 
         Parameters:
-        ----------
+        -----------
         entry : str
             The entry to check.
 
         Returns:
-        -------
+        --------
         bool
             True if the entry is a valid command or attribute.
 
@@ -138,7 +138,7 @@ class GcodeParser():
         Add an attribute to the command dict.
 
         Parameters:
-        ----------
+        -----------
         cnt : int
             The index of the command in the content list.
         command_dict : dict
@@ -147,7 +147,7 @@ class GcodeParser():
             The content of the command line.
 
         Returns:
-        -------
+        --------
         command_dict : dict
             The command dict with the attribute added.
 
@@ -223,6 +223,21 @@ class GcodeParser():
     def _add_movement(cnt, command_dict, content):
         """
         Add a movement command to the command dict.
+
+        Parameters:
+        -----------
+        cnt : int
+            The index of the command in the content list.
+        command_dict : dict
+            The command dict to add the attribute to.
+        content : list
+            The content of the command line.
+
+        Returns:
+        --------
+        command_dict : dict
+            The command dict with the attribute added.
+        
         """
         # Convert the movement value to the right type.
         data = content[cnt][1:]

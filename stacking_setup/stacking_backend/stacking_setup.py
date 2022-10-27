@@ -124,7 +124,7 @@ class StackingSetupBackend(object):
             The parsed command dict.
         
         Returns:
-        -------
+        --------
         exit_code : int
             0 if all the commands were executed successfully.
         msg : str
@@ -255,7 +255,7 @@ class StackingSetupBackend(object):
             A dictionary with the movements for each axis.
 
         Returns:
-        -------
+        --------
         exit_code : int
             0 if the command was executed successfully.
         msg : str
@@ -296,13 +296,13 @@ class StackingSetupBackend(object):
         """
         Make an arc to the given position (rotate).
 
-        Parameters
-        ----------
+        Parameters:
+        -----------
         movements : dict
             A dictionary with the movements for each axis.
 
-        Returns
-        -------
+        Returns:
+        --------
         exit_code : int
             0 if the command was executed successfully.
         msg : str
@@ -397,14 +397,14 @@ class StackingSetupBackend(object):
         Set the steps per um for the given axis. If no factors are
         given, the current factors are returned.
         
-        Parameters
-        ----------
+        Parameters:
+        -----------
         factors : dict
             A dictionary with the steps per um for each axis that
             should be changed.
 
-        Returns
-        -------
+        Returns:
+        --------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
@@ -440,8 +440,8 @@ class StackingSetupBackend(object):
         """
         Get the temperature report.
         
-        Returns
-        -------
+        Returns:
+        --------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
@@ -471,13 +471,13 @@ class StackingSetupBackend(object):
         keep alive timer has been set. Otherwise the keep alive timer will be
         set to the given amount of seconds.
         
-        Parameters
-        ----------
+        Parameters:
+        -----------
         interval : int
             The interval in seconds between keep alive messages.
         
-        Returns
-        -------
+        Returns:
+        --------
         exit_code : int
             0 if the command was executed successfully, 1 otherwise.
         msg : str
@@ -508,8 +508,8 @@ class StackingSetupBackend(object):
         """
         Get the current position.
         
-        Returns
-        -------
+        Returns:
+        --------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
@@ -533,12 +533,13 @@ class StackingSetupBackend(object):
         """
         Reset the machine.
         
-        Returns
-        -------
+        Returns:
+        --------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
+
         """
         self._disconnect_all_hardware()  # Try to disconnect all the hardware.
         self._emergency_stop_event.clear()  # Reset the emergency stop flag.
@@ -551,8 +552,8 @@ class StackingSetupBackend(object):
         """
         Macro function to set the jogging parameters for the stepper or actuator.
         
-        Returns
-        -------
+        Returns:
+        --------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
@@ -566,19 +567,20 @@ class StackingSetupBackend(object):
 
         If speed 0 is given the axis will stop.
         
-        Parameters
-        ----------
+        Parameters:
+        -----------
         axis : str
             The axis to jog.
         speed : float
             The speed to jog at.
         
-        Returns
-        -------
+        Returns:
+        --------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
+
         """
         raise NotImplementedError('M812 not implemented.')
 
@@ -586,12 +588,13 @@ class StackingSetupBackend(object):
         """
         Macro function to set the driving parameters for the stepper or actuator.
         
-        Returns
-        -------
+        Returns:
+        --------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
+
         """
         for axis in self._hardware:
             if axis.id == axis:
@@ -605,19 +608,20 @@ class StackingSetupBackend(object):
 
         If speed 0 is given the axis will stop.
         
-        Parameters
-        ----------
+        Parameters:
+        -----------
         axis : str
             The axis to drive.
         speed : float
             The speed to drive at.
         
-        Returns
-        -------
+        Returns:
+        --------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
+
         """
         raise NotImplementedError('M813 not implemented.')
 

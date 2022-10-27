@@ -10,9 +10,12 @@ Contents
 --------
 .. toctree::
    :maxdepth: 1
-   frondend
-   middleware_api
-   backend_api
+
+   apidoc_generated/modules
+   apidoc_generated/stacking_setup.stacking_frondend
+   apidoc_generated/stacking_setup.stacking_middleware
+   apidoc_generated/stacking_setup.stacking_backend
+
 
 Indices and tables
 ==================
