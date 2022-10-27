@@ -8,5 +8,3 @@ All methods that raise a `NotImplementedError` must be implemented in the child 
     :toctree: generated
 
     stacking_middleware.base_connector.BaseConnector
-    stacking_middleware.pipeline_connection.PipelineConnection
-    stacking_middleware.serial_connection.SerialConnection

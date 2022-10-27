@@ -38,6 +38,7 @@ def mock_pia13(id):
 
     return mock_part
 
+
 def mock_prmtz8(id):
     mock_part = MagicMock(spec=Base)
     mock_part.id = id
@@ -60,6 +61,7 @@ def mock_prmtz8(id):
 
     return mock_part
 
+
 def mock_sample_holder(id):
     mock_part = MagicMock(spec=Base)
     mock_part.id = id
@@ -81,22 +83,22 @@ def mock_sample_holder(id):
     return mock_part
 
 
+def _get_hardware_mocks():
+    """
+    Create a mock hardware for the backend to control.
+
+    Returns:
+        A tuple of mock hardware objects (MagicMocks).
+
+    """
+    return [mock_pia13('X'),
+            mock_pia13('Y'),
+            mock_pia13('Z'),
+            mock_prmtz8('L'),
+            mock_sample_holder('K'),]
+
+
 class TestControlBackend(unittest.TestCase):
-
-    @staticmethod
-    def _get_hardware_mocks():
-        """
-        Create a mock hardware for the backend to control.
-
-        Returns:
-            A tuple of mock hardware objects (MagicMocks).
-
-        """
-        return [mock_pia13('X'),
-                mock_pia13('Y'),
-                mock_pia13('Z'),
-                mock_prmtz8('L'),
-                mock_sample_holder('K'),]
 
     def setUp(self):
         self.to_main, self.to_proc = mp.Pipe()
@@ -168,6 +170,17 @@ class TestControlBackend(unittest.TestCase):
     # Test execute multiple commands
 
     # Test execute lots of commands
+
+
+class TestMovementCommands(unittest.TestCase):
+
+    def setUp(self):
+        self.to_main, self.to_proc = mp.Pipe()
+        
+    def tearDown(self):
+        # Close the pipes
+        self.to_main.close()
+        self.to_proc.close()
 
     # Test G0
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
@@ -301,6 +314,17 @@ class TestControlBackend(unittest.TestCase):
         # Check if the return code is right
         self.assertEqual(exit_code, 0)
         self.assertEqual(msg, None)
+
+
+class TestMachineCommands(unittest.TestCase):
+
+    def setUp(self):
+        self.to_main, self.to_proc = mp.Pipe()
+        
+    def tearDown(self):
+        # Close the pipes
+        self.to_main.close()
+        self.to_proc.close()
 
     # Test M92
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
