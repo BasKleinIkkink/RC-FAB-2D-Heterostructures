@@ -29,7 +29,7 @@ def check_for_response(con, lock, event):
     
     while not event.is_set():
         lock.acquire()
-        if con.is_connected():
+        if con.is_connected:
             response = con.receive()
         lock.release()
 
@@ -43,7 +43,7 @@ def check_for_response(con, lock, event):
         sleep(0.1)  # Sleep 100ms to prevent the thread from hogging the CPU
 
 
-def main():
+def main(connector):
     """
     Start the TUI and the backend.
 
@@ -52,10 +52,6 @@ def main():
     None
 
     """
-    config = ConfigParser()
-    #con = SerialConnection()
-    # Print the introduction information
-
     # Print the welcome dialog
     os.system('cls')
     print("Welcome to the Stacking TUI!")
@@ -63,29 +59,31 @@ def main():
 
     # Create the response thread as a deamon so it will close when the program closes
     shutdown_event = Event()
-    #res_thread = Thread(target=check_for_response, args=(con, Lock(), shutdown_event,), daemon=True)
-    #res_thread.start()
+    res_thread = Thread(target=check_for_response, args=(connector, Lock(), shutdown_event,), daemon=True)
+    res_thread.start()
 
     # Start the main loop
     while True:
         response = input(">>> ")
+        print(type(response))
         if response.lower() == "help()":
-            print("help() - Print this help dialog")
+            print("\nhelp() - Print this help dialog")
             print("exit() - Exit the program")
             print("connect() - Connect to the device")
             print("disconnect() - Disconnect from the device")
             print("is_connected() - Check if the device is connected")
             print("send() - Send a command to the device")
             print("receive() - Receive data from the device")
-            print("handshake() - Perform a handshake with the IO controller (RPI)")
+            print("handshake() - Perform a handshake with the IO controller (RPI)\n")
         elif response.lower() == "exit()":
             break
         else:
             # Send the command to the rpi and wait for the response
-            con.send(response)
+            connector.send(response)
 
     # Close the response thread and connector
+    shutdown_event.set()
     res_thread.join()
-    con.disconnect()
+    connector.disconnect()
 
     print("\n\nThank you for using the Stacking TUI! See you next time.")

@@ -88,7 +88,7 @@ class PipeCom():
         ----------
         conn : multiprocessing.connection.Connection
             The connection to write to.
-        data : list
+        data : list, str or bytes
             The data to write to the pipe.
         
         Returns
@@ -96,7 +96,13 @@ class PipeCom():
         None.
 
         """
-        conn.send(data)
+        if isinstance(data, str) and isinstance(data, bytes):
+            raise TypeError('The data to write to the pipe must be a list, str or bytes.')
+        elif isinstance(data, list):
+            for item in data:
+                conn.send(item)
+        else:
+            conn.send(data)
         conn.send(EOM_CHAR)
 
     @staticmethod
@@ -154,15 +160,31 @@ class PipelineConnection(BaseConnector):
     def disconnect(self):
         PipeCom.close_pipe(self._connection)
 
-    
-
     def send(self, data):
         PipeCom.write_pipe(self._connection, data)
 
     def message_waiting(self):
+        """
+        Check if a message is waiting.
+
+        Returns:
+        --------
+        bool
+            True if a message is waiting, False otherwise.
+
+        """
         return self._connection.poll()
 
     def receive(self):
+        """
+        Receive the data from the pipe.
+
+        Returns:
+        --------
+        data : list
+            The received data.
+
+        """
         # Check if a message is waiting
         if not self._connection.poll():
             return None

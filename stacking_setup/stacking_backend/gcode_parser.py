@@ -69,7 +69,7 @@ class GcodeParser():
         """
         
         if not isinstance(line, (str, bytes)):  # Check that the line is not empty and a string or bytes.
-            raise TypeError('Line is not a string or bytes or is empty.')
+            raise TypeError('Line is not a string or bytes or is empty. {}, {}'.format(line, type(line)))
 
         if isinstance(line, bytes):  # If the line is in bytes convert to string.
             line = line.decode('utf-8')
@@ -171,11 +171,13 @@ class GcodeParser():
         # Check if the last command allows the attribute.
         if last_command[0] in ACCEPTED_AXES:
             # Command is a movement command.
-            raise AttributeError('Movement commands ({}) are not allowed to have attributes.'.format(last_command, content[cnt]))
+            raise AttributeError('Movement commands ({}) are not allowed to have attributes. {}'.format(last_command, content[cnt]))
 
+        
         elif content[cnt][0] not in ACCEPTED_COMMANDS[last_command].keys():
+            print(last_command, content[cnt])
             # The attribute is not allowed for the last command.
-            raise AttributeError('The attribute {} is not allowed for the last command.'.format(last_command, content[cnt]))
+            raise AttributeError('The attribute {} is not allowed for the last command. {}'.format(last_command, content[cnt]))
 
         # Convert the attribute data to the right type.
         attribute_id = content[cnt][0]

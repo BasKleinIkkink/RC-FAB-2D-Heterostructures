@@ -1,10 +1,11 @@
-from re import X
-import sys, os
 import unittest
 from unittest.mock import MagicMock, patch, PropertyMock, Mock
 import multiprocessing as mp
+import threading as tr
+from time import sleep
 
 #Following lines are for assigning parent directory dynamically.
+import sys, os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_dir_path = os.path.abspath(os.path.join(dir_path, os.pardir))
 sys.path.insert(0, parent_dir_path)
@@ -12,11 +13,24 @@ sys.path.insert(0, parent_dir_path)
 # The code to be tested
 from stacking_setup.stacking_backend.hardware.exceptions import NotSupportedError
 from stacking_setup.stacking_backend.stacking_setup import StackingSetupBackend
-from stacking_setup.stacking_backend.configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_AXES, ACCEPTED_LINEAR_AXES, ACCEPTED_ROTATIONAL_AXES
 from stacking_setup.stacking_backend.hardware.base import Base
 
 
 def mock_pia13(id):
+    """
+    Create a mock class for the pia
+
+    Parameters:
+    -----------
+    id: str
+        The axis id of the pia.
+    
+    Returns:
+    --------
+    mock_part : MagicMock
+        A mock pia object (MagicMock).
+    
+    """
     mock_part = MagicMock(spec=Base)
     mock_part.id = id
     mock_part.type = 'PIA13'
@@ -40,6 +54,20 @@ def mock_pia13(id):
 
 
 def mock_prmtz8(id):
+    """
+    Create a mock class for the PRMTZ8.
+
+    Parameters:
+    -----------
+    id: str
+        The axis id of the PRMTZ8.
+
+    Returns:
+    --------
+    mock_part : MagicMock
+        A mock PRMTZ8 object (MagicMock).
+
+    """
     mock_part = MagicMock(spec=Base)
     mock_part.id = id
     mock_part.type = 'PRMTZ8'
@@ -63,6 +91,20 @@ def mock_prmtz8(id):
 
 
 def mock_sample_holder(id):
+    """
+    Create a mock class for the sample holder.
+
+    Parameters:
+    -----------
+    id: str
+        The axis id of the sample holder.
+
+    Returns:
+    --------
+    mock_part : MagicMock
+        A mock sample holder object (MagicMock).
+
+    """
     mock_part = MagicMock(spec=Base)
     mock_part.id = id
     mock_part.type = 'SAMPLE HOLDER'
@@ -85,9 +127,11 @@ def mock_sample_holder(id):
 
 def _get_hardware_mocks():
     """
-    Create a mock hardware for the backend to control.
+    Create mock hardware for the backend to control.
 
     Returns:
+    --------
+    hardware : dict
         A tuple of mock hardware objects (MagicMocks).
 
     """
@@ -113,6 +157,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_connect_hardware(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         stack._connect_all_hardware()
 
         # Check if the right functions were called.
@@ -131,6 +176,7 @@ class TestControlBackend(unittest.TestCase):
     def test_disconnect_hardware(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         # Test the initiate hardware function.
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         stack._disconnect_all_hardware()
 
         for i in stack._hardware:
@@ -144,35 +190,56 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_emergency_stop(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         stack._emergency_stop()
 
         # Check if the emergency stop flag was set.
         self.assertTrue(stack._emergency_stop_event.is_set())
 
     # Test the control loop
-    #@patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    #@patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
-    #def test_control_loop(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-    #    # Test the initiate hardware function.
-    #    to_main, from_process = mp.Pipe()
-    #    stack = StackingSetupBackend(to_main)
-    #    stack._control_loop()
+    @patch.object(StackingSetupBackend, 'G0', return_value=(0, None))
+    @patch.object(StackingSetupBackend, 'G1', return_value=(0, None))
+    @patch.object(StackingSetupBackend, 'M112', return_value=(0, None))
+    @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
+    @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
+    def test_control_loop(self, _init_emergency_breaker_mock, _init_all_hardware_mock,
+                          M112_mock, G1_mock, G0_mock):
+        #######################################################
+        # This test relies on a fully functional gcode parser #
+        #######################################################
+        # Test the initiate hardware function.
+        stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
 
-    #    # Check if the right functions were called.
-    #    _init_all_hardware_mock.assert_called_once()
-    #    _init_emergency_breaker_mock.assert_called_once()
+        # Start the loop in a seperate thread
+        loop_thread = tr.Thread(target=stack._controller_loop, args=(stack._emergency_stop_event,
+                                stack._shutdown, stack._pipe_to_main,), daemon=True)
+        loop_thread.start()
 
-        # Start the process
-    #    stack.start_backend_process()
+        # Send a some commands trough the pipe
+        command = ['G0 X0 Y0 Z0 K0', 'G1 L1', 'M112']
+        for i in command:
+            self.to_proc.send(i)
+
+        sleep(2)
+
+        # Check the function calls
+        G0_mock.assert_called_once_with({'X': 0, 'Y': 0, 'Z': 0, 'K': 0})
+        G1_mock.assert_called_once_with({'L': 1})
+        M112_mock.assert_called_once_with({})
 
     # Test the echo function
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_echo(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         
         def test_function(dummy1, dymmy2=None):
-            return dummy1, dymmy2
+            return 0, (dummy1, dymmy2)
+
+        def test_function2(dummy1=None, dummy2=None):
+            return 0, (dummy1, dummy2)
         
         exit_code, msg = stack._echo(test_function, 1, 2)
 
@@ -180,12 +247,54 @@ class TestControlBackend(unittest.TestCase):
         pipe_msg = self.to_proc.recv()
         self.assertEqual(pipe_msg.msg, msg)
         self.assertEqual(pipe_msg.exit_code, exit_code)
+
+        exit_code, msg = stack._echo(test_function2)
+        pipe_msg = self.to_proc.recv()
+        self.assertEqual(pipe_msg.msg, msg)
+        self.assertEqual(pipe_msg.exit_code, exit_code)
     
     # Test execute one command
+    @patch.object(StackingSetupBackend, 'G0', return_value=(0, None))
+    @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
+    @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
+    def test_execute_one_command(self, _init_emergency_breaker_mock, _init_all_hardware_mock, G0_mock):
+        stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
+        
+        # Test a command that is not implemented
+        stack._execute_command({'M1000': {}})
+        pipe_msg = self.to_proc.recv()
+        self.assertNotEqual(pipe_msg.msg, None)
+        self.assertEqual(pipe_msg.exit_code, 1)
+
+        # Test a command that is implemented
+        stack._execute_command({'G0': {'X': 5}})
+        pipe_msg = self.to_proc.recv()
+        self.assertEqual(pipe_msg.msg, None)
+        self.assertEqual(pipe_msg.exit_code, 0)
 
     # Test execute multiple commands
-
-    # Test execute lots of commands
+    @patch.object(StackingSetupBackend, 'G0', return_value=(0, None))
+    @patch.object(StackingSetupBackend, 'G1', return_value=(0, None))
+    @patch.object(StackingSetupBackend, 'M92', return_value=(0, None))
+    @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
+    @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
+    def test_execute_multiple_commands(self, _init_emergency_breaker_mock, _init_all_hardware_mock,
+                                        M92_mock, G1_mock, G0_mock):
+          stack = StackingSetupBackend(self.to_main)
+          stack.setup_backend()
+          
+          # Test a command that is not implemented
+          stack._execute_command({'M1000': {}, 'G1': {'X': 5, 'Y': 5, 'I': 5, 'J': 5}})
+          pipe_msg = self.to_proc.recv()
+          self.assertNotEqual(pipe_msg.msg, None)
+          self.assertEqual(pipe_msg.exit_code, 1)
+    
+          # Test a command that is implemented
+          stack._execute_command({'G0': {'X': 5}, 'M92': {'X': 5}})
+          pipe_msg = self.to_proc.recv()
+          self.assertEqual(pipe_msg.msg, None)
+          self.assertEqual(pipe_msg.exit_code, 0)
 
     # Test call M92
     @patch.object(StackingSetupBackend, 'M92', return_value=(0, 10))
@@ -193,6 +302,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_call_M92(self, _init_emergency_breaker_mock, _init_all_hardware_mock, M92_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
 
         # When calling with no arguments the function should return the current value
         command = {'M92': {}}
@@ -210,6 +320,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_call_M105(self, _init_emergency_breaker_mock, _init_all_hardware_mock, M105_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
 
         # When calling with no arguments the function should return the current value
         command = {'M105': {}}
@@ -227,6 +338,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_call_M112(self, _init_emergency_breaker_mock, _init_all_hardware_mock, M112_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
 
         # When calling with no arguments the function should return the current value
         command = {'M112': {}}
@@ -244,6 +356,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_call_M113(self, _init_emergency_breaker_mock, _init_all_hardware_mock, M113_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
 
         # When calling with no arguments the function should return the current value
         command = {'M113': {}}
@@ -271,6 +384,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G0(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         movement = {'X': 1, 'Y': 2, 'Z': 3}
         exit_code, msg = stack.G0(movement)
 
@@ -288,6 +402,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G0_not_supported(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         movement = {'L': 1}
         exit_code, msg = stack.G0(movement)
 
@@ -303,6 +418,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G0_non_existing_part(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         movement = {'X': 5,'A': 1}
         exit_code, msg = stack.G0(movement)
 
@@ -320,6 +436,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G1(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         movement = {'L': 5}
         exit_code, msg = stack.G1(movement)
 
@@ -335,6 +452,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G1_not_supported(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         movement = {'X': 5}
         exit_code, msg = stack.G1(movement)
 
@@ -350,6 +468,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G1_non_existing_part(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         movement = {'L': 5,'A': 1}
         exit_code, msg = stack.G1(movement)
 
@@ -369,6 +488,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G28(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         exit_code, msg = stack.G28()
 
         # Check if the right functions were called.
@@ -386,6 +506,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G90andG91(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
 
         # Change the mode a few times
         _, _ = stack.G90()
@@ -415,6 +536,8 @@ class TestMachineCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_M92(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
+
         factors = {'Y': 5}
         exit_code, msg = stack.M92(factors)
 
@@ -437,6 +560,7 @@ class TestMachineCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_M105(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         exit_code, msg = stack.M105()
 
         # Check if the return code is right
@@ -449,6 +573,7 @@ class TestMachineCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_M112(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         exit_code, msg = stack.M112()
 
         # Check if the return code is right
@@ -462,6 +587,7 @@ class TestMachineCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_M113(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
 
         # Ask for the inteval without one being set
         exit_code, msg = stack.M113({})
@@ -486,6 +612,7 @@ class TestMachineCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_M114(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend()
         exit_code, msg = stack.M114()
 
         # Check if the return code is right

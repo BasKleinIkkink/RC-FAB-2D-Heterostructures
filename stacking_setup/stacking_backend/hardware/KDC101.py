@@ -5,7 +5,7 @@ from .exceptions import HardwareNotConnectedError
 class KDC101():
     """Class to control communication with the KCD101 piezocontroller."""
 
-    def __init__(self, serial_nr):
+    def __init__(self, serial_nr='27263640'):
         """Initialize the KCD101."""
         self._type = 'KCD101'
         self._connected = False
