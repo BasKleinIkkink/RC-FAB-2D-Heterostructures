@@ -1,12 +1,26 @@
 from pylablib.devices.Thorlabs.kinesis import KinesisMotor, list_kinesis_devices
 from .exceptions import HardwareNotConnectedError
+from typing import Union
 
 
 class KDC101():
-    """Class to control communication with the KCD101 piezocontroller."""
+    """Class to control communication with the KCD101 motorcontroller."""
 
     def __init__(self, serial_nr='27263640'):
-        """Initialize the KCD101."""
+        """
+        Initialize the KCD101.
+        
+        Parameters:
+        -----------
+        serial_nr : str
+            The serial number of the KCD101.
+
+        Raises:
+        -------
+        HardwareNotConnectedError
+            If the KCD101 is not connected.
+        
+        """
         self._type = 'KCD101'
         self._connected = False
         self._controller = None
@@ -29,7 +43,7 @@ class KDC101():
             raise HardwareNotConnectedError('The external controller is not connected.')
 
     # CONNECTION FUNCTIONS
-    def connect(self):
+    def connect(self) -> None:
         """Connect the KCD101."""
         # Device model PRM1-Z8 is used bcause the PRMTZ8/M is not officially supported by pylablib.
         self._controller = KinesisMotor(self._serial_nr, scale="PRM1-Z8")
@@ -37,7 +51,8 @@ class KDC101():
 
     def disconnect(self):
         """Disconnect the KCD101."""
-        raise NotImplementedError()
+        self._controller.stop
+        del self
 
     def emergency_stop(self):
         """Stop all the connected piezos and disconnect the controller."""

@@ -66,8 +66,8 @@ class PRMTZ8(Base):
 
     def disconnect(self):
         """Disconnect the PRMTZ8."""
-        if self.controller.is_connected():
-            self.controller.disconnect()
+        if self._controller.is_connected():
+            self._controller.disconnect()
 
     # STATUS FUNCTIONS
     def is_connected(self):

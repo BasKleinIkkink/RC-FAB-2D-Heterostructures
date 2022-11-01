@@ -1,5 +1,8 @@
 import configparser
 
+SENTINEL = 'SENTINEL'  # Sentinel command to close the pipe
+EOM_CHAR = 'EOM'  # String indicating the end of a message over a pipe
+
 
 class BaseConnector(object):
     """
@@ -13,6 +16,7 @@ class BaseConnector(object):
     _role = None
     _config = None
     _handshake_complete = False
+    _SENTINEL = SENTINEL
 
     def __init__(self, role):
         # Load the config file
@@ -46,6 +50,11 @@ class BaseConnector(object):
         """Check if the device is connected."""
         raise NotImplementedError()
 
+    @property
+    def SENTINEL(self):
+        """Return the sentinel command."""
+        return self._SENTINEL
+
     # METHODS
     def connect(self):
         """Connect to the device."""
@@ -53,6 +62,10 @@ class BaseConnector(object):
 
     def disconnect(self):
         """Disconnect from the device."""
+        raise NotImplementedError()
+
+    def send_sentinel(self):
+        """Send a sentinel to the IO controller (RPI)."""
         raise NotImplementedError()
 
     def send(self, command):

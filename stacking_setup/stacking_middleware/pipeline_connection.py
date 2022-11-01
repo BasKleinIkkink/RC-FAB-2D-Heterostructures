@@ -1,13 +1,9 @@
 import multiprocessing as mp
-from .base_connector import BaseConnector
+from .base_connector import BaseConnector, SENTINEL, EOM_CHAR
 import errno
 import os
 from time import sleep
 from queue import Empty, Full
-
-
-SENTINEL = 'SENTINEL'  # Sentinel command to close the pipe
-EOM_CHAR = 'EOM'  # String indicating the end of a message over a pipe
 
 
 class PipeCom():
@@ -156,6 +152,9 @@ class PipelineConnection(BaseConnector):
     def connect(self):
         # The pipe is connected on init and cannot reconnect
         pass
+
+    def send_sentinel(self):
+        PipeCom.write_pipe(self._connection, self.SENTINEL)
 
     def disconnect(self):
         PipeCom.close_pipe(self._connection)

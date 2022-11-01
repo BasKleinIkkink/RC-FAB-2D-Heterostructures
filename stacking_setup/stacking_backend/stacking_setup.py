@@ -3,6 +3,7 @@ import threading as tr
 import traceback
 import functools
 import sys
+import time
 from .gcode_parser import GcodeParser
 from .hardware.exceptions import NotSupportedError
 from ..stacking_middleware.message import Message
@@ -10,7 +11,96 @@ from .hardware.KDC101 import KDC101
 from .hardware.KIM101 import KIM101
 from .hardware.PIA13 import PIA13
 from .hardware.PRMTZ8 import PRMTZ8
-from .hardware.emergency_breaker import EmergencyBreaker 
+from .hardware.emergency_breaker import EmergencyBreaker
+from typing import Union
+from ..stacking_middleware.pipeline_connection import PipelineConnection
+from ..stacking_middleware.serial_connection import SerialConnection
+
+
+class RepeatedTimer:
+    """Class to repeat a task every x seconds."""
+
+    def __init__(self, interval, function, *args, **kwargs):
+        """
+        Ïnitiate the timer.
+        
+        Parameters:
+        -----------
+        interval : float, int
+            The interval in seconds.
+        function : callable
+            The function to repeat.
+        *args
+            The arguments for the function.
+        **kwargs
+            The keyword arguments for the function.
+        """
+        self._timer = None
+        self._interval = interval
+        self._function = function
+        self._args = args
+        self._kwargs = kwargs
+        self._is_running = False
+        self._next_call = time.time()
+        self.start()
+
+    @property
+    def interval(self) -> Union[int, float]:
+        """
+        Get the interval.
+        
+        Returns:
+        --------
+        float, int
+            The interval in seconds.
+        """
+        return self._interval
+
+    @property
+    def is_running(self) -> bool:
+        """
+        Get the running status.
+        
+        Returns:
+        --------
+        bool
+            True if the timer is running, False otherwise.
+        """
+        return self._is_running
+
+    @property
+    def next_call(self) -> Union[int, float]:
+        """
+        Get the next call.
+        
+        Returns:
+        --------
+        float, int
+            The next call in seconds.
+
+        """
+        return self._next_call
+
+    def _run(self) -> None:
+        """Run the function."""
+        self._is_running = False
+        self.start()
+        self._function(*self._args, **self._kwargs)
+
+    def start(self) -> None:
+        """Wait for the next run."""
+        if not self.is_running:
+            self._next_call += self._interval
+            self._timer = tr.Timer(self.next_call - time.time(), self._run)
+            self._timer.setDaemon(True)
+            self._timer.start()
+            self._is_running = True
+
+    
+    def stop(self) -> None:
+        """Stop the timer."""
+        self._timer.cancel()
+        self._is_running = False
 
 
 def catch_remote_exceptions(wrapped_function : callable) -> callable:
@@ -24,10 +114,16 @@ def catch_remote_exceptions(wrapped_function : callable) -> callable:
     wrapped_function : function
         The function to wrap.
 
+    Raises:
+    -------
+    Exception
+        The remote exception that should be send to the main process.
+
     Returns:
     --------
     function
         The wrapped function.
+
     """
 
     @functools.wraps(wrapped_function)
@@ -53,13 +149,13 @@ class StackingSetupBackend:
     _emergency_breaker = None
     _hardware = None
 
-    def __init__(self, pipe_to_main) -> None:
+    def __init__(self, to_main : Union[PipelineConnection, SerialConnection]) -> None:
         """
         Initiate the backend class.
 
         Parameters:
         -----------
-        pipe_to_main : mp.Pipe
+        to_main : mp.Pipe
             The pipe to the main process.
 
         Returns:
@@ -67,7 +163,7 @@ class StackingSetupBackend:
         None
 
         """
-        self._pipe_to_main = pipe_to_main
+        self._con_to_main = to_main
         self._emergency_stop_event = mp.Event()
         self._shutdown = mp.Event()
 
@@ -129,7 +225,7 @@ class StackingSetupBackend:
             exit_code, msg = new_function()
 
         message = Message(exit_code, msg)
-        self._pipe_to_main.send(message)
+        self._con_to_main.send(message)
 
         # Return the exit code and msg
         return exit_code, msg
@@ -194,16 +290,16 @@ class StackingSetupBackend:
         self._hardware = self._init_all_hardware()
         self._logger.info('Stacking setup initiated with connected hardware: {}'.format(self._hardware))
 
-    def start_backend(self):
+    def start_backend(self) -> None:
         """Start the hardware controller process."""
         self._controller_process = mp.Process(target=self._controller_loop, args=(self._emergency_stop_event,
-                                                                        self._shutdown, self._pipe_to_main,))    
+                                                                        self._shutdown, self._con_to_main,))    
         self._controller_process.set_deamon=True
         self._controller_process.start()
 
     @catch_remote_exceptions
     def _controller_loop(self, emergency_stop_event : mp.Event, shutdown_event : mp.Event, 
-                        pipe_to_main) -> None:
+                        con_to_main : Union[PipelineConnection, SerialConnection]) -> None:
         """
         The main loop of the hardware controller process.
 
@@ -216,7 +312,7 @@ class StackingSetupBackend:
             The event that is set when the emergency stop is triggered.
         shutdown_event : multiprocessing.Event
             The event that is set when the shutdown is triggered.
-        pipe_to_main : multiprocessing.Pipe
+        con_to_main : multiprocessing.Pipe
             The pipe to the main process.
 
         Returns:
@@ -227,7 +323,7 @@ class StackingSetupBackend:
         # When starting a process the class is pickled and a new instance is created in the new process.
         # This means that attributes that were changed in the main process are not changed in the new process.
         # To fix this the attributes are set again in the new process.
-        self._pipe_to_main = pipe_to_main
+        self._con_to_main = con_to_main
         self._emergency_stop_event = emergency_stop_event
         self._shutdown = shutdown_event
         self.setup_backend()
@@ -235,20 +331,36 @@ class StackingSetupBackend:
         # Start the execution loop
         while not emergency_stop_event.is_set() or not shutdown_event.is_set():
             # Check if a new command is available
-            if pipe_to_main.message_waiting():
-                commands = pipe_to_main.receive() # Read the command
+            if self._con_to_main.message_waiting():
+                commands = self._con_to_main.receive() # Read the command
+
+                # Check if the SENTINEL command is in commands
+                if isinstance(commands, (list, tuple,)):
+                    if self._con_to_main.SENTINEL in commands:
+                        # Power off the insturment and close the connection
+                        break
+                elif commands == self._con_to_main.SENTINEL:
+                    # Power off the insturment and close the connection
+                    break
+
                 for command in commands:
                     # Excecute all the commands
-                    parsed_command = GcodeParser.parse_gcode_line(command)  # Parse the command
+                    try:
+                        parsed_command = GcodeParser.parse_gcode_line(command)  # Parse the command
+                    except ValueError as e:
+                        self._con_to_main.send(Message(1, str(e)))
+                        continue
                     self._execute_command(parsed_command) # Execute the command
 
         if not self._emergency_stop_event.is_set():
             # Put all the parts in a save position
-            raise NotImplementedError('Not implemented')
+            self._disconnect_all_hardware()
+            self._logger.info('Stacking process stopped.')
+            self._con_to_main.disconnect()
         else:
             # Emergency stop all the parts
-            self._disconnect_all_hardware()
-
+            raise NotImplementedError('Not implemented')
+            
     def _execute_command(self, parsed_command : dict) -> None:
         """
         Execute the parsed command dict.
@@ -297,7 +409,7 @@ class StackingSetupBackend:
                 exit_code, msg = self._echo(self.M105)
             elif command_id == 'M113':
                 # Keep the host alive
-                exit_code, msg = self._echo(self.M113)
+                exit_code, msg = self._echo(self.M113, parsed_command[command_id])
             elif command_id == 'M114':
                 # Get the position
                 exit_code, msg = self._echo(self.M114)
@@ -314,7 +426,7 @@ class StackingSetupBackend:
                 exit_code, msg = self._echo(self.M999)
             else:
                 exit_code = 1
-                self._pipe_to_main.send(Message(exit_code, 'Unknown command: {}'.format(command_id)))
+                self._con_to_main.send(Message(exit_code, 'Unknown command: {}'.format(command_id)))
 
             # Delete the command from the list
             keys.remove(command_id)
@@ -348,7 +460,7 @@ class StackingSetupBackend:
                 exit_code, msg = self.echo(self.G91)
             else:
                 exit_code = 1
-                self._pipe_to_main.send(Message(exit_code, 'Unknown command: {}'.format(command_id)))
+                self._con_to_main.send(Message(exit_code, 'Unknown command: {}'.format(command_id)))
 
             # Delete the command from the dict
             keys.remove(command_id)
@@ -363,7 +475,7 @@ class StackingSetupBackend:
         if not exit_code and len(parsed_command) != 0:
             # Send the error message to the main process
             msg = Message(exit_code=1, msg='Not all commands were executed: {}'.format(parsed_command))
-            self._pipe_to_main.send(msg)
+            self._con_to_main.send(msg)
         
     # MOVEMENT FUNCTIONS
     def G0(self, movements : dict) -> tuple:
@@ -591,7 +703,7 @@ class StackingSetupBackend:
 
         If the interval None is given the current settings will be returned if a 
         keep alive timer has been set. Otherwise the keep alive timer will be
-        set to the given amount of seconds.
+        set to the given amount of seconds. If 0 is given the timer is disabled.
         
         Parameters:
         -----------
@@ -614,16 +726,19 @@ class StackingSetupBackend:
                 return 1, 'No keep alive interval set.'
 
             return 0, interval
+        elif interval['S'] == 0:
+            # Disable the keep alive timer
+            self._keep_host_alive_timer.stop()
+            return 0, None
         else:
-            self._keep_host_alive_timer = tr.Timer(interval=interval['S'], 
+            self._keep_host_alive_timer = RepeatedTimer(interval=interval['S'], 
                                                    function=self._keep_host_alive)
-            self._keep_host_alive_timer.setDaemon(True)
             self._keep_host_alive_timer.start()
             return 0, None
 
     def _keep_host_alive(self) -> None:
         """Send a keep alive message to the host. (support function for M113)"""
-        self._pipe.send(Message(exit_code=0, msg='The backend is still alive!!'))
+        self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!'))
 
     def M114(self) -> tuple:
         """

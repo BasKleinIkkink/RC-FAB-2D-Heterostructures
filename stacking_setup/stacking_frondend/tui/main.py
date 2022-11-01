@@ -35,8 +35,9 @@ def check_for_response(con, lock, event):
 
         if response is not None:
             if isinstance(response, list):
-                for item in response:
-                    print(item)
+                for msg in response:
+                    for key, value in msg.summary().items():
+                        print(key, value)
             else:
                 print(response)
 
@@ -65,17 +66,16 @@ def main(connector):
     # Start the main loop
     while True:
         response = input(">>> ")
-        print(type(response))
         if response.lower() == "help()":
             print("\nhelp() - Print this help dialog")
             print("exit() - Exit the program")
-            print("connect() - Connect to the device")
-            print("disconnect() - Disconnect from the device")
-            print("is_connected() - Check if the device is connected")
-            print("send() - Send a command to the device")
-            print("receive() - Receive data from the device")
-            print("handshake() - Perform a handshake with the IO controller (RPI)\n")
+            print("G0 - Make a linaer move")
+            print("G1 - Make a rotational move")
+            print("G28 - Home all axes")
         elif response.lower() == "exit()":
+            # Send the sentinel command to the backend to close the program
+            connector.send_sentinel()
+            connector.disconnect()
             break
         else:
             # Send the command to the rpi and wait for the response

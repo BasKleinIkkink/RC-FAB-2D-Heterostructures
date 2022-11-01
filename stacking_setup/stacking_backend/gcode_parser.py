@@ -119,6 +119,10 @@ class GcodeParser():
             True if the entry is a valid command or attribute.
 
         """
+        # Check if the entry is None or an empty string
+        if entry is None or entry == '':
+            return False
+
         # Check if the entry is a known command or attribute.
         if entry not in ACCEPTED_COMMANDS.keys() and entry[0] not in ACCEPTED_AXES \
                 and entry[0] not in ACCEPTED_ATTRIBUTES:
@@ -154,7 +158,7 @@ class GcodeParser():
         """
         # Check if this is the first entry.
         if len(command_dict.keys()) == 0:
-            raise ValueError('Entry is an attribute but is the first entry.')
+            raise ValueError('Entry {} is an attribute but is the first entry in the command.'.format(content[cnt]))
 
         # Check what the last added command was
         i = 0
@@ -177,7 +181,7 @@ class GcodeParser():
         elif content[cnt][0] not in ACCEPTED_COMMANDS[last_command].keys():
             print(last_command, content[cnt])
             # The attribute is not allowed for the last command.
-            raise AttributeError('The attribute {} is not allowed for the last command. {}'.format(last_command, content[cnt]))
+            raise AttributeError('The attribute {} is not allowed for the last command'.format(content[cnt]))
 
         # Convert the attribute data to the right type.
         attribute_id = content[cnt][0]

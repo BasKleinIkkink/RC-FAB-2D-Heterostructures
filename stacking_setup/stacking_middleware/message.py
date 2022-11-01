@@ -24,3 +24,10 @@ class Message:
     @property
     def kwargs(self):
         return self._kwargs
+
+    def __str__(self):
+        return self._msg
+
+    def summary(self):
+        return {'exit_code': self._exit_code,
+                'msg': self._msg}
