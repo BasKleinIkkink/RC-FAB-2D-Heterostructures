@@ -46,7 +46,7 @@ class GcodeParser():
     """
 
     @classmethod
-    def parse_gcode_line(cls, line):
+    def parse_gcode_line(cls, line : str) -> dict:
         """
         Parse the gcode command lines from the main process.
 
@@ -104,7 +104,7 @@ class GcodeParser():
         return commands
 
     @staticmethod
-    def _is_valid(entry):
+    def _is_valid(entry : str) -> bool:
         """
         Check if the entry is a valid command or attribute.
 
@@ -137,7 +137,7 @@ class GcodeParser():
 
 
     @staticmethod
-    def _add_attribute(cnt, command_dict, content):
+    def _add_attribute(cnt : int, command_dict : dict, content : list) -> dict:
         """
         Add an attribute to the command dict.
 
@@ -148,7 +148,7 @@ class GcodeParser():
         command_dict : dict
             The command dict to add the attribute to.
         content : list
-            The content of the command line.
+            The content of the command line split on ' '.
 
         Returns:
         --------
@@ -226,7 +226,7 @@ class GcodeParser():
         return command_dict
 
     @staticmethod
-    def _add_movement(cnt, command_dict, content):
+    def _add_movement(cnt : int, command_dict : dict, content : list) -> dict:
         """
         Add a movement command to the command dict.
 
@@ -238,6 +238,11 @@ class GcodeParser():
             The command dict to add the attribute to.
         content : list
             The content of the command line.
+
+        Raises:
+        -------
+        ValueError
+            If the command is not a valid movement command.
 
         Returns:
         --------

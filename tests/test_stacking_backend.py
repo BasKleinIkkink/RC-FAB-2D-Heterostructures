@@ -213,7 +213,7 @@ class TestControlBackend(unittest.TestCase):
 
         # Start the loop in a seperate thread
         loop_thread = tr.Thread(target=stack._controller_loop, args=(stack._emergency_stop_event,
-                                stack._shutdown, stack._pipe_to_main,), daemon=True)
+                                stack._shutdown, stack._con_to_main,), daemon=True)
         loop_thread.start()
 
         # Send a some commands trough the pipe

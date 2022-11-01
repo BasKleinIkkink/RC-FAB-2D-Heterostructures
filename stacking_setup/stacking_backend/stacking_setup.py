@@ -15,6 +15,7 @@ from .hardware.emergency_breaker import EmergencyBreaker
 from typing import Union
 from ..stacking_middleware.pipeline_connection import PipelineConnection
 from ..stacking_middleware.serial_connection import SerialConnection
+from typeguard import typechecked
 
 
 class RepeatedTimer:
@@ -68,6 +69,7 @@ class RepeatedTimer:
         """
         return self._is_running
 
+    
     @property
     def next_call(self) -> Union[int, float]:
         """
@@ -188,7 +190,8 @@ class StackingSetupBackend:
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
         return logging.getLogger(__name__)
 
-    def _echo(self, func : callable, *args : list, **kwargs : dict) -> tuple:
+    @typechecked
+    def _echo(self, func : callable, command : Union[dict, None]=None) -> tuple:
         """
         Echo the command response (error code and msg) to the main process.
 
@@ -215,17 +218,12 @@ class StackingSetupBackend:
             return func(*args, **kwargs)
 
         # Send the exit code and msg over the pipe to main
-        if len(args) > 0 and len(kwargs.keys()) > 0: 
-            exit_code, msg = new_function(*args, **kwargs)
-        elif len(args) > 0:
-            exit_code, msg = new_function(*args)
-        elif len(kwargs.keys()) > 0:
-            exit_code, msg = new_function(**kwargs)
+        if command is not None:
+            exit_code, msg = new_function(command)
         else:
             exit_code, msg = new_function()
 
-        message = Message(exit_code, msg)
-        self._con_to_main.send(message)
+        self._con_to_main.send(Message(exit_code, msg))
 
         # Return the exit code and msg
         return exit_code, msg
@@ -298,6 +296,7 @@ class StackingSetupBackend:
         self._controller_process.start()
 
     @catch_remote_exceptions
+    @typechecked
     def _controller_loop(self, emergency_stop_event : mp.Event, shutdown_event : mp.Event, 
                         con_to_main : Union[PipelineConnection, SerialConnection]) -> None:
         """
@@ -347,6 +346,7 @@ class StackingSetupBackend:
                     # Excecute all the commands
                     try:
                         parsed_command = GcodeParser.parse_gcode_line(command)  # Parse the command
+                        self._con_to_main.send(Message(0, 'Command parsed: {}'.format(parsed_command)))
                     except ValueError as e:
                         self._con_to_main.send(Message(1, str(e)))
                         continue
@@ -360,7 +360,8 @@ class StackingSetupBackend:
         else:
             # Emergency stop all the parts
             raise NotImplementedError('Not implemented')
-            
+
+    @typechecked        
     def _execute_command(self, parsed_command : dict) -> None:
         """
         Execute the parsed command dict.
@@ -401,9 +402,6 @@ class StackingSetupBackend:
 
             if command_id[0] != 'M':
                 continue
-            elif command_id == 'M92':
-                # Set the steps per um
-                exit_code, msg = self._echo(self.M92, parsed_command[command_id])
             elif command_id == 'M105':
                 # Get the temperature
                 exit_code, msg = self._echo(self.M105)
@@ -454,10 +452,10 @@ class StackingSetupBackend:
                 exit_code, msg = self._echo(self.G28)
             elif command_id == 'G90':
                 # Set to absolute positioning
-                exit_code, msg = self.echo(self.G90)
+                exit_code, msg = self._echo(self.G90)
             elif command_id == 'G91':
                 # Set to relative positioning
-                exit_code, msg = self.echo(self.G91)
+                exit_code, msg = self._echo(self.G91)
             else:
                 exit_code = 1
                 self._con_to_main.send(Message(exit_code, 'Unknown command: {}'.format(command_id)))
@@ -478,6 +476,7 @@ class StackingSetupBackend:
             self._con_to_main.send(msg)
         
     # MOVEMENT FUNCTIONS
+    @typechecked
     def G0(self, movements : dict) -> tuple:
         """
         Move to the given axis in a lineair motion.
@@ -525,6 +524,7 @@ class StackingSetupBackend:
         else:
             return 0, None
 
+    @typechecked
     def G1(self, movements : dict) -> tuple:
         """
         Make an arc to the given position (rotate).
@@ -589,6 +589,7 @@ class StackingSetupBackend:
         for axis in self._hardware:
             try:
                 axis.home()
+                self._con_to_main.send(Message(0, 'Axis {} homed.'.format(axis.id)))
             except NotSupportedError:
                 pass
 
@@ -625,10 +626,14 @@ class StackingSetupBackend:
         return 0, None
 
     # MACHINE FUNCTIONS
+    @typechecked
     def M92(self, factors : dict) -> tuple:
         """
         Set the steps per um for the given axis. If no factors are
         given, the current factors are returned.
+
+        IMPORTANT: This function should not be used as the value should 
+        be determinded during the calibration of the machine.
         
         Parameters:
         -----------
@@ -697,6 +702,7 @@ class StackingSetupBackend:
         self._emergency_stop()
         return 0, None
 
+    @typechecked
     def M113(self, interval : dict) -> tuple:
         """
         Keep the host alive
@@ -780,6 +786,7 @@ class StackingSetupBackend:
         return 0, None
 
     # JOGGING AND DRIVING FUNCTIONS
+    @typechecked
     def M810(self, command : dict) -> tuple:
         """
         Macro function to set the jogging parameters for the stepper or actuator.
@@ -815,6 +822,7 @@ class StackingSetupBackend:
         """
         raise NotImplementedError('M812 not implemented.')
 
+    @typechecked
     def M812(self, command : dict) -> tuple:
         """
         Macro function to set the driving parameters for the stepper or actuator.

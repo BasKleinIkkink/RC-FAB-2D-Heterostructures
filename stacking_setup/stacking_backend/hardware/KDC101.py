@@ -1,18 +1,19 @@
 from pylablib.devices.Thorlabs.kinesis import KinesisMotor, list_kinesis_devices
 from .exceptions import HardwareNotConnectedError
-from typing import Union
+from typing import Union, Dict, List
+from typeguard import typechecked
 
 
 class KDC101():
     """Class to control communication with the KCD101 motorcontroller."""
 
-    def __init__(self, serial_nr='27263640'):
+    def __init__(self, serial_nr : Union[str, bytes]='27263640') -> None:
         """
         Initialize the KCD101.
         
         Parameters:
         -----------
-        serial_nr : str
+        serial_nr : str, bytes
             The serial number of the KCD101.
 
         Raises:
@@ -49,48 +50,50 @@ class KDC101():
         self._controller = KinesisMotor(self._serial_nr, scale="PRM1-Z8")
         self._connected = True
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect the KCD101."""
         self._controller.stop
         del self
 
-    def emergency_stop(self):
-        """Stop all the connected piezos and disconnect the controller."""
+    def emergency_stop(self) -> None:
+        """Stop all the connected motors and disconnect the controller."""
         self._controller.stop()
 
     # STATUS FUNCTIONS
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Check if the KCD101 is connected."""
         return self._connected
 
-    def is_moving(self):
+    def is_moving(self) -> bool:
         """Check if the motor is moving."""
         return self._controller.is_moving()
 
-    def get_position(self):
+    def get_position(self) -> Union[int, float]:
         """Get the position of the motor."""
         return self._controller.get_position()
 
-    def is_homed(self):
+    def is_homed(self) -> bool:
         """Check if the motor is homed."""
         return self._controller.is_homed()
 
-    def is_homing(self):
+    def is_homing(self) -> bool:
         """Check if the motor is homing."""
         return self._controller.is_homing()
 
     # HOMING FUNCTIONS
-    def home(self, hold_until_done=True):
+    @typechecked
+    def home(self, hold_until_done : bool = True) -> None:
         """Home the motor."""
         self._controller.home()
         if hold_until_done:
             self._controller.wait_for_home()
 
-    def get_homing_parameters(self):
+    def get_homing_parameters(self) -> dict:
         """Get the homing parameters."""
         return self._controller.get_homing_parameters()
 
-    def setup_homing(self, velocity=None, acceleration=None):
+    @typechecked
+    def setup_homing(self, velocity : Union[float, int, None]=None, acceleration : Union[float, int, None]=None) -> None:
         """
         Set the homing parameters.
 
@@ -102,14 +105,17 @@ class KDC101():
             The velocity to home with.
         acceleration : float
             The acceleration to home with.
+
         """
         self._controller.setup_homing(velocity=velocity, acceleration=acceleration)
 
     # JOG AND DRIVE PARAMETERS
-    def get_drive_parameters(self, scale=True):
+    @typechecked
+    def get_drive_parameters(self, scale: bool=True) -> dict:
         return self._controller.get_velocity_parameters(scale=scale)
 
-    def setup_drive(self, velocity=None, acceleration=None, scale=True):
+    @typechecked
+    def setup_drive(self, velocity : Union[float, int]=None, acceleration : Union[float, int]=None, scale : bool =True):
         """
         Set the drive parameters of the rotation plate.
         
@@ -117,10 +123,12 @@ class KDC101():
         """
         self._controller.setup_velocity(max_velocity=velocity, acceleration=acceleration, scale=scale)
     
-    def get_jog_parameters(self, scale=True):
+    @typechecked
+    def get_jog_parameters(self, scale : bool=True) -> dict:
         return self._controller.get_jog_parameters(scale=scale)
 
-    def setup_jog(self, velocity=None, acceleration=None, scale=True):
+    @typechecked
+    def setup_jog(self, velocity : Union[float, int, None]=None, acceleration: Union[float, int, None]=None, scale: bool=True):
         """
         Set the jog parameters of the rotation plate.
         
@@ -129,7 +137,8 @@ class KDC101():
         self._controller.setup_jog(max_velocity=velocity, acceleration=acceleration, scale=scale)
 
     # MOVEMENT FUNCTIONS
-    def start_jog(self, direction, kind='continuous'):
+    @typechecked
+    def start_jog(self, direction : Union[str, int, bool], kind : str='continuous') -> None:
         """
         Start a jog movement.
 
@@ -142,18 +151,19 @@ class KDC101():
         """
         self._controller.jog(direction=direction, kind=kind)
 
-    def stop_jog(self):
+    def stop_jog(self) -> None:
         """Stop the jog movement."""
         self._controller.stop()
 
-    def rotate_to(self, position, hold_until_done=True, scale=True):
+    @typechecked
+    def rotate_to(self, position : Union[float, int], hold_until_done : bool=True, scale : bool=True) -> None:
         """
-        Move the piezo to the given position.
+        Move the motor to the given position.
 
         Parameters
         ----------
         channel : int
-            The channel of the piezo to move.
+            The channel of the motor to move.
         position : float
             The position to move to.
         velocity : float
@@ -167,14 +177,15 @@ class KDC101():
         if hold_until_done:
             self._controller.wait_move()
 
-    def rotate_by(self, distance, hold_until_done=True, scale=True):
+    @typechecked
+    def rotate_by(self, distance : Union[float, int], hold_until_done : bool=True, scale : bool=True) -> None:
         """
-        Move the piezo by the given distance.
+        Move the motor by the given distance.
 
         Parameters
         ----------
         channel : int
-            The channel of the piezo to move.
+            The channel of the motor to move.
         distance : float
             The distance to move.
         velocity : float
@@ -188,14 +199,14 @@ class KDC101():
         if hold_until_done:
             self._controller.wait_move()
 
-    def stop(self):
+    def stop(self) -> None:
         """
-        Stop the piezo.
+        Stop the motor.
 
         Parameters
         ----------
         channel : int
-            The channel of the piezo to stop.
+            The channel of the motor to stop.
         """
         self._controller.stop(immediate=True)
 
@@ -206,6 +217,7 @@ if __name__ == '__main__':
     controller = KDC101('27263640')
     controller.connect()
 
+    """
     # Test drive functions.
     drive_params = controller.get_drive_parameters()
     print('original drive settings: {}'.format(drive_params))
@@ -233,5 +245,6 @@ if __name__ == '__main__':
     # Reset the jog params
     controller.setup_jog(velocity=15, acceleration=15)
     print('reset jog settings: {}'.format(controller.get_jog_parameters()))	
+    """
 
     controller.home()

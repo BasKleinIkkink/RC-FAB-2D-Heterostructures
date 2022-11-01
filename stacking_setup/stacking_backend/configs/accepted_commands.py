@@ -29,7 +29,7 @@ ACCEPTED_COMMANDS = {
     # 'M81' : {},
     # 'M85' : {'S': [int, float]},
     'M92' : {'ACCEPTED_AXES': ACCEPTED_AXES},
-    # 'M105' : {},
+    'M105' : {},
     # 'M111' : {'S': [int]},
     'M112' : {},
     'M113' : {'S': [int, float]},
