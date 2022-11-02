@@ -119,7 +119,6 @@ if __name__ == '__main__':
     controller = KDC101(serial_nr='27263640')
     rot = PRMTZ8(id='L', hardware_controller=controller)
     
-    """
     # Test drive functions.
     drive_params = [rot.speed, rot.acceleration]
     print('original drive settings: {}'.format(drive_params))
@@ -139,7 +138,6 @@ if __name__ == '__main__':
     sleep(5)
     rot.stop_jog()
     print('Done with jog test.')
-    """
 
     # Home the stage
     rot.home()

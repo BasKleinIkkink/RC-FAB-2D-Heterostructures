@@ -23,7 +23,7 @@ class RepeatedTimer:
 
     def __init__(self, interval, function, *args, **kwargs):
         """
-        Ïnitiate the timer.
+        Initiate the timer.
         
         Parameters:
         -----------
@@ -346,7 +346,6 @@ class StackingSetupBackend:
                     # Excecute all the commands
                     try:
                         parsed_command = GcodeParser.parse_gcode_line(command)  # Parse the command
-                        self._con_to_main.send(Message(0, 'Command parsed: {}'.format(parsed_command)))
                     except ValueError as e:
                         self._con_to_main.send(Message(1, str(e)))
                         continue
@@ -589,7 +588,6 @@ class StackingSetupBackend:
         for axis in self._hardware:
             try:
                 axis.home()
-                self._con_to_main.send(Message(0, 'Axis {} homed.'.format(axis.id)))
             except NotSupportedError:
                 pass
 
@@ -607,8 +605,11 @@ class StackingSetupBackend:
             A message with the result of the command.
 
         """
-        self._positioning = 'ABS'
-        return 0, None
+        if self._positioning == 'REL':
+            self._positioning = 'ABS'
+            return 0, 'Now in absolute positioning mode.'
+        else:
+            return 0, 'Already in absolute positioning mode.'
 
     def G91(self) -> tuple:
         """
@@ -622,8 +623,11 @@ class StackingSetupBackend:
             A message with the result of the command.
 
         """
-        self._positioning = 'REL'
-        return 0, None
+        if self._positioning == 'ABS':
+            self._positioning = 'REL'
+            return 0, 'Now in relative positioning mode.'
+        else:
+            return 0, 'Already in relative positioning mode.'
 
     # MACHINE FUNCTIONS
     @typechecked
@@ -786,31 +790,11 @@ class StackingSetupBackend:
         return 0, None
 
     # JOGGING AND DRIVING FUNCTIONS
-    @typechecked
-    def M810(self, command : dict) -> tuple:
-        """
-        Macro function to set the jogging parameters for the stepper or actuator.
-
-        Parameters:
-        -----------
-        command : dict
-            A dictionary with the axis id and the speed and acceleration to set.
-        
-        Returns:
-        --------
-        exit_code : int
-            0 if the command was successful, 1 if not.
-        msg : str
-            A message with the result of the command.
-
-        """
-        raise NotImplementedError('M810 not implemented.')
-    
-    def M811(self) -> tuple:
+    def M811(self, command : dict) -> tuple:
         """
         Jog the given axis at at the set speed.
 
-        If speed 0 is given the axis will stop.
+        Will jog the given axis if the axis value is one and stop moving if the value is 0.
         
         Returns:
         --------
@@ -820,7 +804,18 @@ class StackingSetupBackend:
             A message with the result of the command.
 
         """
-        raise NotImplementedError('M812 not implemented.')
+        for axis in self._hardware:
+            if axis.id in command.keys():
+                if command[axis.id] == 1:
+                    try:
+                        axis.jog()
+                    except NotSupportedError:
+                        pass
+                elif command[axis.id] == 0:
+                    try:
+                        axis.stop_jog()
+                    except NotSupportedError:
+                        pass
 
     @typechecked
     def M812(self, command : dict) -> tuple:
@@ -842,6 +837,35 @@ class StackingSetupBackend:
         """
         for axis in self._hardware:
             if axis.id == axis:
-                axis.max_speed = max_speed
-                axis.max_acceleration = max_acceleration
+                try:
+                    axis.speed = command[axis.id]
+                except KeyError:
+                    pass
+
+                return 0, None
+
+    def M813(self, command : dict) -> tuple:
+        """
+        Custom function to set the acceleration of the given axes.
+
+        Parameters:
+        -----------
+        command : dict
+            A dictionary with the axis id(s) and the acceleration to set
+        
+        Returns:
+        --------
+        exit_code : int
+            0 if the command was successful, 1 if not.
+        msg : str
+            A message with the result of the command.
+
+        """
+        for axis in self._hardware:
+            if axis.id == axis:
+                try:
+                    axis.acceleration = command[axis.id]
+                except KeyError:
+                    pass
+
                 return 0, None

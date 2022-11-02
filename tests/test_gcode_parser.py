@@ -4,7 +4,7 @@ import sys, os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_dir_path = os.path.abspath(os.path.join(dir_path, os.pardir))
 sys.path.insert(0, parent_dir_path)
-from stacking_setup.stacking_backend.gcode_parser import GcodeParser
+from stacking_setup.stacking_backend.gcode_parser import GcodeParser, GcodeAttributeError
 
 
 class TestGcodeParser(unittest.TestCase):
@@ -117,13 +117,13 @@ class TestGcodeParser(unittest.TestCase):
     # Test add duplicate movement command
     def test_add_duplicate_movement_command(self):
         gcode_line = 'G0 X0.0 X0.0'
-        with self.assertRaises(ValueError):
+        with self.assertRaises(GcodeAttributeError):
             _ = GcodeParser().parse_gcode_line(gcode_line)
 
     # Test add movent to command that doesnt allow movement
     def test_add_movement_to_not_allowed(self):
         gcode_line = 'G28 X0.0'
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(GcodeAttributeError):
             _ = GcodeParser().parse_gcode_line(gcode_line)
 
     # Test forbidden movement on linear axis

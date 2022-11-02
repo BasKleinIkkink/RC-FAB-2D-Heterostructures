@@ -1,18 +1,18 @@
-stacking\_backend package
+stacking\_setup.stacking\_backend package
 =========================================
 
 Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    stacking_setup.stacking_backend.hardware
 
 Submodules
 ----------
 
-stacking\_backend.gcode\_parser module
+stacking\_setup.stacking\_backend.gcode\_parser module
 ------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.gcode_parser
@@ -20,7 +20,7 @@ stacking\_backend.gcode\_parser module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.main module
+stacking\_setup.stacking\_backend.main module
 ---------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.main
@@ -28,7 +28,7 @@ stacking\_backend.main module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.settings module
+stacking\_setup.stacking\_backend.settings module
 -------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.settings
@@ -36,7 +36,7 @@ stacking\_backend.settings module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.stacking\_setup module
+stacking\_setup.stacking\_backend.stacking\_setup module
 --------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.stacking_setup

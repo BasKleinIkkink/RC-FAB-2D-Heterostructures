@@ -6,7 +6,11 @@ from typeguard import typechecked
 
 class KDC101():
     """Class to control communication with the KCD101 motorcontroller."""
+    _type = 'KCD101'
+    _connected = False
+    _controller = None
 
+    @typechecked
     def __init__(self, serial_nr : Union[str, bytes]='27263640') -> None:
         """
         Initialize the KCD101.
@@ -22,10 +26,6 @@ class KDC101():
             If the KCD101 is not connected.
         
         """
-        self._type = 'KCD101'
-        self._connected = False
-        self._controller = None
-
         if not isinstance(serial_nr, str):
             self._serial_nr = str(serial_nr)
         else:
@@ -111,7 +111,7 @@ class KDC101():
 
     # JOG AND DRIVE PARAMETERS
     @typechecked
-    def get_drive_parameters(self, scale: bool=True) -> dict:
+    def get_drive_parameters(self, scale: bool=True) -> list:
         return self._controller.get_velocity_parameters(scale=scale)
 
     @typechecked
@@ -141,6 +141,14 @@ class KDC101():
     def start_jog(self, direction : Union[str, int, bool], kind : str='continuous') -> None:
         """
         Start a jog movement.
+
+        ATTENTION: The jog has to be terminated by the stop method.
+
+        If ``kind=="continuous"``, simply start motion in the given direction at the standard jog speed
+        until either the motor is stopped explicitly, or the limit is reached.
+        If ``kind=="builtin"``, use the built-in jog command, whose parameters are specified by :meth:`get_jog_parameters`.
+        Note that ``kind=="continuous"`` is still implemented through the builtin jog, so it changes its parameters;
+        hence, afterwards the jog parameters need to be manually restored.
 
         Parameters
         ----------
@@ -217,7 +225,6 @@ if __name__ == '__main__':
     controller = KDC101('27263640')
     controller.connect()
 
-    """
     # Test drive functions.
     drive_params = controller.get_drive_parameters()
     print('original drive settings: {}'.format(drive_params))
@@ -245,6 +252,5 @@ if __name__ == '__main__':
     # Reset the jog params
     controller.setup_jog(velocity=15, acceleration=15)
     print('reset jog settings: {}'.format(controller.get_jog_parameters()))	
-    """
 
     controller.home()

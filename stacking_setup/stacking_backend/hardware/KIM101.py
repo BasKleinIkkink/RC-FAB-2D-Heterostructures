@@ -1,16 +1,35 @@
-from pylablib.devices.Thorlabs.kinesis import KinesisPiezoMotor, list_kinesis_devices
+from pylablib.devices.Thorlabs.kinesis import KinesisPiezoMotor, list_kinesis_devices, TPZMotorDriveParams
 from .exceptions import HardwareNotConnectedError
+from typing import Union
+from typeguard import typechecked
 
 
 class KIM101():
     """Class to control communication with the KIM101 piezocontroller."""
+    _controller = None
+    _connected = False
+    _type = 'KIM101'
 
-    def __init__(self, serial_nr='97101742'):
-        """Initialize the KIM101."""
-        self._type = 'KIM101'
-        self._connected = False
-        self._controller = None
+    @typechecked
+    def __init__(self, serial_nr: Union[str, bytes]='97101742') -> None:
+        """
+        Initialize the KIM101.
+        
+        Parameters:
+        -----------
+        serial_nr : str
+            The serial number of the KIM101.
 
+        Raises:
+        -------
+        HardwareNotConnectedError
+            If the KIM101 is not connected.
+
+        Returns:
+        --------
+        None
+
+        """
         if not isinstance(serial_nr, str):
             self._serial_nr = str(serial_nr)
         else:
@@ -29,32 +48,47 @@ class KIM101():
             raise HardwareNotConnectedError('The external controller is not connected.')
 
     # CONNECTION FUNCTIONS
-    def connect(self):
+    def connect(self) -> None:
         """Connect the KIM101."""
         self._controller = KinesisPiezoMotor(self._serial_nr)
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect the KIM101."""
         raise NotImplementedError()
 
-    def emergency_stop(self):
+    def emergency_stop(self) -> None:
         """Stop all the connected piezos and disconnect the controller."""
         for i in range(4):
             self._controller.stop(channel=i)
 
     # STATUS FUNCTIONS
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Check if the KIM101 is connected."""
         if self._connected:
             return self._controller.is_connected()
         else:
             return False
 
-    def is_moving(self, channel):
-        """Check if the piezo is moving."""
+    @typechecked
+    def is_moving(self, channel : int) -> bool:
+        """
+        Check if the piezo is moving.
+        
+        Parameters:
+        -----------
+        channel : int
+            The channel of the piezo to check.
+        
+        Returns:
+        --------
+        bool
+            True if the piezo is moving, False otherwise.
+
+        """
         return self._controller.is_moving(channel=channel)
 
-    def get_position(self, channel):
+    @typechecked
+    def get_position(self, channel : int) -> Union[float, int]:
         """
         Get the position of the piezo.
         
@@ -62,53 +96,115 @@ class KIM101():
         ``"moving_fw"`` (moving forward), ``"moving_bk"`` (moving backward), ``"jogging_fw"`` (jogging forward), ``"jogging_bk"`` (jogging backward),
         ``"homing"`` (homing), ``"homed"`` (homing done), ``"tracking"``, ``"settled"``,
         ``"motion_error"`` (excessive position error), ``"current_limit"`` (motor current limit exceeded), or ``"enabled"`` (motor is enabled).
+        
+        Parameters:
+        -----------
+        channel : int
+            The channel of the piezo to check.
+
+        Returns:
+        --------
+        float, int
+            The position of the piezo.
+
         """
         return self._controller.get_position(channel=channel)
 
-    def get_status(self, channel):
-        """Get the status of the piezo."""
-        return self._controller.get_status_n(channel=channel)
-
-    def get_parameters(self, channel):
+    @typechecked
+    def _wait_move(self, channel : int) -> bool:
         """
-        Get the parameters of the piezo.
+        Wait until the piezo is not moving anymore.
         
-        Get current piezo-motor drive parameters ``(max_voltage, velocity, acceleration)``
-        Voltage is defined in volts, velocity in steps/s, and acceleration in steps/s^2.
-        """
-        return self._controller.get_parameters(channel=channel)
+        Parameters:
+        -----------
+        channel : int
+            The channel of the piezo to check.
 
-    def _wait_move(self, channel):
-        """Wait until the piezo is not moving anymore."""
+        Returns:
+        --------
+        bool
+            True if the piezo is not moving anymore, False otherwise.
+
+        """
         self._controller.wait_move(channel=channel)
 
     # JOG AND DRIVE PARAMETERS
-    def setup_jog(self, channel, velocity=None, acceleration=None):
-        """Set the jog paramters of the piezo."""
-        self._controller.setup_jog(velocity=velocity, acceleration=acceleration, channel=channel)
+    @typechecked
+    def setup_jog(self, velocity : Union[float, int, None]=None, 
+                  acceleration : Union[float, int, None]=None) -> None:
+        """
+        Set the jog paramters of the piezo.
+        
+        Parameters:
+        -----------
+        velocity : float, int, None
+            The velocity of the piezo in um/s. If None, the velocity is not changed.
+        acceleration : float, int, None
+            The acceleration of the piezo in um/s^2. If None, the acceleration is not changed.
+        
+        Returns:
+        --------
+        None
 
-    def get_jog_parameters(self, channel):
-        """Get the jog parameters of the piezo."""
-        return self._controller.get_jog_parameters(channel=channel)
+        """
+        self._controller.setup_jog(velocity=velocity, acceleration=acceleration, scale=scale)
 
-    def setup_drive(self, channel, max_voltage=None, velocity=None, acceleration=None):
+    @typechecked
+    def get_jog_parameters(self) -> TPZMotorDriveParams:
+        """
+        Get the jog parameters of the piezo.
+        
+        Returns:
+        --------
+        TPZMotorDriveParams
+            The jog parameters of the piezo.
+        
+        """
+        return self._controller.get_jog_parameters()
+
+    @typechecked
+    def setup_drive(self, max_voltage : Union[float, int, None]=None, 
+                    velocity : Union[float, int, None]=None, 
+                    acceleration : Union[float, int, None]=None) -> None:
         """
         Set the drive parameters of the piezo.
         
         The drive parameters are used for detemining the movement behavoir when moving by relative or absolute positioning.
+        
+        Parameters:
+        -----------
+        max_voltage : float, int, None
+            The maximum voltage of the piezo in V. If None, the max voltage is not changed.
+        velocity : float, int, None
+            The velocity of the piezo in um/s. If None, the velocity is not changed.
+        acceleration : float, int, None
+            The acceleration of the piezo in um/s^2. If None, the acceleration is not changed.
+
+        Returns:
+        --------
+        None
+
         """
-        self._controller.setup_drive(max_voltage=max_voltage, velocity=velocity, acceleration=acceleration, channel=channel)
+        self._controller.setup_drive(max_voltage=max_voltage, velocity=velocity, acceleration=acceleration,)
     
-    def get_drive_parameters(self, channel):
+    @typechecked
+    def get_drive_parameters(self) -> TPZMotorDriveParams:
         """
         Get the drive parameters of the piezo.
         
         The drive parameters are used for detemining the movement behavoir when moving by relative or absolute positioning.
+        
+        Returns:
+        --------
+        TPZMotorDriveParams
+            The drive parameters of the piezo.
+        
         """
-        return self._controller.get_drive_parameters(channel=channel)
+        return self._controller.get_drive_parameters()
 
     # MOVEMENT FUNCTIONS
-    def start_jog(self, channel, direction, kind='buildin'):
+    @typechecked
+    def start_jog(self, channel : int, direction : Union[str, int, bool], kind : str='continues') -> None:
         """
         Start a jog.
         
@@ -119,10 +215,26 @@ class KIM101():
         If ``kind=="builtin"``, use the built-in jog command, whose parameters are specified by :meth:`get_jog_parameters`.
         Note that ``kind=="continuous"`` is still implemented through the builtin jog, so it changes its parameters;
         hence, afterwards the jog parameters need to be manually restored.
+        
+        Parameters:
+        -----------
+        channel : int
+            The channel of the piezo to move.
+        direction : str, int, bool
+            The direction of the jog. Can be ``"forward"``, ``"backward"``, ``1``, ``-1``, ``True``, or ``False``.
+        kind : str
+            The kind of the jog. Can be ``"continuous"`` or ``"builtin"``.
+
+        Returns:
+        --------
+        None
+
         """
         self._controller.jog(direction=direction, kind=kind, channel=channel)
 
-    def move_to(self, channel, position, wait_until_done=True):
+    @typechecked
+    def move_to(self, channel : int, position : Union[float, int], 
+                wait_until_done : bool=True) -> None:
         """
         Move one of the connected piezos.
         
@@ -137,12 +249,18 @@ class KIM101():
         wait_until_done : bool
             If True, wait until the movement is done.
 
+        Returns:
+        --------
+        None
+
         """
         self._controller.move_to(position=position, channel=channel)
         if wait_until_done:
             self._wait_move(channel=channel)
 
-    def move_by(self, channel, distance, wait_until_done=True):
+    @typechecked
+    def move_by(self, channel : int, distance : Union[float, int], 
+                wait_until_done : bool=True) -> None:
         """
         Move one of the connected piezos.
         
@@ -157,21 +275,68 @@ class KIM101():
         wait_until_done : bool
             If True, wait until the movement is done.
 
+        Returns:
+        --------
+        None
+
         """
         self._controller.move_by(distance=distance, channel=channel)
         if wait_until_done:
             self._wait_move(channel=channel)
 
-    def stop(self, channel):
-        """Stop one of the connected piezos."""
-        self._controller.stop(channel=channel)
+    @typechecked
+    def stop(self, channel : Union[int, None]=None) -> None:
+        """
+        Stop one of the connected piezos.
+        
+        Parameters:
+        -----------
+        channel : int, None
+            The channel of the piezo to stop. If None, all piezos are stopped.
+        
+        Returns:
+        --------
+        None
+
+        """
+        if channel is None:
+            for i in range(4):
+                self._controller.stop(channel=i)
+        else:
+            self._controller.stop(channel=channel)
 
     
 
 if __name__ == '__main__':
+    from time import sleep
+       # Connect to the controller.
     controller = KIM101()
     controller.connect()
-    print('CONNECTED!!!!')
-    #controller.move_by(1, 1500)
-    #controller.move_by(2, 1500)
-    #controller.move_by(3, 1500)
+
+    # Test drive functions.
+    drive_params = controller.get_drive_parameters()
+    print('original drive settings: {}'.format(drive_params))
+    controller.setup_drive(velocity=20, acceleration=15)
+    print('new drive settings: {}'.format(controller.get_drive_parameters()))
+    controller.move_by(channel=1, distance=1000)
+    controller.move_to(channel=1, position=25000)
+
+    # Reset the driving params
+    controller.setup_drive(velocity=10, acceleration=10)
+    print('reset drive settings: {}'.format(controller.get_drive_parameters()))
+
+    # Test jog functions.
+    jog_params = controller.get_jog_parameters()
+    print('original jog settings: {}'.format(jog_params))
+    controller.setup_jog(channel=1, velocity=20, acceleration=20)
+    print('new jog settings: {}'.format(controller.get_jog_parameters()))
+    controller.start_jog(channel=1, direction='+')
+    sleep(3)
+    controller.stop_jog(channel=1)
+    controller.start_jog(channel=1, direction='-')
+    sleep(3)
+    controller.stop_jog(channel=1)
+
+    # Reset the jog params
+    controller.setup_jog(channel=1, velocity=15, acceleration=15)
+    print('reset jog settings: {}'.format(controller.get_jog_parameters()))	

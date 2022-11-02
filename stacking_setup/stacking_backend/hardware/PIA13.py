@@ -184,7 +184,7 @@ class PIA13(Base):
         Move the hardware to a certain position.
 
         Parameters:
-        ----------
+        -----------
         position: float or int
             The position to move the hardware to.
         """

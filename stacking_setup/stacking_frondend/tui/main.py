@@ -35,9 +35,11 @@ def check_for_response(con, lock, event):
 
         if response is not None:
             if isinstance(response, list):
+                print_msg = ''
                 for msg in response:
                     for key, value in msg.summary().items():
-                        print(key, value)
+                        print_msg += key+' : '+str(value)+'; '
+                print(print_msg+'\n >>>')
             else:
                 print(response)
 
