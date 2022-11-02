@@ -14,23 +14,25 @@ Movment comamands are not allowed to have attributes
 
 """
 
-ACCEPTED_ATTRIBUTES = ['S', 'I', 'R', 'A']
-ACCEPTED_AXES = ['X', 'Y', 'Z', 'I', 'J', 'K', 'R']
+ACCEPTED_ATTRIBUTES = ('S', 'I', 'R', 'A')
+ACCEPTED_AXES = ('X', 'Y', 'Z', 'H', 'J', 'K', 'L',)
+ACCEPTED_LINEAR_AXES = ('X', 'Y', 'Z', 'H', 'J', 'K',)
+ACCEPTED_ROTATIONAL_AXES = ('L',)
 ACCEPTED_COMMANDS = {
-    'G0' : {'ACCEPTED_AXES': ACCEPTED_AXES.remove('R')},
-    'G1' : {'ACCEPTED_AXES': 'R'},
+    'G0' : {'ACCEPTED_AXES': ACCEPTED_LINEAR_AXES},
+    'G1' : {'ACCEPTED_AXES': ACCEPTED_ROTATIONAL_AXES},
     'G28' : {},
     'G90' : {},
     'G91' : {},
     'M0' : {},
-    'M80' : {},
-    'M81' : {},
+    # 'M80' : {},
+    # 'M81' : {},
     # 'M85' : {'S': [int, float]},
-    # 'M92' : {'S': [int, float]},
-    # 'M105' : {},
+    'M92' : {'ACCEPTED_AXES': ACCEPTED_AXES},
+    'M105' : {},
     # 'M111' : {'S': [int]},
     'M112' : {},
-    'M113' : {},
+    'M113' : {'S': [int, float]},
     # 'M114' : {},
     # 'M119' : {},
     # 'M120' : {},
@@ -49,14 +51,11 @@ ACCEPTED_COMMANDS = {
     # 'M510' : {},
     # 'M511' : {'S' : [bytes]},
     # 'M512' : {'S' : [bytes]},
-    'M810' : {'S' : [float, int],
-              'I' : [float, int],},
-    'M811' : {'S' : [float, int],
-              'I' : [float, int],},
-    'M812' : {'S' : [float, int],
-              'I' : [float, int],},
-    'M813' : {'S' : [float, int],
-              'I' : [float, int],},
+    #'M810' : {'S' : [float, int],
+    #          'I' : [float, int],},
+    'M811' : {'ACCEPTED_AXES': ACCEPTED_AXES},
+    'M812' : {'ACCEPTED_AXES': ACCEPTED_AXES},
+    'M813' : {'ACCEPTED_AXES': ACCEPTED_AXES},
     # 'M814' : {},
     # 'M815' : {},
     # 'M816' : {},

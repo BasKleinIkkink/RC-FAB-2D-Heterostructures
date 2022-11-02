@@ -115,6 +115,8 @@ test_env/
 .win_env/
 .sudo_env/
 .controller_env/
+.sphinx_env/
+envs/
 
 # Spyder project settings
 .spyderproject

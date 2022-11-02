@@ -1,4 +1,24 @@
 from .configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_ATTRIBUTES, ACCEPTED_AXES
+from typing import Union
+from typeguard import typechecked
+
+
+class GcodeAttributeError(Exception):
+    
+    def __init__(self, msg):
+        self._msg = msg
+
+    def __str__(self):
+        return self._msg
+
+
+class GcodeCommandError(Exception):
+    
+    def __init__(self, msg):
+        self._msg = msg
+
+    def __str__(self):
+        return self._msg
 
 
 class GcodeParser():
@@ -8,7 +28,7 @@ class GcodeParser():
     Gcode docs https://marlinfw.org/meta/gcode/
 
     Used Gcode commands:
-    -------------------
+    --------------------
     G0 - G1 : Lineair movement
     G28 : Home all axes
     G90 : Set to absolute coordinates
@@ -46,17 +66,17 @@ class GcodeParser():
     """
 
     @classmethod
-    def parse_gcode_line(cls, line):
+    def parse_gcode_line(cls, line : Union[str, bytes]) -> dict:
         """
         Parse the gcode command lines from the main process.
 
         Parameters:
-        ----------
+        -----------
         line : str or bytes
             The gcode command line.
 
         Returns:
-        -------
+        --------
         commands : dict
             The parsed gcode commands with the hardware id as the dict key.
 
@@ -66,13 +86,20 @@ class GcodeParser():
             If the line is not a string or bytes.
         ValueError:
             If the line contains no gcode commands.
-        """
-        # Check that the line is not empty and a string or bytes.
-        if not isinstance(line, (str, bytes)):
-            raise TypeError('Line is not a string or bytes or is empty.')
+        Exception:
+            If the parser reaches a point that should not be reached.
 
-        # If the line is in bytes convert to string.
-        if isinstance(line, bytes):
+        Returns:
+        --------
+        commands : dict
+            The parsed gcode commands with the hardware id as the dict key.
+
+        """
+        
+        if not isinstance(line, (str, bytes)):  # Check that the line is not empty and a string or bytes.
+            raise TypeError('Line is not a string or bytes or is empty. {}, {}'.format(line, type(line)))
+
+        if isinstance(line, bytes):  # If the line is in bytes convert to string.
             line = line.decode('utf-8')
 
         content = line.split(' ')
@@ -105,21 +132,25 @@ class GcodeParser():
         return commands
 
     @staticmethod
-    def _is_valid(entry):
+    def _is_valid(entry : str) -> bool:
         """
         Check if the entry is a valid command or attribute.
 
         Parameters:
-        ----------
+        -----------
         entry : str
             The entry to check.
 
         Returns:
-        -------
+        --------
         bool
             True if the entry is a valid command or attribute.
 
         """
+        # Check if the entry is None or an empty string
+        if entry is None or entry == '':
+            return False
+
         # Check if the entry is a known command or attribute.
         if entry not in ACCEPTED_COMMANDS.keys() and entry[0] not in ACCEPTED_AXES \
                 and entry[0] not in ACCEPTED_ATTRIBUTES:
@@ -134,28 +165,40 @@ class GcodeParser():
 
 
     @staticmethod
-    def _add_attribute(cnt, command_dict, content):
+    def _add_attribute(cnt : int, command_dict : dict, content : list) -> dict:
         """
         Add an attribute to the command dict.
 
         Parameters:
-        ----------
+        -----------
         cnt : int
             The index of the command in the content list.
         command_dict : dict
             The command dict to add the attribute to.
         content : list
-            The content of the command line.
+            The content of the command line split on ' '.
+
+        Raises:
+        -------
+        ValueError:
+            If the attribute is the first command in the line (never allowed)
+        TypeError:
+            If the attribute cannot be converted to one of the allowed data types
+        GcodeAttributeError:
+            If the attribute is not a valid attribute or follows a command that
+            does not allow for the attribute.
+        NotImplementedError:
+            If the attribute is of a datatype that is not implemented.
 
         Returns:
-        -------
+        --------
         command_dict : dict
             The command dict with the attribute added.
 
         """
         # Check if this is the first entry.
         if len(command_dict.keys()) == 0:
-            raise ValueError('Entry is an attribute but is the first entry.')
+            raise ValueError('Entry {} is an attribute but is the first entry in the command.'.format(content[cnt]))
 
         # Check what the last added command was
         i = 0
@@ -172,11 +215,13 @@ class GcodeParser():
         # Check if the last command allows the attribute.
         if last_command[0] in ACCEPTED_AXES:
             # Command is a movement command.
-            raise AttributeError('Movement commands ({}) are not allowed to have attributes.'.format(last_command, attribute_entry))
+            raise GcodeAttributeError('Movement commands ({}) are not allowed to have attributes. {}'.format(last_command, content[cnt]))
 
+        
         elif content[cnt][0] not in ACCEPTED_COMMANDS[last_command].keys():
+            print(last_command, content[cnt])
             # The attribute is not allowed for the last command.
-            raise AttributeError('The attribute {} is not allowed for the last command.'.format(last_command, attribute_entry))
+            raise GcodeAttributeError('The attribute {} is not allowed for the last command'.format(content[cnt]))
 
         # Convert the attribute data to the right type.
         attribute_id = content[cnt][0]
@@ -201,29 +246,50 @@ class GcodeParser():
                 elif data == '1':
                     data = True
                 else:
-                    raise AttributeError('The data {} is not a valid boolean.'.format(data))
-            elif data == 'True' or data == 'TRUE' or data == 'true':
+                    raise TypeError('The data {} is not a valid boolean.'.format(data))
+            elif data.lower() == 'true':
                 data = True
-            elif data == 'False' or data == 'FALSE' or data == 'false':
+            elif data.lower() == 'false':
                 data = False
             else:
-                raise ValueError('The data {} is not a valid boolean.'.format(data))
+                raise TypeError('The data {} is not a valid boolean.'.format(data))
         elif bytes in types:
-            # Convert to bytes
+            # Convert to bytes if allowed
             data = bytes(data)
         else:
             raise NotImplementedError('The data type {} is not implemented.'.format(types))
 
-        # Add the attribute to the last command
-        if isinstance(data, str):
-            raise Exception('The data {} is not a valid type.'.format(data))
         command_dict[last_command][attribute_id] = data
         return command_dict
 
     @staticmethod
-    def _add_movement(cnt, command_dict, content):
+    def _add_movement(cnt : int, command_dict : dict, content : list) -> dict:
         """
         Add a movement command to the command dict.
+
+        Parameters:
+        -----------
+        cnt : int
+            The index of the command in the content list.
+        command_dict : dict
+            The command dict to add the attribute to.
+        content : list
+            The content of the command line.
+
+        Raises:
+        -------
+        ValueError:
+            If the movement command is an invalid value.
+        GcodeAttributeError:
+            If the movement aready exists in the command dict, if the 
+            movement follows a command that does not allow for movement
+            commands.
+
+        Returns:
+        --------
+        command_dict : dict
+            The command dict with the attribute added.
+        
         """
         # Convert the movement value to the right type.
         data = content[cnt][1:]
@@ -233,9 +299,9 @@ class GcodeParser():
         except ValueError:
             data = float(data)
         except:
-            raise ValueError('Movement command {} is not a valid number.'.format(content[cnt][0]))
+            raise ValueError('Movement command {} is not a valid value.'.format(content[cnt][0]))
 
-        # Look for the last non movement non attribute command.
+        # Look for the last non axis non attribute command.
         i = 0
         while True:
             i -= 1
@@ -243,9 +309,9 @@ class GcodeParser():
 
             # Check if the command is an attribute
             if last_command[0] in ACCEPTED_ATTRIBUTES:
-                raise AttributeError('Movement commands ({}) are not allowed to have attributes.'.format(last_command))
+                raise GcodeAttributeError('Movement commands ({}) are not allowed to have attributes.'.format(last_command))
             
-            # Check if the command is a movement command.
+            # Check if the command is an axis command.
             if last_command[0] in ACCEPTED_AXES:
                 continue
             else:
@@ -254,13 +320,13 @@ class GcodeParser():
         # Check if the command is allowed to have a movement command.
         try:
             if content[cnt][0] not in ACCEPTED_COMMANDS[last_command]['ACCEPTED_AXES']:
-                raise AttributeError('Movent attribute {} is not allowed for command {}.'.format(content[cnt], last_command))
+                raise GcodeAttributeError('Movent attribute {} is not allowed for command {}.'.format(content[cnt], last_command))
         except KeyError:
-            raise AttributeError('Command {} is not allowed to have movemt attributes.'.format(last_command))
+            raise GcodeAttributeError('Command {} is not allowed to have movement attributes.'.format(last_command))
 
         # Check if there already is a movement command with the same id.
         if content[cnt][0] in command_dict[last_command].keys():
-            raise ValueError('Movement command {} already exists.'.format(content[cnt][0]))
+            raise GcodeAttributeError('Movement command {} already exists.'.format(content[cnt][0]))
 
         # Add the movement command to the command dict.
         command_dict[last_command][content[cnt][0]] = data

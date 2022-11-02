@@ -34,6 +34,7 @@ class EmergencyBreaker(object):
         self._timeout = timeout
         self._emergency_stop_event
         self._power_state = self.get_power_state()
+        self._emergency_stop_event = emergency_stop_event
 
         # Pre encoded strings
         self._shutdown_string = 'shutdown'.encode()  # String to send to the microcontroller to trigger the emergency breaker.

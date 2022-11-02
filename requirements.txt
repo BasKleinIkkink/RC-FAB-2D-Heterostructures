@@ -1,5 +1,7 @@
 wheel
+setuptools
 numpy
 pandas
 scipy
 pylablib-lightweight[extra,devio]
+typeguard
