@@ -18,7 +18,7 @@ fit_fn = np.poly1d(p)
 
 # Plot the data with error bars
 plt.errorbar(grouped_avg.index, grouped_avg['Sensor reading'], yerr=stdev['Sensor reading'], label='Measurement error', capsize=4, lw=0, elinewidth=1)
-plt.fill_between(grouped_avg.index, grouped_avg['Sensor reading']-fit_stdev, grouped_avg['Sensor reading']+fit_stdev, alpha=0.2, color='gray', label='Fit error')
+# plt.fill_between(grouped_avg.index, grouped_avg['Sensor reading']-fit_stdev, grouped_avg['Sensor reading']+fit_stdev, alpha=0.2, color='gray', label='Fit error')
 plt.plot(grouped_avg.index, fit_fn(grouped_avg.index), label='1st order fit', color='gray')
 plt.scatter(grouped_avg.index, grouped_avg['Sensor reading'], label='Measurement', color='black', s=3)
 plt.xlabel('Mass (g)')
