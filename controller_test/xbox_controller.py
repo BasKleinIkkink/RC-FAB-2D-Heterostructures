@@ -72,7 +72,7 @@ class CustomXbox360Controller:
         - right:
     xbox button:
         - pressed: Stop all movement
-        - released: If held longer than 2 seconds perform emergency stop
+        - released: pass
     
     """
     

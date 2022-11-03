@@ -1,4 +1,4 @@
-from .exceptions import NotSupportedError
+from exceptions import NotSupportedError
 
 class Base():
     """
@@ -148,3 +148,7 @@ class Base():
     def rotate_by(self, rotation):
         """Rotate the hardware by a position."""
         raise NotSupportedError()
+
+    def stop(self):
+        """Unconditionally stop the hardware."""
+        raise NotImplementedError()

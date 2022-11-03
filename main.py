@@ -5,7 +5,7 @@ from multiprocessing import Pipe
 
 
 if __name__ == '__main__':
-    # Connect the back and frondend with the chosen middleware method
+    # Create the chosen middleware method
     par_con, ch_con = Pipe()
     backend = StackingSetupBackend(Connection(par_con, "BACKEND"))
 

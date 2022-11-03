@@ -60,22 +60,27 @@ class KDC101():
         self._controller.stop()
 
     # STATUS FUNCTIONS
+    @typechecked
     def is_connected(self) -> bool:
         """Check if the KCD101 is connected."""
         return self._connected
 
+    @typechecked
     def is_moving(self) -> bool:
         """Check if the motor is moving."""
         return self._controller.is_moving()
 
+    @typechecked
     def get_position(self) -> Union[int, float]:
         """Get the position of the motor."""
         return self._controller.get_position()
 
+    @typechecked
     def is_homed(self) -> bool:
         """Check if the motor is homed."""
         return self._controller.is_homed()
 
+    @typechecked
     def is_homing(self) -> bool:
         """Check if the motor is homing."""
         return self._controller.is_homing()
@@ -88,6 +93,7 @@ class KDC101():
         if hold_until_done:
             self._controller.wait_for_home()
 
+    @typechecked
     def get_homing_parameters(self) -> dict:
         """Get the homing parameters."""
         return self._controller.get_homing_parameters()
@@ -115,7 +121,7 @@ class KDC101():
         return self._controller.get_velocity_parameters(scale=scale)
 
     @typechecked
-    def setup_drive(self, velocity : Union[float, int]=None, acceleration : Union[float, int]=None, scale : bool =True):
+    def setup_drive(self, velocity : Union[float, int]=None, acceleration : Union[float, int]=None, scale : bool =True) -> None:
         """
         Set the drive parameters of the rotation plate.
         
@@ -128,7 +134,7 @@ class KDC101():
         return self._controller.get_jog_parameters(scale=scale)
 
     @typechecked
-    def setup_jog(self, velocity : Union[float, int, None]=None, acceleration: Union[float, int, None]=None, scale: bool=True):
+    def setup_jog(self, velocity : Union[float, int, None]=None, acceleration: Union[float, int, None]=None, scale: bool=True) -> None:
         """
         Set the jog parameters of the rotation plate.
         
