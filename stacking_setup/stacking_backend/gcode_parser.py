@@ -1,9 +1,14 @@
-from .configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_ATTRIBUTES, ACCEPTED_AXES
 from typing import Union
 from typeguard import typechecked
 
+try: 
+    from .configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_ATTRIBUTES, ACCEPTED_AXES
+except ImportError:
+    from configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_ATTRIBUTES, ACCEPTED_AXES
+
 
 class GcodeAttributeError(Exception):
+    """Exception raised when there is an issue with a given attribute."""
     
     def __init__(self, msg):
         self._msg = msg
@@ -12,7 +17,8 @@ class GcodeAttributeError(Exception):
         return self._msg
 
 
-class GcodeCommandError(Exception):
+class GcodeParsingError(Exception):
+    """Exception raised when there is an issue parsing a gcode command."""
     
     def __init__(self, msg):
         self._msg = msg
@@ -29,43 +35,44 @@ class GcodeParser():
 
     Used Gcode commands:
     --------------------
-    G0 - G1 : Lineair movement
-    G28 : Home all axes
-    G90 : Set to absolute coordinates
-    G91 : Set to relative coordinates
+    - G0 - G1 : Lineair movement
+    - G28 : Home all axes
+    - G90 : Set to absolute coordinates
+    - G91 : Set to relative coordinates
 
-    X, Y, Z : Move the mask holder
-    I, J, K : Move the base plate
-    L : Move the sample holder
+    - X, Y, Z : Move the mask holder
+    - I, J, K : Move the base plate
+    - L : Move the sample holder
 
-    M0 : Unconditional stop
-    M80 : Power on
-    M81 : Power off
-    M85 : Inactivity shutdown
-    M92 : Set axis steps per unit
-    M105 : Report current temperature
-    M111 : Debug level
-    M112 : Emergency stop
-    M113 : Keep host alive
-    M114 : Report current position
-    M119 : Report endstop status
-    M120 : Enable endstops
-    M121 : Disable endstops
-    M140 : Set bed temperature
-    M154 : Position auto report
-    M155 : Temperature auto report
-    M190 : Wait for bed temperature
-    M500 : Save settings
-    M501 : Restore settings
-    M503 : Report settings
-    M510 : Lock machine
-    M511 : Unlock machine
-    M512 : Set password
-    M810 - M819 : G-code macros
-    M999 : STOP restart
+    - M0 : Unconditional stop
+    - M80 : Power on
+    - M81 : Power off
+    - M85 : Inactivity shutdown
+    - M92 : Set axis steps per unit
+    - M105 : Report current temperature
+    - M111 : Debug level
+    - M112 : Emergency stop
+    - M113 : Keep host alive
+    - M114 : Report current position
+    - M119 : Report endstop status
+    - M120 : Enable endstops
+    - M121 : Disable endstops
+    - M140 : Set bed temperature
+    - M154 : Position auto report
+    - M155 : Temperature auto report
+    - M190 : Wait for bed temperature
+    - M500 : Save settings
+    - M501 : Restore settings
+    - M503 : Report settings
+    - M510 : Lock machine
+    - M511 : Unlock machine
+    - M512 : Set password
+    - M810 - M819 : G-code macros
+    - M999 : STOP restart
     """
 
     @classmethod
+    @typechecked
     def parse_gcode_line(cls, line : Union[str, bytes]) -> dict:
         """
         Parse the gcode command lines from the main process.
@@ -75,19 +82,14 @@ class GcodeParser():
         line : str or bytes
             The gcode command line.
 
-        Returns:
-        --------
-        commands : dict
-            The parsed gcode commands with the hardware id as the dict key.
-
         Raises:
         -------
-        TypeError:
-            If the line is not a string or bytes.
-        ValueError:
-            If the line contains no gcode commands.
+        GcodeParsingError:
+            If the line is not a string or bytes or is empty.
+        GcodeAttributeError:
+            If the entry is not a valid command or attribute.
         Exception:
-            If the parser reaches a point that should not be reached.
+            If an unknown parsing error occurs.
 
         Returns:
         --------
@@ -97,21 +99,21 @@ class GcodeParser():
         """
         
         if not isinstance(line, (str, bytes)):  # Check that the line is not empty and a string or bytes.
-            raise TypeError('Line is not a string or bytes or is empty. {}, {}'.format(line, type(line)))
+            raise GcodeParsingError('Line is not a string or bytes or is empty. {}, {}'.format(line, type(line)))
 
         if isinstance(line, bytes):  # If the line is in bytes convert to string.
             line = line.decode('utf-8')
 
         content = line.split(' ')
         if len(content) == 0:
-            raise ValueError('Line is empty.')
+            raise GcodeParsingError('Line is empty.')
         
         # Sort the commands so the right functions are called.
         commands = {}
         for cnt, command in enumerate(content):
             # Check if the command is a known command.
             if not cls._is_valid(command):
-                raise ValueError('Entry {} is not a valid command or attribute.'.format(command))
+                raise GcodeAttributeError('Entry {} is not a valid command or attribute.'.format(command))
 
             # Check if the entry is an attribute.
             if command[0] in ACCEPTED_ATTRIBUTES:
@@ -132,9 +134,13 @@ class GcodeParser():
         return commands
 
     @staticmethod
+    @typechecked
     def _is_valid(entry : str) -> bool:
         """
         Check if the entry is a valid command or attribute.
+
+        Uses the definitions from the accepted_commands.py file in the configs folder
+        to check if the entry is a valid command or attribute.
 
         Parameters:
         -----------
@@ -144,7 +150,7 @@ class GcodeParser():
         Returns:
         --------
         bool
-            True if the entry is a valid command or attribute.
+            True if the entry is a valid command or attribute, otherwise False.
 
         """
         # Check if the entry is None or an empty string
@@ -165,6 +171,7 @@ class GcodeParser():
 
 
     @staticmethod
+    @typechecked
     def _add_attribute(cnt : int, command_dict : dict, content : list) -> dict:
         """
         Add an attribute to the command dict.
@@ -180,10 +187,8 @@ class GcodeParser():
 
         Raises:
         -------
-        ValueError:
-            If the attribute is the first command in the line (never allowed)
-        TypeError:
-            If the attribute cannot be converted to one of the allowed data types
+        GcodeParsingError:
+            If the attribute does not follow the set rules for parsing.
         GcodeAttributeError:
             If the attribute is not a valid attribute or follows a command that
             does not allow for the attribute.
@@ -198,7 +203,7 @@ class GcodeParser():
         """
         # Check if this is the first entry.
         if len(command_dict.keys()) == 0:
-            raise ValueError('Entry {} is an attribute but is the first entry in the command.'.format(content[cnt]))
+            raise GcodeParsingError('Entry {} is an attribute but is the first entry in the command.'.format(content[cnt]))
 
         # Check what the last added command was
         i = 0
@@ -246,13 +251,13 @@ class GcodeParser():
                 elif data == '1':
                     data = True
                 else:
-                    raise TypeError('The data {} is not a valid boolean.'.format(data))
+                    raise GcodeAttributeError('The data {} is not a valid boolean.'.format(data))
             elif data.lower() == 'true':
                 data = True
             elif data.lower() == 'false':
                 data = False
             else:
-                raise TypeError('The data {} is not a valid boolean.'.format(data))
+                raise GcodeAttributeError('The data {} is not a valid boolean.'.format(data))
         elif bytes in types:
             # Convert to bytes if allowed
             data = bytes(data)
@@ -263,6 +268,7 @@ class GcodeParser():
         return command_dict
 
     @staticmethod
+    @typechecked
     def _add_movement(cnt : int, command_dict : dict, content : list) -> dict:
         """
         Add a movement command to the command dict.
@@ -278,7 +284,7 @@ class GcodeParser():
 
         Raises:
         -------
-        ValueError:
+        GcodeParsingError:
             If the movement command is an invalid value.
         GcodeAttributeError:
             If the movement aready exists in the command dict, if the 
@@ -299,7 +305,7 @@ class GcodeParser():
         except ValueError:
             data = float(data)
         except:
-            raise ValueError('Movement command {} is not a valid value.'.format(content[cnt][0]))
+            raise GcodeParsingError('Movement command {} is not a valid value.'.format(content[cnt][0]))
 
         # Look for the last non axis non attribute command.
         i = 0

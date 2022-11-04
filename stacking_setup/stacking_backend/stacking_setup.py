@@ -4,24 +4,43 @@ import traceback
 import functools
 import sys
 import time
-from .gcode_parser import GcodeParser
-from .hardware.exceptions import NotSupportedError
-from ..stacking_middleware.message import Message
-from .hardware.KDC101 import KDC101
-from .hardware.KIM101 import KIM101
-from .hardware.PIA13 import PIA13
-from .hardware.PRMTZ8 import PRMTZ8
-from .hardware.emergency_breaker import EmergencyBreaker
-from typing import Union
-from ..stacking_middleware.pipeline_connection import PipelineConnection
-from ..stacking_middleware.serial_connection import SerialConnection
 from typeguard import typechecked
+from typing import Union
+
+try:
+    from .gcode_parser import GcodeParser
+    from .hardware.base import NotSupportedError
+    from ..stacking_middleware.message import Message
+    from .hardware.KDC101 import KDC101
+    from .hardware.KIM101 import KIM101
+    from .hardware.PIA13 import PIA13
+    from .hardware.PRMTZ8 import PRMTZ8
+    from .hardware.emergency_breaker import EmergencyBreaker
+    from ..stacking_middleware.pipeline_connection import PipelineConnection
+    from ..stacking_middleware.serial_connection import SerialConnection
+except ImportError:
+    from gcode_parser import GcodeParser
+    from hardware.base import NotSupportedError
+    from stacking_middleware.message import Message
+    from hardware.KDC101 import KDC101
+    from hardware.KIM101 import KIM101
+    from hardware.PIA13 import PIA13
+    from hardware.PRMTZ8 import PRMTZ8
+    from hardware.emergency_breaker import EmergencyBreaker
+    from stacking_middleware.pipeline_connection import PipelineConnection
+    from stacking_middleware.serial_connection import SerialConnection
+    
 
 
 class RepeatedTimer:
-    """Class to repeat a task every x seconds."""
+    """
+    Class to repeat a task every x seconds.
+    
+    The class is a wrapper around a threading.Timer object and resets
+    it every time the function is called.
+    """
 
-    def __init__(self, interval, function, *args, **kwargs):
+    def __init__(self, interval : Union[int, float], function : callable, *args, **kwargs) -> None:
         """
         Initiate the timer.
         
@@ -31,9 +50,9 @@ class RepeatedTimer:
             The interval in seconds.
         function : callable
             The function to repeat.
-        *args
+        args
             The arguments for the function.
-        **kwargs
+        kwargs
             The keyword arguments for the function.
         """
         self._timer = None
@@ -144,9 +163,8 @@ class StackingSetupBackend:
     """
     The hardware controller
 
-    Is connected to the main process with a pipe. The pipe expects data in the form of strings
-    or bytes containing the gcode command lines. For the supported commands see the gcode_parser function and
-    the accepted_commands.py file.
+    Is connected to the main process with a connector. The connector expects data in the form of strings
+    or bytes containing the gcode command lines. For the supported commands see the accepted_commands.py file.
     """
     _emergency_breaker = None
     _hardware = None
@@ -157,7 +175,7 @@ class StackingSetupBackend:
 
         Parameters:
         -----------
-        to_main : mp.Pipe
+        to_main : PipelineConnection, SerialConnection
             The pipe to the main process.
 
         Returns:

@@ -1,4 +1,7 @@
-from .base import Base
+try:
+    from .base import Base
+except ImportError:
+    from base import Base
 
 
 class SampleBed(Base):

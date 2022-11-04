@@ -11,9 +11,8 @@ parent_dir_path = os.path.abspath(os.path.join(dir_path, os.pardir))
 sys.path.insert(0, parent_dir_path)
 
 # The code to be tested
-from stacking_setup.stacking_backend.hardware.exceptions import NotSupportedError
 from stacking_setup.stacking_backend.stacking_setup import StackingSetupBackend
-from stacking_setup.stacking_backend.hardware.base import Base
+from stacking_setup.stacking_backend.hardware.base import Base, NotSupportedError
 
 
 def mock_pia13(id):

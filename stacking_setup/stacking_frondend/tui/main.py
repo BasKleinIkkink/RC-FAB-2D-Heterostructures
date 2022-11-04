@@ -1,6 +1,3 @@
-"""This file contains the infinite loop that runs the program."""
-#from ...stacking_middleware.serial_connection import SerialConnection
-from configparser import ConfigParser
 import os
 from threading import Thread, Lock, Event
 from time import sleep
@@ -19,6 +16,8 @@ def check_for_response(con, lock, event):
         The connection to check for a response from.
     lock : threading.Lock
         The lock to use to prevent multiple threads from using the pipe at the same time.
+    event : threading.Event
+        The event to check if the thread should be closed.
 
     Returns:
     --------
@@ -49,6 +48,11 @@ def check_for_response(con, lock, event):
 def main(connector):
     """
     Start the TUI and the backend.
+
+    Parameters:
+    -----------
+    connector : Child class of BaseConnector
+        The connector to use to communicate with the backend.
 
     Returns:
     --------

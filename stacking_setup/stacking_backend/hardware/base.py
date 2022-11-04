@@ -1,16 +1,79 @@
-from exceptions import NotSupportedError
+class NotSupportedError(Exception):
+    """
+    Exception raised when a method is not supported.
+    """
+    
+    def __init__(self, msg=None):
+        """
+        Initialize the exception.
+
+        Parameters:
+        -----------
+        msg : str
+            The message to display.
+
+        """
+        self._msg = msg
+
+
+class HardwareNotConnectedError(Exception):
+    """Exception raised when a hardware is not connected."""
+    
+    def __init__(self, msg=None):
+        """
+        Initialize the exception.
+        
+        Parameters:
+        -----------
+        message: str
+            The message to display.
+        
+        """
+        self._msg = msg
+
+    def __str__(self):
+        return self._msg
+
+
+class NotCalibratedError(Exception):
+    """
+    Exception raised when the hardware is not calibrated for the asked function.
+
+    F.e. trying to do an absolute move when the home point is unknown.
+    """
+    
+    def __init__(self, msg=None):
+        """
+        Initialize the exception.
+
+        Parameters:
+        -----------
+        msg : str
+            The message to display.
+
+        """
+        self._msg = msg
+
+    def __str__(self):
+        return self._msg
+
 
 class Base():
     """
     Base class for hardware.
     
-    This class contains all the functions the main control code expects
-    connecter servos/motors/actuators to have. Functions that are supported
-    should be overridden in the derived class. Functions that should be supported
-    by all hardware raisa NotImplementedError, optional functions raise NotSupportedError.
+    This class contains all the functions the StackingSetupBackend class expects
+    connected hardware to have. Functions that are supported should be overridden 
+    in the derived class. 
+    
+    .. important:: Functions that should be supported by all hardware raise a ``NotImplementedError``, 
+        optional functions raise ``NotSupportedError``. The ``NotSupportedError`` is always caught
+        by the ``StackingSetupBackend()`` class, so it is safe to raise it in functions that are
+        not supported by all hardware.
 
-    Each function should return an exit code (0 for success, 1 for failure) and
-    and an error message, data, or None. 
+    .. note:: Each function should return an exit code (0 for success, 1 for failure) and
+        and an error message, data, or None. 
+
     """
     _id = None
     _type = 'HARDWARE BASE CLASS'

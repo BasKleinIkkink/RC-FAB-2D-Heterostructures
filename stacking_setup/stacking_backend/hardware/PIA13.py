@@ -1,13 +1,16 @@
-from .base import Base
-from .exceptions import NotCalibratedError
-from .KIM101 import KIM101
+try:
+    from .base import Base, NotCalibratedError
+    from .KIM101 import KIM101
+except ImportError:
+    from base import Base, NotCalibratedError
+    from KIM101 import KIM101
 
 
 class PIA13(Base):
     """Class to control a PIA13 Thorlabs piezo actuator."""
     
 
-    def __init__(self, id, channel, actuator_id, hardware_controller):
+    def __init__(self, id : str, channel : int, actuator_id : str, hardware_controller : KIM101) -> None:
         """
         Initialize the PIA13.
         
@@ -19,7 +22,7 @@ class PIA13(Base):
             The channel of the hardware.
         actuator_id: int
             The id of the actuator.
-        hardware_controller: object
+        hardware_controller: KIM101
             The hardware controller to use.
         
         """

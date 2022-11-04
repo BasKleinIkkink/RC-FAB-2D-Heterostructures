@@ -9,8 +9,9 @@ Welcome to Stacking setup's documentation!
 Contents
 --------
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
+   README
    apidoc_generated/modules
    apidoc_generated/stacking_setup.stacking_frondend
    apidoc_generated/stacking_setup.stacking_middleware

@@ -1,7 +1,11 @@
 from pylablib.devices.Thorlabs.kinesis import KinesisMotor, list_kinesis_devices
-from .exceptions import HardwareNotConnectedError
-from typing import Union, Dict, List
+from typing import Union
 from typeguard import typechecked
+
+try:
+    from .base import HardwareNotConnectedError
+except ImportError:
+    from base import HardwareNotConnectedError
 
 
 class KDC101():

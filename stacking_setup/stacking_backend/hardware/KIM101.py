@@ -1,7 +1,11 @@
 from pylablib.devices.Thorlabs.kinesis import KinesisPiezoMotor, list_kinesis_devices, TPZMotorDriveParams
-from .exceptions import HardwareNotConnectedError
 from typing import Union
 from typeguard import typechecked
+
+try:
+    from .base import HardwareNotConnectedError
+except ImportError:
+    from base import HardwareNotConnectedError
 
 
 class KIM101():
@@ -62,6 +66,7 @@ class KIM101():
             self._controller.stop(channel=i)
 
     # STATUS FUNCTIONS
+    @typechecked
     def is_connected(self) -> bool:
         """Check if the KIM101 is connected."""
         if self._connected:
@@ -147,7 +152,7 @@ class KIM101():
         None
 
         """
-        self._controller.setup_jog(velocity=velocity, acceleration=acceleration, scale=scale)
+        self._controller.setup_jog(velocity=velocity, acceleration=acceleration)
 
     @typechecked
     def get_jog_parameters(self) -> TPZMotorDriveParams:
@@ -306,7 +311,6 @@ class KIM101():
             self._controller.stop(channel=channel)
 
     
-
 if __name__ == '__main__':
     from time import sleep
        # Connect to the controller.

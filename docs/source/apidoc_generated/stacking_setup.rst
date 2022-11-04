@@ -5,7 +5,7 @@ Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    stacking_setup.stacking_backend
    stacking_setup.stacking_frondend

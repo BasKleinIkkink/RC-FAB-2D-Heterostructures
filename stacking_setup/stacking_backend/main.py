@@ -1,5 +1,9 @@
-from .stacking_setup import StackingSetup
-from .gcode_parser import GCodeParser
+try:
+    from .stacking_setup import StackingSetup
+    from .gcode_parser import GCodeParser
+except ImportError:
+    from stacking_setup import StackingSetup
+    from gcode_parser import GCodeParser
 
 import threading as tr
 

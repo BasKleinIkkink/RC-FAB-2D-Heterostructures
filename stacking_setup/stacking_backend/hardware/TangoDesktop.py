@@ -1,8 +1,11 @@
-from base import Base
 import serial
-from exceptions import HardwareNotConnectedError, NotSupportedError
 from typing import Union
 from typeguard import typechecked
+
+try:
+    from .base import Base, HardwareNotConnectedError
+except ImportError:
+    from base import Base, HardwareNotConnectedError
 
 
 class TangoDesktop(Base):

@@ -1,7 +1,11 @@
-from .KDC101 import KDC101
-from .exceptions import HardwareNotConnectedError
-from .base import Base
 from time import sleep
+try:
+    from .KDC101 import KDC101
+    from .base import Base, HardwareNotConnectedError
+except ImportError:
+    from KDC101 import KDC101
+    from base import Base, HardwareNotConnectedError
+
 
 
 class PRMTZ8(Base):
