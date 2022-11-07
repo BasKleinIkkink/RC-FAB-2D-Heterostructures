@@ -1,6 +1,7 @@
 from pylablib.devices.Thorlabs.kinesis import KinesisMotor, list_kinesis_devices
 from typing import Union
 from typeguard import typechecked
+from configparser import ConfigParser
 
 try:
     from .base import HardwareNotConnectedError
@@ -15,7 +16,7 @@ class KDC101():
     _controller = None
 
     @typechecked
-    def __init__(self, serial_nr : Union[str, bytes]='27263640') -> None:
+    def __init__(self, settings : ConfigParser, serial_nr : Union[str, bytes]='27263640') -> None:
         """
         Initialize the KCD101.
         
@@ -29,6 +30,7 @@ class KDC101():
         HardwareNotConnectedError
             If the KCD101 is not connected.
         """
+        self._settings=settings
         if not isinstance(serial_nr, str):
             self._serial_nr = str(serial_nr)
         else:

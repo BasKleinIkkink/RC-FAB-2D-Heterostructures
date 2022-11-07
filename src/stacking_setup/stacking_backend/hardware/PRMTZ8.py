@@ -1,6 +1,7 @@
 from time import sleep
 from typing import Union
 from typeguard import typechecked
+from configparser import ConfigParser
 
 try:
     from .KDC101 import KDC101
@@ -15,7 +16,8 @@ class PRMTZ8(Base):
     """Class to control communication with the PRMTZ8 piezocontroller."""
 
     @typechecked
-    def __init__(self, hardware_controller : KDC101 , id : str='L') -> None:
+    def __init__(self, hardware_controller : KDC101, settings : ConfigParser,
+                id : str='L') -> None:
         """
         Initialize the PRMTZ8.
         

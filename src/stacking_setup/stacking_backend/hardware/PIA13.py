@@ -1,5 +1,6 @@
 from typing import Union
 from typeguard import typechecked
+from configparser import ConfigParser
 
 try:
     from .base import Base, NotCalibratedError
@@ -11,9 +12,9 @@ except ImportError:
 
 class PIA13(Base):
     """Class to control a PIA13 Thorlabs piezo actuator."""
-    
 
-    def __init__(self, id : str, channel : int, actuator_id : str, hardware_controller : KIM101) -> None:
+    def __init__(self, id : str, channel : int, actuator_id : str, hardware_controller : KIM101,
+                settings : ConfigParser) -> None:
         """
         Initialize the PIA13.
         
@@ -32,12 +33,14 @@ class PIA13(Base):
         self._type = 'PIA13'
         self._channel = channel
         self._hardware_controller = hardware_controller
+        self._actuator_id = actuator_id  # Used for identifien the section in the settings
+        self._settings = settings
         self._steps_calibrated = False  # Steps per nm were calibrated
         self._steps_per_nm = 0  # Steps per nm
 
     # ATTRIBUTES
     @property
-    def device_info(self) -> None:
+    def device_info(self) -> dict:
         """Get the device info."""
         return {'id': self._id,
                 'type': self._type,
@@ -52,7 +55,8 @@ class PIA13(Base):
         return self._steps_per_um
 
     @steps_per_um.setter
-    def steps_per_um(self, steps_per_mm : Union[float, int]) -> None:
+    @typechecked
+    def steps_per_um(self, steps_per_mm : Union[float, int]) -> Union[float, int]:
         """
         Set the steps per um.
         
@@ -69,7 +73,8 @@ class PIA13(Base):
                                                         steps_per_mm)
 
     @property
-    def position(self) -> None:
+    @typechecked
+    def position(self) -> Union[float, int]:
         """Get the position of the hardware."""
         return self._hardware_controller.get_position(self._channel)
 

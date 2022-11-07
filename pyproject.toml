@@ -6,9 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "stacking_setup"
 version = "0.0.2"
 description = "This package contains the code needed to control a custom stacking setup."
-authors = [
-    {"name": "Nynra", "email": "nynradev@pm.me"},
-]
 readme = "README.md"
 license = {text = "BSD 3-Clause License"}
 classifiers = [
