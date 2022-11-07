@@ -1,5 +1,8 @@
-stacking\_backend.hardware package
+stacking\_setup.stacking\_backend.hardware package
 ==================================================
+
+Submodules
+----------
 
 stacking\_backend.hardware.KDC101 module
 --------------------------------------------------------
@@ -33,6 +36,14 @@ stacking\_backend.hardware.PRMTZ8 module
    :undoc-members:
    :show-inheritance:
 
+stacking\_backend.hardware.TangoDesktop module
+--------------------------------------------------------------
+
+.. automodule:: stacking_setup.stacking_backend.hardware.TangoDesktop
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 stacking\_backend.hardware.base module
 ------------------------------------------------------
 
@@ -45,14 +56,6 @@ stacking\_backend.hardware.emergency\_breaker module
 --------------------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.hardware.emergency_breaker
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-stacking\_backend.hardware.exceptions module
-------------------------------------------------------------
-
-.. automodule:: stacking_setup.stacking_backend.hardware.exceptions
    :members:
    :undoc-members:
    :show-inheritance:

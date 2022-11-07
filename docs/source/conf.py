@@ -8,7 +8,7 @@
 
 # Add the package directory to the path so that we can import the package
 import os, sys
-sys.path.insert(0, os.path.abspath('..\..'))
+sys.path.insert(0, os.path.abspath('..\..\src'))
 
 project = 'LION Van der Waals Stacking Facility: Stacking setup'
 copyright = '2022, Nynra'

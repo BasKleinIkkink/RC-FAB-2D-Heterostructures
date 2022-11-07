@@ -7,8 +7,8 @@ class NotSupportedError(Exception):
         """
         Initialize the exception.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         msg : str
             The message to display.
 
@@ -23,8 +23,8 @@ class HardwareNotConnectedError(Exception):
         """
         Initialize the exception.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         message: str
             The message to display.
         
@@ -46,8 +46,8 @@ class NotCalibratedError(Exception):
         """
         Initialize the exception.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         msg : str
             The message to display.
 

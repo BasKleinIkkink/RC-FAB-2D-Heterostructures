@@ -2,8 +2,6 @@ stacking_setup
 ==============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
-   stacking_setup.stacking_backend
-   stacking_setup.stacking_middleware
-   stacking_setup.stacking_frontend
+   stacking_setup

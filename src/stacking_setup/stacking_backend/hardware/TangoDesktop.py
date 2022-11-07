@@ -12,8 +12,6 @@ class TangoDesktop(Base):
     """
     Class for TangoDesktop hardware.
 
-    IMPORTANT: This class is
-
     Communication interface:
     ------------------------
     All TANGO controllers communicate via a serial COM port interface, independent

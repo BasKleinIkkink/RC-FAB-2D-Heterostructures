@@ -19,16 +19,15 @@ class KDC101():
         """
         Initialize the KCD101.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         serial_nr : str, bytes
             The serial number of the KCD101.
 
-        Raises:
-        -------
+        Raises
+        ------
         HardwareNotConnectedError
             If the KCD101 is not connected.
-        
         """
         if not isinstance(serial_nr, str):
             self._serial_nr = str(serial_nr)
@@ -66,40 +65,89 @@ class KDC101():
     # STATUS FUNCTIONS
     @typechecked
     def is_connected(self) -> bool:
-        """Check if the KCD101 is connected."""
+        """
+        Check if the KCD101 is connected.
+        
+        Returns
+        -------
+        bool
+            True if the KCD101 is connected, False otherwise.
+        """
         return self._connected
 
     @typechecked
     def is_moving(self) -> bool:
-        """Check if the motor is moving."""
+        """
+        Check if the motor is moving.
+        
+        Returns
+        -------
+        bool
+            True if the motor is moving, False otherwise.
+        """
         return self._controller.is_moving()
 
     @typechecked
     def get_position(self) -> Union[int, float]:
-        """Get the position of the motor."""
+        """
+        Get the position of the motor.
+        
+        Returns
+        -------
+        int, float
+            The position of the motor.
+        """
         return self._controller.get_position()
 
     @typechecked
     def is_homed(self) -> bool:
-        """Check if the motor is homed."""
+        """
+        Check if the motor is homed.
+        
+        Returns
+        -------
+        bool
+            True if the motor is homed, False otherwise.
+        """
         return self._controller.is_homed()
 
     @typechecked
     def is_homing(self) -> bool:
-        """Check if the motor is homing."""
+        """
+        Check if the motor is homing.
+        
+        Returns
+        -------
+        bool
+            True if the motor is homing, False otherwise.
+        """
         return self._controller.is_homing()
 
     # HOMING FUNCTIONS
     @typechecked
     def home(self, hold_until_done : bool = True) -> None:
-        """Home the motor."""
+        """
+        Home the motor.
+        
+        Parameters
+        ----------
+        hold_until_done : bool
+            If True, the function will wait until the motor is homed.
+        """
         self._controller.home()
         if hold_until_done:
             self._controller.wait_for_home()
 
     @typechecked
     def get_homing_parameters(self) -> dict:
-        """Get the homing parameters."""
+        """
+        Get the homing parameters.
+        
+        Returns
+        -------
+        dict
+            The homing parameters.
+        """
         return self._controller.get_homing_parameters()
 
     @typechecked
@@ -115,13 +163,20 @@ class KDC101():
             The velocity to home with.
         acceleration : float
             The acceleration to home with.
-
         """
         self._controller.setup_homing(velocity=velocity, acceleration=acceleration)
 
     # JOG AND DRIVE PARAMETERS
     @typechecked
     def get_drive_parameters(self, scale: bool=True) -> list:
+        """
+        Get the drive parameters.
+
+        Parameters
+        ----------
+        scale : bool
+            If True, the parameters will be scaled to the correct units.
+        """
         return self._controller.get_velocity_parameters(scale=scale)
 
     @typechecked
@@ -130,11 +185,33 @@ class KDC101():
         Set the drive parameters of the rotation plate.
         
         The drive parameters are used for detemining the movement behavoir when moving by relative or absolute positioning.
+
+        Parameters
+        ----------
+        velocity : float
+            The velocity to move with.
+        acceleration : float
+            The acceleration to move with.
+        scale : bool
+            If True, the parameters will be scaled to the correct units.
         """
         self._controller.setup_velocity(max_velocity=velocity, acceleration=acceleration, scale=scale)
     
     @typechecked
     def get_jog_parameters(self, scale : bool=True) -> dict:
+        """
+        Get the jog parameters.
+
+        Parameters
+        ----------
+        scale : bool
+            If True, the parameters will be scaled to the correct units.
+
+        Returns
+        -------
+        dict
+            The jog parameters.
+        """
         return self._controller.get_jog_parameters(scale=scale)
 
     @typechecked
@@ -143,6 +220,15 @@ class KDC101():
         Set the jog parameters of the rotation plate.
         
         The jog parameters are used for detemining the movement behavoir when moving by relative or absolute positioning.
+
+        Parameters
+        ----------
+        velocity : float
+            The velocity to move with.
+        acceleration : float
+            The acceleration to move with.
+        scale : bool
+            If True, the parameters will be scaled to the correct units.
         """
         self._controller.setup_jog(max_velocity=velocity, acceleration=acceleration, scale=scale)
 
@@ -152,7 +238,8 @@ class KDC101():
         """
         Start a jog movement.
 
-        ATTENTION: The jog has to be terminated by the stop method.
+        .. attention:: 
+            The jog has to be terminated by the stop method.
 
         If ``kind=="continuous"``, simply start motion in the given direction at the standard jog speed
         until either the motor is stopped explicitly, or the limit is reached.

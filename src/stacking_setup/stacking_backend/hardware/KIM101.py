@@ -19,20 +19,15 @@ class KIM101():
         """
         Initialize the KIM101.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         serial_nr : str
             The serial number of the KIM101.
 
-        Raises:
-        -------
+        Raises
+        ------
         HardwareNotConnectedError
             If the KIM101 is not connected.
-
-        Returns:
-        --------
-        None
-
         """
         if not isinstance(serial_nr, str):
             self._serial_nr = str(serial_nr)
@@ -68,7 +63,14 @@ class KIM101():
     # STATUS FUNCTIONS
     @typechecked
     def is_connected(self) -> bool:
-        """Check if the KIM101 is connected."""
+        """
+        Check if the KIM101 is connected.
+        
+        Returns
+        -------
+        bool
+            True if the KIM101 is connected.
+        """
         if self._connected:
             return self._controller.is_connected()
         else:
@@ -79,13 +81,13 @@ class KIM101():
         """
         Check if the piezo is moving.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel : int
             The channel of the piezo to check.
         
-        Returns:
-        --------
+        Returns
+        -------
         bool
             True if the piezo is moving, False otherwise.
 
@@ -102,13 +104,13 @@ class KIM101():
         ``"homing"`` (homing), ``"homed"`` (homing done), ``"tracking"``, ``"settled"``,
         ``"motion_error"`` (excessive position error), ``"current_limit"`` (motor current limit exceeded), or ``"enabled"`` (motor is enabled).
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel : int
             The channel of the piezo to check.
 
-        Returns:
-        --------
+        Returns
+        -------
         float, int
             The position of the piezo.
 
@@ -120,13 +122,13 @@ class KIM101():
         """
         Wait until the piezo is not moving anymore.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel : int
             The channel of the piezo to check.
 
-        Returns:
-        --------
+        Returns
+        -------
         bool
             True if the piezo is not moving anymore, False otherwise.
 
@@ -140,17 +142,12 @@ class KIM101():
         """
         Set the jog paramters of the piezo.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         velocity : float, int, None
             The velocity of the piezo in um/s. If None, the velocity is not changed.
         acceleration : float, int, None
             The acceleration of the piezo in um/s^2. If None, the acceleration is not changed.
-        
-        Returns:
-        --------
-        None
-
         """
         self._controller.setup_jog(velocity=velocity, acceleration=acceleration)
 
@@ -159,11 +156,10 @@ class KIM101():
         """
         Get the jog parameters of the piezo.
         
-        Returns:
-        --------
+        Returns
+        -------
         TPZMotorDriveParams
             The jog parameters of the piezo.
-        
         """
         return self._controller.get_jog_parameters()
 
@@ -176,19 +172,14 @@ class KIM101():
         
         The drive parameters are used for detemining the movement behavoir when moving by relative or absolute positioning.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         max_voltage : float, int, None
             The maximum voltage of the piezo in V. If None, the max voltage is not changed.
         velocity : float, int, None
             The velocity of the piezo in um/s. If None, the velocity is not changed.
         acceleration : float, int, None
             The acceleration of the piezo in um/s^2. If None, the acceleration is not changed.
-
-        Returns:
-        --------
-        None
-
         """
         self._controller.setup_drive(max_voltage=max_voltage, velocity=velocity, acceleration=acceleration,)
     
@@ -199,11 +190,10 @@ class KIM101():
         
         The drive parameters are used for detemining the movement behavoir when moving by relative or absolute positioning.
         
-        Returns:
-        --------
+        Returns
+        -------
         TPZMotorDriveParams
             The drive parameters of the piezo.
-        
         """
         return self._controller.get_drive_parameters()
 
@@ -213,7 +203,8 @@ class KIM101():
         """
         Start a jog.
         
-        ATTENTION: The jog has to be terminated by the stop method.
+        .. attention:: 
+            The jog has to be terminated by the stop method.
 
         If ``kind=="continuous"``, simply start motion in the given direction at the standard jog speed
         until either the motor is stopped explicitly, or the limit is reached.
@@ -221,19 +212,14 @@ class KIM101():
         Note that ``kind=="continuous"`` is still implemented through the builtin jog, so it changes its parameters;
         hence, afterwards the jog parameters need to be manually restored.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel : int
             The channel of the piezo to move.
         direction : str, int, bool
             The direction of the jog. Can be ``"forward"``, ``"backward"``, ``1``, ``-1``, ``True``, or ``False``.
         kind : str
             The kind of the jog. Can be ``"continuous"`` or ``"builtin"``.
-
-        Returns:
-        --------
-        None
-
         """
         self._controller.jog(direction=direction, kind=kind, channel=channel)
 
@@ -253,11 +239,6 @@ class KIM101():
             The position to move to (in steps).
         wait_until_done : bool
             If True, wait until the movement is done.
-
-        Returns:
-        --------
-        None
-
         """
         self._controller.move_to(position=position, channel=channel)
         if wait_until_done:
@@ -279,11 +260,6 @@ class KIM101():
             The distance to move (in steps).
         wait_until_done : bool
             If True, wait until the movement is done.
-
-        Returns:
-        --------
-        None
-
         """
         self._controller.move_by(distance=distance, channel=channel)
         if wait_until_done:
@@ -294,15 +270,10 @@ class KIM101():
         """
         Stop one of the connected piezos.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel : int, None
             The channel of the piezo to stop. If None, all piezos are stopped.
-        
-        Returns:
-        --------
-        None
-
         """
         if channel is None:
             for i in range(4):
