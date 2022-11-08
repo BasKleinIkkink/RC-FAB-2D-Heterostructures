@@ -1,12 +1,13 @@
 import serial
-import typing
+from typing import Union
 from typeguard import typechecked
+import time
 
 try:
-    from .base_connector import BaseConnector
+    from .base_connector import BaseConnector, HandshakeError
     from ..stacking_backend.configs.settings import Settings
 except ImportError:
-    from base_connector import BaseConnector
+    from base_connector import BaseConnector, HandshakeError
     from ..stacking_backend.configs.settings import Settings
 
 
@@ -34,6 +35,9 @@ class SerialConnection(BaseConnector):
     def is_connected(self) -> bool:
         return self._serial.is_open
 
+    def send_sentinel(self):
+        self.send(self.SENTINEL)
+
     def send(self, command):
         # Check if the command is a string otherwise convert to str
         if not isinstance(command, str): command = str(command)
@@ -42,13 +46,73 @@ class SerialConnection(BaseConnector):
     def message_waiting(self):
         return True if self._serial.in_waiting > 0 else False
 
-    def receive(self):
-        if not self.message_waiting(): return None
+    def receive(self) -> Union[str, None]:
         return self._serial.read().decode()
+
+    def handshake(self):
+        # Depending on the role of the connector decide
+        # what to send and what to receive
+        if self._role == 'FRONDEND':
+            if not self._frondend_handshake():
+                raise HandshakeError('Frondend handshake failed')
+            else: self._handshake_complete = True
+
+        elif self._role == 'BACKEND':
+            if not self._backend_handshake():
+                raise HandshakeError('Backend handshake failed')
+            else: self._handshake_complete = True
+
+        else:
+            raise HandshakeError('Unknown role {}'.format(self._role))
+
+    def _frondend_handshake(self):
+        if not self.is_connected: return False
+
+        # Send the hello message
+        self.send('Hello there.')
+
+        # Wait for the response
+        attempts = 0
+        max_attempts = 5
+        while attempts < max_attempts:
+            res = self.receive()
+            if len(res) == 0:
+                attempts += 1
+                time.sleep(0.1)
+            elif res[0] == 'Hello there general Kenobi.':
+                return True
+
+    def _backend_handshake(self):
+        # Wait for the hello message
+        attempts = 0
+        max_attempts = 5
+        while attempts < max_attempts:
+            res = self.receive()
+            if len(res) == 0:
+                attempts += 1
+                time.sleep(0.1)
+            elif res[0] == 'Hello there.':
+                break
+        
+        # If the handshake failed keep waiting for the hello message
+        # and send 'Im still here' every 5 seconds
+        if attempts == max_attempts:
+            while True:
+                res = self.receive()
+                if len(res) == 0:
+                    time.sleep(5)
+                    self.send('Im still here')
+                elif res[0] == 'Hello there.':
+                    # Break out of the loop
+                    break
+
+        # Send the response
+        self.send('Hello there general Kenobi.')
+        return True
 
 
 if __name__ == '__main__':
-    serial_connection = SerialConnection('PARENT')
+    serial_connection = SerialConnection('FRONDEND')
     serial_connection.connect()
     serial_connection.send('Hello, world!')
     serial_connection.disconnect()

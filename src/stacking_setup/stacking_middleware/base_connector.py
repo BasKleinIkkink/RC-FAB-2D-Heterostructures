@@ -1,10 +1,20 @@
 import configparser
+import time
 
 SENTINEL = 'SENTINEL'  # Sentinel command to close the pipe
 EOM_CHAR = 'EOM'  # String indicating the end of a message over a pipe
 
 
-class BaseConnector(object):
+class HandshakeError(Exception):
+    
+    def __init__(self, message=None):
+        self._message = message
+
+    def __str__(self):
+        return self._message
+
+
+class BaseConnector:
     """
     Class to hold all the expected connection functions.
 
@@ -12,22 +22,9 @@ class BaseConnector(object):
     be inherited.
     """
     _connection_method = None
-    _timeout = 1
     _role = None
-    _config = None
     _handshake_complete = False
     _SENTINEL = SENTINEL
-
-    def __init__(self, role):
-        # Load the config file
-        self._role = role
-        self._config = configparser.ConfigParser()
-        self._config.read("com_config.ini")
-        self._load_settings()
-
-    def _load_settings(self):
-        """Load the settings from the config file."""
-        raise NotImplementedError()
 
     # ATTRIBUTES
     @property
@@ -81,5 +78,63 @@ class BaseConnector(object):
         raise NotImplementedError()
 
     def handshake(self):
-        """Perform a handshake with the IO controller (RPI)."""
-        raise NotImplementedError()
+        # Depending on the role of the connector decide
+        # what to send and what to receive
+        if self._role == 'FRONDEND':
+            if not self._frondend_handshake():
+                raise HandshakeError('Frondend handshake failed')
+            else: self._handshake_complete = True
+
+        elif self._role == 'BACKEND':
+            if not self._backend_handshake():
+                raise HandshakeError('Backend handshake failed')
+            else: self._handshake_complete = True
+
+        else:
+            raise HandshakeError('Unknown role {}'.format(self._role))
+
+    def _frondend_handshake(self):
+        if not self.is_connected: return False
+
+        # Send the hello message
+        self.send('Hello there.')
+
+        # Wait for the response
+        attempts = 0
+        max_attempts = 5
+        while attempts < max_attempts:
+            res = self.receive()
+            if len(res) == 0:
+                attempts += 1
+                time.sleep(0.1)
+            elif res[0] == 'Hello there general Kenobi.':
+                return True
+
+    def _backend_handshake(self):
+        # Wait for the hello message
+        attempts = 0
+        max_attempts = 5
+        while attempts < max_attempts:
+            res = self.receive()
+            if len(res) == 0:
+                attempts += 1
+                time.sleep(0.1)
+            elif res[0] == 'Hello there.':
+                break
+        
+        # If the handshake failed keep waiting for the hello message
+        # and send 'Im still here' every 5 seconds
+        if attempts == max_attempts:
+            while True:
+                res = self.receive()
+                if len(res) == 0:
+                    time.sleep(5)
+                    self.send('Im still here')
+                elif res[0] == 'Hello there.':
+                    # Break out of the loop
+                    break
+
+        # Send the response
+        self.send('Hello there general Kenobi.')
+        return True
+

@@ -135,19 +135,26 @@ class PipelineConnection(BaseConnector):
     """
     _connection_method = "PIPELINE"
 
-    def __init__(self, connection, role):
+    def __init__(self, connection, role, settings):
+        """
+        Initialize the connection.
+
+        Parameters
+        ----------
+        connection : multiprocessing.connection.Connection
+            The connection to use.
+        role : str
+            The role of the connection. Either "FRONDEND" or "BACKEND".
+        settings : ConfigParser
+            Not used in this connection method but added for compatibility.
+        """
         self._connection = connection
         self._role = role
-        
-        # A pipeline is local so no handshake is needed
+        self.handshake()
 
     @property
     def is_connected(self):
         return PipeCom.pipe_is_open(self._connection)
-
-    def _load_settings(self):
-        # No specific settings are needed for this communication method
-        pass
 
     def connect(self):
         # The pipe is connected on init and cannot reconnect
