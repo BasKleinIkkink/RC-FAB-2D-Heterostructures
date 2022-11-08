@@ -25,6 +25,7 @@ class SerialConnection(BaseConnector):
 
         # Create the serial connection
         self._ser = serial.Serial(port, baudrate, timeout=timeout)
+        self.connect()
 
     def connect(self) -> None:
         if not self._serial.is_open: self._serial.open()
@@ -112,7 +113,15 @@ class SerialConnection(BaseConnector):
 
 
 if __name__ == '__main__':
-    serial_connection = SerialConnection('FRONDEND')
-    serial_connection.connect()
-    serial_connection.send('Hello, world!')
-    serial_connection.disconnect()
+    def test_frondend():
+        serial_connection = SerialConnection('FRONDEND')
+        serial_connection.handshake()
+        print(serial_connection._handshake_complete)
+
+    def test_backend():
+        serial_connection = SerialConnection('BACKEND')
+        serial_connection.handshake()
+        print(serial_connection._handshake_complete)
+    
+    test_frondend()
+    # test_backend()
