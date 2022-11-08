@@ -1,6 +1,8 @@
 import serial
 from typing import Union
 from typeguard import typechecked
+from configparser import ConfigParser
+import time
 
 try:
     from .base import Base, HardwareNotConnectedError
@@ -11,6 +13,12 @@ except ImportError:
 class TangoDesktop(Base):
     """
     Class for TangoDesktop hardware.
+
+    .. warning::
+        
+        While the manual mentiones the !cal and !rm functions for calibration these are not
+        supported and will cause unwanted behaviour if called. For these methods to be 
+        implemented the Tango desktop needs an AUX IO port for endstops, wich we do not have.
 
     Communication interface:
     ------------------------
@@ -38,14 +46,16 @@ class TangoDesktop(Base):
     _type = "TANGO DESKTOP"
     _controller = None
     _baud_rate = 9600
-    _timeout = 0.2
+    _timeout = 1
     _serial_nr = '220313104'
     _ser = None
     _port = 'COM6'
 
-    def __init__(self) -> None:
+    def __init__(self, id : str, settings : ConfigParser) -> None:
         """Initialize the tango desktop."""	
         # Check if the tango desktop is connected
+        self._id = id
+
         if self._controller is None:
             # Controller is not initiated, check if the port can be captured
             try:
@@ -65,7 +75,7 @@ class TangoDesktop(Base):
 
     # ATTRIBUTES
     @property
-    @typechecked
+    #@typechecked
     def steps_per_um(self) -> float:
         """Get the steps per um."""
         steps_per_rev = float(self._send_and_receive('?motorsteps z', expect_response=True, expect_confirmation=False))
@@ -73,13 +83,13 @@ class TangoDesktop(Base):
         return round(steps_per_rev / spindle_pitch, 3)
 
     @property
-    @typechecked
+    #@typechecked
     def position(self) -> float:
         """Get the current position."""
         return float(self._send_and_receive('?pos z', expect_response=True, expect_confirmation=False))
 
     @property
-    @typechecked
+    #@typechecked
     def speed(self) -> float:
         """Get the current speed."""
         spindle_pitch = float(self._send_and_receive('?pitch z', expect_response=True, expect_confirmation=False))
@@ -87,7 +97,7 @@ class TangoDesktop(Base):
         return round(rev_per_s / spindle_pitch, 3)
 
     @speed.setter
-    @typechecked
+    #@typechecked
     def speed(self, speed : Union[float, int]) -> None:
         """Set the speed of the tango desktop."""
         # Calculate the needed revolutions per second
@@ -96,7 +106,7 @@ class TangoDesktop(Base):
         self._send_and_receive('!vel z {}'.format(rev_per_s), expect_confirmation=False, expect_response=False)
 
     @property
-    @typechecked
+    #@typechecked
     def acceleration(self) -> float:
         """Get the acceleration of the tango desktop."""
         acc = float(self._send_and_receive('?accel z', expect_response=True, expect_confirmation=False))
@@ -104,7 +114,7 @@ class TangoDesktop(Base):
         return acc
 
     @acceleration.setter
-    @typechecked
+    #@typechecked
     def acceleration(self, acceleration : Union[float, int]) -> None:
         """Set the acceleration of the tango desktop."""
         # The acceleration is given in mm/s^2
@@ -113,7 +123,10 @@ class TangoDesktop(Base):
         self._send_and_receive('!accel z {}'.format(acc), expect_confirmation=False, expect_response=False)
 
     # CONNECTION FUNCTIONS
-    @typechecked
+    def _message_waiting(self):
+        return True if self._ser.in_waiting > 0 else False
+
+    #@typechecked
     def _send_and_receive(self, command : str, expect_confirmation : bool=True, expect_response : bool=False) -> Union[None, str]:
         """
         Send a command to the tango desktop and receive the response.
@@ -145,36 +158,44 @@ class TangoDesktop(Base):
         # Check if the command has a carriage return
         if command[-2:] != '\r':
             command += ' \r'
+
+        
+        self._ser.reset_input_buffer() # Empty the serial buffer
         self._ser.write(command.encode())  # Send the command
         
-        while True:
-            # Check if a confirmation is expected
-            if expect_confirmation and not expect_response:
-                resp = self._ser.readline().decode().strip()  # Read the command confirmation
-                if resp == '@': continue
-                if resp == 'OK...': break
-                else: raise ValueError("The command {} was not accepted by the tango desktop and gave response: {}.".format(command, resp))
-            elif expect_response:
-                data_resp = self._ser.readline().decode().strip()
-                if data_resp == '@': continue
-                else: break
-            
+        if expect_confirmation or expect_response:
+            got_response = False
+            etime = time.time() + self._timeout
+            while time.time() < etime and not got_response:
+                # Check if a confirmation is expected
+                time.sleep(0.01)
 
-        if not expect_confirmation:
-            # Ask the tango if there are any errors
-            self._ser.write('?err \r'.encode())
+                if expect_confirmation and not expect_response:
+                    if self._message_waiting(): resp = self._ser.readline().decode().strip()  # Read the command confirmation
 
-            while True:
-                resp = self._ser.readline().decode().strip()
-                if resp == '@': continue
-                elif resp != '0':
-                    raise ValueError("The command {} gave an error: {}.".format(command, resp))
-                else: break
+                    if resp == '@': 
+                        continue
+                    if resp == 'OK...': 
+                        got_response = True
+                    else: 
+                        raise ValueError("The command {} was not accepted by the tango desktop and gave response: {}.".format(command, resp))
+                elif expect_response:
+                    if self._message_waiting():
+
+                        data_resp = self._ser.readline().decode().strip()
+                    if data_resp == '@': 
+                        continue
+                    else: 
+                        got_response = True
+                
+            if not got_response:
+                print("The command {} did not receive a response.".format(command))
+                raise HardwareNotConnectedError("The tango desktop did not respond to the command {}.".format(command))
         
             if expect_response: return data_resp  
-            else: return None
+        return None
 
-    @typechecked
+    #@typechecked
     def connect(self) -> None:
         """Connect to the tango desktop."""
         if self._ser is None:
@@ -187,11 +208,20 @@ class TangoDesktop(Base):
                 # Set the dimentions to um
                 self._send_and_receive('!dim 1 1 1', expect_confirmation=False, expect_response=False)
 
+            # Disable the autostatus reporting
+            self._send_and_receive('!autostatus 0', expect_confirmation=False, expect_response=False)
+
+            # Activate extended mode (enables homing)
             resp = self._send_and_receive('?extmode', expect_response=True, expect_confirmation=False)
             if resp != '1':
                 self._send_and_receive('!extmode 1', expect_response=False, expect_confirmation=False)
 
-    @typechecked
+            # Activate the software limits so !cal and !rm do not set the limits anymore
+            resp = self._send_and_receive('?nosetlimit z', expect_response=True, expect_confirmation=False)
+            if resp != '1':
+                self._send_and_receive('!nosetlimit z 1', expect_response=False, expect_confirmation=False)
+
+    #@typechecked
     def disconnect(self) -> None:
         """Disconnect from the tango desktop."""
         if self._ser is None:
@@ -204,12 +234,12 @@ class TangoDesktop(Base):
             self._ser.close()  # Disconnect the tango desktop
 
     # STATUS FUNCTIONS
-    @typechecked
+    #@typechecked
     def is_connected(self) -> bool:
         """Check if the tango desktop is connected."""
         return True if self._ser is not None else False
 
-    @typechecked
+    #@typechecked
     def is_moving(self) -> bool:
         """
         Check the status of the axis.
@@ -235,7 +265,6 @@ class TangoDesktop(Base):
         --------
         bool:
             True if the axis is moving, False if not.
-
         """
         resp = self._send_and_receive('sa z', expect_response=True, expect_confirmation=False)
         if resp in ['E', '-', 'T']: raise ValueError("The axis responded with: {}".format(resp))
@@ -243,8 +272,21 @@ class TangoDesktop(Base):
         elif resp in ['@', 'J']: return False
         else: raise KeyError('Unknown response: {}'.format(resp))
 
+    # HOMING FUNCTIONS
+    def home(self):
+        """
+        Home the tango desktop.
+        
+        .. warning::
+
+            This function assumes that there is only one snapshot position saved on the tango desktop.
+            otherwise it will move to the first snapshot position in the snapshot array.
+
+        """
+        self._send_and_receive('!home z', expect_response=False, expect_confirmation=False)
+
     # MOVEMENT FUNCTIONS
-    @typechecked
+    #@typechecked
     def start_jog(self, direction : Union[str, int]) -> None:
         """Start a continuous jog in the given direction."""
         # Check if the direction is allowed
@@ -255,36 +297,49 @@ class TangoDesktop(Base):
 
         rev_per_s = self._send_and_receive('?vel', expect_response=True, expect_confirmation=False).split(' ')[2]
         rev_per_s = float(rev_per_s)
-        self._send_and_receive('!speed {}{}'.format(direction, rev_per_s), expect_response=False, expect_confirmation=False)
+        self._send_and_receive('!speed z {}{}'.format(direction, rev_per_s), expect_response=False, expect_confirmation=False)
 
     def stop_jog(self) -> None:
-        self._send_and_receive('!speed 0', expect_response=False, expect_confirmation=False)
+        self._send_and_receive('!speed z 0', expect_response=False, expect_confirmation=False)
 
-    @typechecked
+    #@typechecked
     def move_to(self, position : Union[float, int]) -> None:
         """Move the tango desktop to the given position."""
         self._send_and_receive('!moa z {}'.format(position), expect_response=False, expect_confirmation=False)
 
-    @typechecked
+    #@typechecked
     def move_by(self, distance : Union[float, int]) -> None:
         """Move the tango desktop by the given distance."""
         self._send_and_receive('!mor z {}'.format(distance), expect_response=False, expect_confirmation=False)
 
     def stop(self) -> None:
         """Stop the tango desktop."""
+        # Stop all moves
+        self._send_and_receive('!a', expect_response=False, expect_confirmation=False)
+        # Stop all other commands
         self._send_and_receive('!stop', expect_response=False, expect_confirmation=False)
 
 
 if __name__ == '__main__':
-    tango = TangoDesktop()
+    import configparser
+    import time
+    config = configparser.ConfigParser()
+    config.read('..\configs\config.ini')
+    tango = TangoDesktop(id='F', settings=config)
     tango.connect()
     print('Position: {}'.format(tango.position))
     print('Speed: {}'.format(tango.speed))
     print('Acceleration: {}'.format(tango.acceleration))
     tango.move_by(10000)  # Move 10mm up
     print('Is moving: {}'.format(tango.is_moving()))
-    tango.move_to(0)
+    tango.move_to(10)
     while tango.is_moving():
         pass
     print('Is moving: {}'.format(tango.is_moving()))
+
+    # Test jogging
+    tango.start_jog('-')
+    time.sleep(1)
+    tango.stop_jog()
+
     tango.disconnect()

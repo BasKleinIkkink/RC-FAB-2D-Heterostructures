@@ -1,6 +1,7 @@
-from pylablib.devices.Thorlabs.kinesis import KinesisPiezoMotor, list_kinesis_devices, TPZMotorDriveParams
+from pylablib.devices.Thorlabs.kinesis import KinesisPiezoMotor, list_kinesis_devices, TPZMotorDriveParams, TPZMotorJogParams
 from typing import Union
 from typeguard import typechecked
+from configparser import ConfigParser
 
 try:
     from .base import HardwareNotConnectedError
@@ -15,7 +16,7 @@ class KIM101():
     _type = 'KIM101'
 
     @typechecked
-    def __init__(self, serial_nr: Union[str, bytes]='97101742') -> None:
+    def __init__(self, settings : ConfigParser, serial_nr: Union[str, bytes]='97101742') -> None:
         """
         Initialize the KIM101.
         
@@ -118,7 +119,7 @@ class KIM101():
         return self._controller.get_position(channel=channel)
 
     @typechecked
-    def _wait_move(self, channel : int) -> bool:
+    def _wait_move(self, channel : int) -> None:
         """
         Wait until the piezo is not moving anymore.
         
@@ -152,7 +153,7 @@ class KIM101():
         self._controller.setup_jog(velocity=velocity, acceleration=acceleration)
 
     @typechecked
-    def get_jog_parameters(self) -> TPZMotorDriveParams:
+    def get_jog_parameters(self) -> TPZMotorJogParams:
         """
         Get the jog parameters of the piezo.
         
@@ -199,7 +200,7 @@ class KIM101():
 
     # MOVEMENT FUNCTIONS
     @typechecked
-    def start_jog(self, channel : int, direction : Union[str, int, bool], kind : str='continues') -> None:
+    def start_jog(self, channel : int, direction : Union[str, int, bool], kind : str='continuous') -> None:
         """
         Start a jog.
         
@@ -222,6 +223,17 @@ class KIM101():
             The kind of the jog. Can be ``"continuous"`` or ``"builtin"``.
         """
         self._controller.jog(direction=direction, kind=kind, channel=channel)
+
+    def stop_jog(self, channel : Union[None, int]=None) -> None:
+        """
+        Stop the jog movement.
+        
+        Parameters
+        ----------
+        channel : int, None
+            The channel of the piezo to stop. If None, all channels are stopped.
+        """
+        self._controller.stop(channel=channel)
 
     @typechecked
     def move_to(self, channel : int, position : Union[float, int], 
@@ -284,17 +296,20 @@ class KIM101():
     
 if __name__ == '__main__':
     from time import sleep
-       # Connect to the controller.
-    controller = KIM101()
+    import configparser
+    config = configparser.ConfigParser()
+    config.read('..\configs\hardware_config.ini')
+    # Connect to the controller.
+    controller = KIM101(config)
     controller.connect()
 
     # Test drive functions.
     drive_params = controller.get_drive_parameters()
     print('original drive settings: {}'.format(drive_params))
-    controller.setup_drive(velocity=20, acceleration=15)
+    controller.setup_drive(velocity=200, acceleration=40)
     print('new drive settings: {}'.format(controller.get_drive_parameters()))
     controller.move_by(channel=1, distance=1000)
-    controller.move_to(channel=1, position=25000)
+    controller.move_to(channel=1, position=0)
 
     # Reset the driving params
     controller.setup_drive(velocity=10, acceleration=10)
@@ -303,15 +318,15 @@ if __name__ == '__main__':
     # Test jog functions.
     jog_params = controller.get_jog_parameters()
     print('original jog settings: {}'.format(jog_params))
-    controller.setup_jog(channel=1, velocity=20, acceleration=20)
+    controller.setup_jog(velocity=20, acceleration=20)
     print('new jog settings: {}'.format(controller.get_jog_parameters()))
-    controller.start_jog(channel=1, direction='+')
+    controller.start_jog(channel=2, direction='+')
     sleep(3)
-    controller.stop_jog(channel=1)
-    controller.start_jog(channel=1, direction='-')
+    controller.stop_jog(channel=2)
+    controller.start_jog(channel=2, direction='-')
     sleep(3)
-    controller.stop_jog(channel=1)
+    controller.stop_jog(channel=2)
 
     # Reset the jog params
-    controller.setup_jog(channel=1, velocity=15, acceleration=15)
+    controller.setup_jog(velocity=15, acceleration=15)
     print('reset jog settings: {}'.format(controller.get_jog_parameters()))	

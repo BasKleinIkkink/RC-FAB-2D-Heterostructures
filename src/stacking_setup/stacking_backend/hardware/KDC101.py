@@ -1,6 +1,7 @@
-from pylablib.devices.Thorlabs.kinesis import KinesisMotor, list_kinesis_devices
+from pylablib.devices.Thorlabs.kinesis import KinesisMotor, list_kinesis_devices, TVelocityParams, TJogParams
 from typing import Union
 from typeguard import typechecked
+from configparser import ConfigParser
 
 try:
     from .base import HardwareNotConnectedError
@@ -15,7 +16,7 @@ class KDC101():
     _controller = None
 
     @typechecked
-    def __init__(self, serial_nr : Union[str, bytes]='27263640') -> None:
+    def __init__(self, settings : ConfigParser, serial_nr : Union[str, bytes]='27263640') -> None:
         """
         Initialize the KCD101.
         
@@ -29,6 +30,7 @@ class KDC101():
         HardwareNotConnectedError
             If the KCD101 is not connected.
         """
+        self._settings=settings
         if not isinstance(serial_nr, str):
             self._serial_nr = str(serial_nr)
         else:
@@ -168,7 +170,7 @@ class KDC101():
 
     # JOG AND DRIVE PARAMETERS
     @typechecked
-    def get_drive_parameters(self, scale: bool=True) -> list:
+    def get_drive_parameters(self, scale: bool=True) -> TVelocityParams:
         """
         Get the drive parameters.
 
@@ -198,7 +200,7 @@ class KDC101():
         self._controller.setup_velocity(max_velocity=velocity, acceleration=acceleration, scale=scale)
     
     @typechecked
-    def get_jog_parameters(self, scale : bool=True) -> dict:
+    def get_jog_parameters(self, scale : bool=True) -> TJogParams:
         """
         Get the jog parameters.
 
@@ -318,20 +320,23 @@ class KDC101():
 
 if __name__ == '__main__':
     from time import sleep
+    import configparser
     # Connect to the controller.
-    controller = KDC101('27263640')
+    config = configparser.ConfigParser()
+    config.read('..\configs\config.ini')
+    controller = KDC101(config, '27263640')
     controller.connect()
 
     # Test drive functions.
     drive_params = controller.get_drive_parameters()
     print('original drive settings: {}'.format(drive_params))
-    controller.setup_drive(max_velocity=20, max_acceleration=15)
+    controller.setup_drive(velocity=20, acceleration=15)
     print('new drive settings: {}'.format(controller.get_drive_parameters()))
     controller.rotate_by(1000, scale=False)
     controller.rotate_to(25000, scale=False)
 
     # Reset the driving params
-    controller.setup_drive(max_velocity=10, max_acceleration=10)
+    controller.setup_drive(velocity=10, acceleration=10)
     print('reset drive settings: {}'.format(controller.get_drive_parameters()))
 
     # Test jog functions.

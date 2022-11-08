@@ -6,6 +6,7 @@ import sys
 import time
 from typeguard import typechecked
 from typing import Union
+import configparser
 
 try:
     from .gcode_parser import GcodeParser
@@ -31,7 +32,6 @@ except ImportError:
     from stacking_middleware.serial_connection import SerialConnection
     
 
-
 class RepeatedTimer:
     """
     Class to repeat a task every x seconds.
@@ -44,8 +44,8 @@ class RepeatedTimer:
         """
         Initiate the timer.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         interval : float, int
             The interval in seconds.
         function : callable
@@ -69,8 +69,8 @@ class RepeatedTimer:
         """
         Get the interval.
         
-        Returns:
-        --------
+        Returns
+        -------
         float, int
             The interval in seconds.
         """
@@ -81,8 +81,8 @@ class RepeatedTimer:
         """
         Get the running status.
         
-        Returns:
-        --------
+        Returns
+        -------
         bool
             True if the timer is running, False otherwise.
         """
@@ -94,11 +94,10 @@ class RepeatedTimer:
         """
         Get the next call.
         
-        Returns:
-        --------
+        Returns
+        -------
         float, int
             The next call in seconds.
-
         """
         return self._next_call
 
@@ -130,18 +129,18 @@ def catch_remote_exceptions(wrapped_function : callable) -> callable:
 
     https://stackoverflow.com/questions/6126007/python-getting-a-traceback
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     wrapped_function : function
         The function to wrap.
 
-    Raises:
-    -------
+    Raises
+    ------
     Exception
         The remote exception that should be send to the main process.
 
-    Returns:
-    --------
+    Returns
+    -------
     function
         The wrapped function.
 
@@ -169,23 +168,22 @@ class StackingSetupBackend:
     _emergency_breaker = None
     _hardware = None
 
-    def __init__(self, to_main : Union[PipelineConnection, SerialConnection]) -> None:
+    def __init__(self, to_main : Union[PipelineConnection, SerialConnection], config_file : str) -> None:
         """
         Initiate the backend class.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         to_main : PipelineConnection, SerialConnection
             The pipe to the main process.
-
-        Returns:
-        --------
-        None
-
+        config_file : str
+            The path to the config file.
         """
         self._con_to_main = to_main
         self._emergency_stop_event = mp.Event()
         self._shutdown = mp.Event()
+        self._config_filename = config_file
+
 
         # TODO: #10 get the data from the config file
         self._positioning = 'REL'  # Always initiate in relative positining mode
@@ -197,11 +195,10 @@ class StackingSetupBackend:
         Set the logger, this has to be done in a function because the class will be pickled and 
         send to another process (logger can't be pickled).
 
-        Returns:
-        --------
+        Returns
+        -------
         logger : tr.Thread
             The logger thread.
-
         """
         import logging  # Import the logger here because it can't be pickled
         logging.basicConfig(level=logging.DEBUG, filename='log.log', 
@@ -213,8 +210,8 @@ class StackingSetupBackend:
         """
         Echo the command response (error code and msg) to the main process.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         func : function
             The function to execute.
         *args : list
@@ -222,13 +219,12 @@ class StackingSetupBackend:
         **kwargs : dict
             The keyword arguments to pass to the function.
 
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
-
         """
         # Wrap the function
         @functools.wraps(func)
@@ -257,21 +253,24 @@ class StackingSetupBackend:
         
         Define the connected hardware controllers.
 
-        Returns:
-        --------
+        Returns
+        -------
         hardware : list
             A list of the hardware controllers.
-
         """
+        # Load the config
+        config = configparser.ConfigParser()
+        config.read(self._config_filename)
+
         # self._piezo_controller = KIM101()
-        self._motor_controller = KDC101()
+        self._motor_controller = KDC101(settings=config)
 
         # Define the connected components.
         _hardware = [
-            # PIA13(id='X', channel=1, hardware_controller=self._piezo_controller), 
-            # PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller), 
-            # PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller),
-            PRMTZ8(id='L', hardware_controller=self._motor_controller)
+            # PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, settings=config), 
+            # PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, settings=config), 
+            # PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller, settings=config),
+            PRMTZ8(id='L', hardware_controller=self._motor_controller, settings=config)
         ]
         return _hardware
 
@@ -323,19 +322,14 @@ class StackingSetupBackend:
         This loop is responsible for the communication with the main process 
         and the parsing and execution of the commands.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         emergency_stop_event : multiprocessing.Event
             The event that is set when the emergency stop is triggered.
         shutdown_event : multiprocessing.Event
             The event that is set when the shutdown is triggered.
         con_to_main : multiprocessing.Pipe
             The pipe to the main process.
-
-        Returns:
-        --------
-        None
-        
         """
         # When starting a process the class is pickled and a new instance is created in the new process.
         # This means that attributes that were changed in the main process are not changed in the new process.
@@ -383,18 +377,17 @@ class StackingSetupBackend:
         """
         Execute the parsed command dict.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         parsed_command : dict
             The parsed command dict.
         
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if all the commands were executed successfully.
         msg : str
             The error message if any error occured.
-
         """
         # Placeholder for the exit code
         exit_code = 0
@@ -498,18 +491,17 @@ class StackingSetupBackend:
         """
         Move to the given axis in a lineair motion.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         movements : dict
             A dictionary with the movements for each axis.
 
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if the command was executed successfully.
         msg : str
             The error message if any error occured.
-
         """
         axis_to_move = list(movements.keys())
         for axis in self._hardware:
@@ -546,18 +538,17 @@ class StackingSetupBackend:
         """
         Make an arc to the given position (rotate).
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         movements : dict
             A dictionary with the movements for each axis.
 
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if the command was executed successfully.
         msg : str
             The error message if any error occured.
-
         """
         axis_to_move = list(movements.keys())
         for axis in self._hardware:
@@ -601,7 +592,6 @@ class StackingSetupBackend:
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
-
         """
         for axis in self._hardware:
             try:
@@ -621,7 +611,6 @@ class StackingSetupBackend:
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
-
         """
         if self._positioning == 'REL':
             self._positioning = 'ABS'
@@ -639,7 +628,6 @@ class StackingSetupBackend:
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
-
         """
         if self._positioning == 'ABS':
             self._positioning = 'REL'
@@ -657,19 +645,18 @@ class StackingSetupBackend:
         IMPORTANT: This function should not be used as the value should 
         be determinded during the calibration of the machine.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         factors : dict
             A dictionary with the steps per um for each axis that
             should be changed.
 
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
-
         """
         # Check if the factor list is empty
         if len(factors.keys()) == 0:
@@ -700,8 +687,8 @@ class StackingSetupBackend:
         """
         Get the temperature report.
         
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
@@ -733,18 +720,17 @@ class StackingSetupBackend:
         keep alive timer has been set. Otherwise the keep alive timer will be
         set to the given amount of seconds. If 0 is given the timer is disabled.
         
-        Parameters:
-        -----------
+        Parameters
+        ----------
         interval : dict
             A dict with the interval to set under key 'S'.
         
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if the command was executed successfully, 1 otherwise.
         msg : str
             If no error the set interval in seconds, otherwise an error message.
-
         """
         if 'S' not in interval.keys():
             # Return the current interval
@@ -772,13 +758,12 @@ class StackingSetupBackend:
         """
         Get the current positions.
         
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : dict
             A dict with the positions of the axes.
-
         """
         positions = {}
         for axis in self._hardware:
@@ -793,13 +778,12 @@ class StackingSetupBackend:
         """
         Reset the machine.
         
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
-
         """
         self._disconnect_all_hardware()  # Try to disconnect all the hardware.
         self._emergency_stop_event.clear()  # Reset the emergency stop flag.
@@ -814,13 +798,12 @@ class StackingSetupBackend:
 
         Will jog the given axis if the axis value is one and stop moving if the value is 0.
         
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
-
         """
         for axis in self._hardware:
             if axis.id in command.keys():
@@ -840,18 +823,17 @@ class StackingSetupBackend:
         """
         Macro function to set the driving parameters for the stepper or actuator.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         command : dict
             A dictionary with the axis id(s) and the speed and acceleration to set.
         
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
-
         """
         for axis in self._hardware:
             if axis.id == axis:
@@ -866,18 +848,17 @@ class StackingSetupBackend:
         """
         Custom function to set the acceleration of the given axes.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         command : dict
             A dictionary with the axis id(s) and the acceleration to set
         
-        Returns:
-        --------
+        Returns
+        -------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
             A message with the result of the command.
-
         """
         for axis in self._hardware:
             if axis.id == axis:
