@@ -1,39 +1,49 @@
 import serial
-from .base_connector import BaseConnector
+import typing
+from typeguard import typechecked
+
+try:
+    from .base_connector import BaseConnector
+    from ..stacking_backend.configs.settings import Settings
+except ImportError:
+    from base_connector import BaseConnector
+    from ..stacking_backend.configs.settings import Settings
 
 
 class SerialConnection(BaseConnector):
     _connection_method = 'SERIAL'
 
-    def __init__(self, role):
-        super().__init__(role)
+    def __init__(self, settings : Settings, role : str) -> None:
+        self._role = role
+        self._settings = settings
 
-    #def _load_settings(self):
-    #    return None
-    #    section = 'SERIAL.PARENT' if self.role == 'PARENT' else 'SERIAL.CHILD'
-    #    self._port = self._config.get(section, 'port')
-    #    self._baud = self._config.get(section, 'baudrate')
-    #    self._timeout = self._config.get(section, 'timeout')
+        # Load some settings
+        port = self._settings.get('serial', 'port')
+        baudrate = self._settings.get('serial', 'baudrate')
+        timeout = self._settings.get('serial', 'timeout')
 
-    def connect(self):
-        self._serial.open()
+        # Create the serial connection
+        self._ser = serial.Serial(port, baudrate, timeout=timeout)
 
-    def disconnect(self):
-        self._serial.close()
+    def connect(self) -> None:
+        if not self._serial.is_open: self._serial.open()
 
-    def is_connected(self):
+    def disconnect(self) -> None:
+        if self._serial.is_open: self._serial.close()
+
+    def is_connected(self) -> bool:
         return self._serial.is_open
 
     def send(self, command):
+        # Check if the command is a string otherwise convert to str
+        if not isinstance(command, str): command = str(command)
         self._serial.write(command.encode())
 
     def message_waiting(self):
         return True if self._serial.in_waiting > 0 else False
 
     def receive(self):
-        if not self.message_waiting():
-            return None
-
+        if not self.message_waiting(): return None
         return self._serial.read().decode()
 
 
