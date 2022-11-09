@@ -148,9 +148,10 @@ class KDC101():
         Returns
         -------
         dict
-            The homing parameters.
+            The homing parameters. Homing velocity (vel) and homing direction (dir).
         """
-        return self._controller.get_homing_parameters()
+        params = self._controller.get_homing_parameters()
+        return {'vel': params[2], 'dir': params[0]}
 
     @typechecked
     def setup_homing(self, velocity : Union[float, int, None]=None, acceleration : Union[float, int, None]=None) -> None:
@@ -170,7 +171,7 @@ class KDC101():
 
     # JOG AND DRIVE PARAMETERS
     @typechecked
-    def get_drive_parameters(self, scale: bool=True) -> TVelocityParams:
+    def get_drive_parameters(self, scale: bool=True) -> dict:
         """
         Get the drive parameters.
 
@@ -178,9 +179,16 @@ class KDC101():
         ----------
         scale : bool
             If True, the parameters will be scaled to the correct units.
-        """
-        return self._controller.get_velocity_parameters(scale=scale)
 
+        Returns
+        -------
+        dict
+            Dictionary containing the velocity (vel) and acceleration (acc)
+        """
+        # Format the parameters to dict format.
+        params = self._controller.get_velocity_params(scale=scale)
+        return {'vel': params[2], 'acc': params[1]}
+        
     @typechecked
     def setup_drive(self, velocity : Union[float, int]=None, acceleration : Union[float, int]=None, scale : bool =True) -> None:
         """
@@ -200,9 +208,12 @@ class KDC101():
         self._controller.setup_velocity(max_velocity=velocity, acceleration=acceleration, scale=scale)
     
     @typechecked
-    def get_jog_parameters(self, scale : bool=True) -> TJogParams:
+    def get_jog_parameters(self, scale : bool=True) -> dict:
         """
         Get the jog parameters.
+
+        The controller can jog in continues and step mode. In this application only step
+        mode is used for safety reasons.
 
         Parameters
         ----------
@@ -212,9 +223,10 @@ class KDC101():
         Returns
         -------
         dict
-            The jog parameters.
+            The jog parameters. Step size, velocity (vel) and acceleration (acc).
         """
-        return self._controller.get_jog_parameters(scale=scale)
+        params = self._controller.get_jog_params(scale=scale)
+        return {'step_size': params[1], 'vel': params[2], 'acc': params[3]}
 
     @typechecked
     def setup_jog(self, velocity : Union[float, int, None]=None, acceleration: Union[float, int, None]=None, scale: bool=True) -> None:

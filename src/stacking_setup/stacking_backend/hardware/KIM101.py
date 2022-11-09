@@ -153,16 +153,18 @@ class KIM101():
         self._controller.setup_jog(velocity=velocity, acceleration=acceleration)
 
     @typechecked
-    def get_jog_parameters(self) -> TPZMotorJogParams:
+    def get_jog_parameters(self) -> dict:
         """
         Get the jog parameters of the piezo.
         
         Returns
         -------
-        TPZMotorDriveParams
-            The jog parameters of the piezo.
+        dict
+            The jog parameters of the piezo. Velpocity (vel) and acceleration (acc) 
+            are in um/s and um/s^2.
         """
-        return self._controller.get_jog_parameters()
+        params = self._controller.get_jog_parameters()
+        return {'step_size': params[1], 'vel': params[3], 'acc': params[4]}
 
     @typechecked
     def setup_drive(self, max_voltage : Union[float, int, None]=None, 
@@ -185,18 +187,19 @@ class KIM101():
         self._controller.setup_drive(max_voltage=max_voltage, velocity=velocity, acceleration=acceleration,)
     
     @typechecked
-    def get_drive_parameters(self) -> TPZMotorDriveParams:
+    def get_drive_parameters(self) -> dict:
         """
         Get the drive parameters of the piezo.
         
-        The drive parameters are used for detemining the movement behavoir when moving by relative or absolute positioning.
+        The drive parameters are used for detemining the movement behaviour when moving by relative or absolute positioning.
         
         Returns
         -------
-        TPZMotorDriveParams
-            The drive parameters of the piezo.
+        dict
+            The drive parameters of the piezo. Velocity (vel) and acceleration (acc)
         """
-        return self._controller.get_drive_parameters()
+        params = self._controller.get_drive_parameters()
+        return {'vel': params[1], 'acc': params[2]}
 
     # MOVEMENT FUNCTIONS
     @typechecked
