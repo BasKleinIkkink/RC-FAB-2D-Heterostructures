@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch, PropertyMock, Mock
 import multiprocessing as mp
 import threading as tr
 from time import sleep
+import configparser
 
 #Following lines are for assigning parent directory dynamically.
 import sys, os
@@ -11,8 +12,10 @@ parent_dir_path = os.path.abspath(os.path.join(dir_path, os.pardir))
 sys.path.insert(0, parent_dir_path)
 
 # The code to be tested
-from stacking_setup.stacking_backend.stacking_setup import StackingSetupBackend
-from stacking_setup.stacking_backend.hardware.base import Base, NotSupportedError
+from src.stacking_setup.stacking_backend.stacking_setup import StackingSetupBackend
+from src.stacking_setup.stacking_backend.hardware.base import Base, NotSupportedError
+from src.stacking_setup.stacking_backend.configs.settings import Settings
+from src.stacking_setup.stacking_backend.configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_LINEAR_AXES, ACCEPTED_ROTATIONAL_AXES
 
 
 def mock_pia13(id):
@@ -145,6 +148,7 @@ class TestControlBackend(unittest.TestCase):
 
     def setUp(self):
         self.to_main, self.to_proc = mp.Pipe()
+        self.settings = configparser.ConfigParser()
         
     def tearDown(self):
         # Close the pipes
@@ -155,7 +159,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_connect_hardware(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         stack._connect_all_hardware()
 
@@ -174,7 +178,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_disconnect_hardware(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         # Test the initiate hardware function.
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         stack._disconnect_all_hardware()
 
@@ -188,7 +192,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_emergency_stop(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         stack._emergency_stop()
 
@@ -199,7 +203,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_echo(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         
         def test_function(dummy1):
@@ -225,7 +229,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_execute_one_command(self, _init_emergency_breaker_mock, _init_all_hardware_mock, G0_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         
         # Test a command that is not implemented
@@ -248,7 +252,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_execute_multiple_commands(self, _init_emergency_breaker_mock, _init_all_hardware_mock,
                                         M105_mock, G1_mock, G0_mock):
-          stack = StackingSetupBackend(self.to_main)
+          stack = StackingSetupBackend(self.to_main, self.settings)
           stack.setup_backend()
           
           # Test a command that is not implemented
@@ -268,7 +272,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_call_M105(self, _init_emergency_breaker_mock, _init_all_hardware_mock, M105_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
 
         # When calling with no arguments the function should return the current value
@@ -286,7 +290,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_call_M112(self, _init_emergency_breaker_mock, _init_all_hardware_mock, M112_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
 
         # When calling with no arguments the function should return the current value
@@ -304,7 +308,7 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_call_M113(self, _init_emergency_breaker_mock, _init_all_hardware_mock, M113_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
 
         # When calling with no arguments the function should return the current value
@@ -322,6 +326,7 @@ class TestMovementCommands(unittest.TestCase):
 
     def setUp(self):
         self.to_main, self.to_proc = mp.Pipe()
+        self.settings = configparser.ConfigParser()
         
     def tearDown(self):
         # Close the pipes
@@ -332,7 +337,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G0(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         movement = {'X': 1, 'Y': 2, 'Z': 3}
         exit_code, msg = stack.G0(movement)
@@ -350,7 +355,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G0_not_supported(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         movement = {'L': 1}
         exit_code, msg = stack.G0(movement)
@@ -366,7 +371,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G0_non_existing_part(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         movement = {'X': 5,'A': 1}
         exit_code, msg = stack.G0(movement)
@@ -384,7 +389,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G1(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         movement = {'L': 5}
         exit_code, msg = stack.G1(movement)
@@ -400,7 +405,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G1_not_supported(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         movement = {'X': 5}
         exit_code, msg = stack.G1(movement)
@@ -416,7 +421,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G1_non_existing_part(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         movement = {'L': 5,'A': 1}
         exit_code, msg = stack.G1(movement)
@@ -436,7 +441,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G28(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         exit_code, msg = stack.G28()
 
@@ -454,7 +459,7 @@ class TestMovementCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_G90andG91(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
 
         # Change the mode a few times
@@ -474,6 +479,7 @@ class TestMachineCommands(unittest.TestCase):
 
     def setUp(self):
         self.to_main, self.to_proc = mp.Pipe()
+        self.settings = configparser.ConfigParser()
         
     def tearDown(self):
         # Close the pipes
@@ -484,7 +490,7 @@ class TestMachineCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_M92(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
 
         factors = {'Y': 5}
@@ -508,7 +514,7 @@ class TestMachineCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_M105(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         exit_code, msg = stack.M105()
 
@@ -521,7 +527,7 @@ class TestMachineCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_M112(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         exit_code, msg = stack.M112()
 
@@ -535,7 +541,7 @@ class TestMachineCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_M113(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
 
         # Ask for the inteval without one being set
@@ -560,7 +566,7 @@ class TestMachineCommands(unittest.TestCase):
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     @patch.object(StackingSetupBackend, '_init_emergency_breaker', return_value=MagicMock())
     def test_M114(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
-        stack = StackingSetupBackend(self.to_main)
+        stack = StackingSetupBackend(self.to_main, self.settings)
         stack.setup_backend()
         exit_code, msg = stack.M114()
 
@@ -569,8 +575,94 @@ class TestMachineCommands(unittest.TestCase):
         self.assertNotEqual(msg, None)
         self.assertEqual(msg, {'X': 0, 'Y': 0, 'Z': 0, 'L': 0})
 
-    # Test M999
 
+class TestSettings(unittest.TestCase):
+
+    def setUp(self):
+        # Create a dummy config file 
+        config = configparser.ConfigParser()
+
+        # Set some dummy values in the sections
+        config['PIA.DEFAULT'] = {'X': 1, 'Y': 2, 'Z': 3, 'L': 4, 'R': 5}
+        config['PIA.Z'] = {'X': 5, 'Y': 6, 'Z': 7, 'L': 8}
+
+        # Write the config file
+        with open('test.ini', 'w') as configfile:
+            config.write(configfile)
+
+    def tearDown(self):
+        # Remove the config file
+        os.remove('test.ini')
+
+    # Test initiating the class
+    def test_init(self):
+        settings = Settings('test.ini')
+        self.assertTrue(isinstance(settings._config, type(configparser.ConfigParser())))
+
+    # Test asking the attributes
+    def test_getattr(self):
+        settings = Settings('test.ini')
+        accepted_commands = settings.accepted_commands
+        accepted_linear_axes = settings.accepted_linear_axes
+        accepted_rotational_axes = settings.accepted_rotational_axes
+
+        self.assertEqual(accepted_commands, ACCEPTED_COMMANDS)
+        self.assertEqual(accepted_linear_axes, ACCEPTED_LINEAR_AXES)
+        self.assertEqual(accepted_rotational_axes, ACCEPTED_ROTATIONAL_AXES)
+
+    # Test setting an attribute
+    def test_setattr(self):
+        settings = Settings('test.ini')
+        with self.assertRaises(AttributeError):
+            settings.accepted_commands = 'test'
+
+    # Ask for existing key
+    def test_get_existing_key(self):
+        settings = Settings('test.ini')
+        self.assertEqual(settings.get('PIA.DEFAULT', 'X'), 1)
+
+    # Ask for non-existing key
+    def test_get_non_existing_key(self):
+        settings = Settings('test.ini')
+        with self.assertRaises(KeyError):
+            self.assertEqual(settings.get('PIA.Z', 'test'), None)
+
+    # Ask for existing key with default
+    def test_get_existing_key_with_default(self):
+        settings = Settings('test.ini')
+        self.assertEqual(settings.get('PIA.Z', 'R'), 5)
+
+    # Change a value
+    def test_set_existing_key(self):
+        settings = Settings('test.ini')
+        settings.set('PIA.Z', key='L', value=10)
+        self.assertEqual(settings.get('PIA.Z', 'L'), 10)
+
+    # Change a value in a section that does not exist
+    def test_set_non_existing_key(self):
+        settings = Settings('test.ini')
+        with self.assertRaises(KeyError):
+            settings.set('PIA.TEST', key='L', value=10)
+
+    # Change a value in the default section
+    def test_set_existing_key_in_default(self):
+        settings = Settings('test.ini')
+        with self.assertRaises(KeyError):
+            settings.set('PIA.DEFAULT', key='L', value=10)
+
+    # Test the save function
+    def test_save(self):
+        settings = Settings('test.ini')
+        settings.set('PIA.Z', key='L', value=1)
+        settings.save()
+        settings = Settings('settings.ini')
+
+        # Delete the file
+        os.remove('settings.ini')
+
+        # Check if the value is correct
+        self.assertEqual(settings.get('PIA.Z', 'L'), 1)
+        	
 
 if __name__ == '__main__':
     # Run all the tests in this file

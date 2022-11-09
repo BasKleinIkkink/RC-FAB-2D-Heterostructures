@@ -16,24 +16,24 @@ class KIM101():
     _type = 'KIM101'
 
     @typechecked
-    def __init__(self, settings : ConfigParser, serial_nr: Union[str, bytes]='97101742') -> None:
+    def __init__(self, settings : ConfigParser) -> None:
         """
         Initialize the KIM101.
         
         Parameters
         ----------
-        serial_nr : str
-            The serial number of the KIM101.
+        settings : ConfigParser
+            The settings to use.
 
         Raises
         ------
         HardwareNotConnectedError
             If the KIM101 is not connected.
         """
-        if not isinstance(serial_nr, str):
-            self._serial_nr = str(serial_nr)
-        else:
-            self._serial_nr = serial_nr
+        self._settings = settings
+        self._serial_nr = self._settings.get(self._type+'.DEFAULT')
+        if self._serial_nr == 'None':
+            raise HardwareNotConnectedError('It could not be determined if the device is connected because of missing serial nr in config.')
 
         # Check if the controller is connected.
         connected_devices = list_kinesis_devices()
