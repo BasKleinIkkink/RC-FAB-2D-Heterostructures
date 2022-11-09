@@ -19,6 +19,7 @@ try:
     from .hardware.emergency_breaker import EmergencyBreaker
     from ..stacking_middleware.pipeline_connection import PipelineConnection
     from ..stacking_middleware.serial_connection import SerialConnection
+    from .configs.settings import Settings
 except ImportError:
     from gcode_parser import GcodeParser
     from hardware.base import NotSupportedError
@@ -30,6 +31,7 @@ except ImportError:
     from hardware.emergency_breaker import EmergencyBreaker
     from stacking_middleware.pipeline_connection import PipelineConnection
     from stacking_middleware.serial_connection import SerialConnection
+    from configs.settings import Settings
     
 
 class RepeatedTimer:
@@ -168,7 +170,7 @@ class StackingSetupBackend:
     _emergency_breaker = None
     _hardware = None
 
-    def __init__(self, to_main : Union[PipelineConnection, SerialConnection], config_file : str) -> None:
+    def __init__(self, to_main : Union[PipelineConnection, SerialConnection], settings : Settings) -> None:
         """
         Initiate the backend class.
 
@@ -176,14 +178,13 @@ class StackingSetupBackend:
         ----------
         to_main : PipelineConnection, SerialConnection
             The pipe to the main process.
-        config_file : str
-            The path to the config file.
+        settings : Settings
+           The settings object.
         """
         self._con_to_main = to_main
         self._emergency_stop_event = mp.Event()
         self._shutdown = mp.Event()
-        self._config_filename = config_file
-
+        self._settings = settings
 
         # TODO: #10 get the data from the config file
         self._positioning = 'REL'  # Always initiate in relative positining mode
@@ -267,10 +268,10 @@ class StackingSetupBackend:
 
         # Define the connected components.
         _hardware = [
-            # PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, settings=config), 
-            # PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, settings=config), 
-            # PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller, settings=config),
-            PRMTZ8(id='L', hardware_controller=self._motor_controller, settings=config)
+            # PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, settings=self._settings), 
+            # PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, settings=self._settings), 
+            # PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller, settings=self._settings),
+            PRMTZ8(id='L', hardware_controller=self._motor_controller, settings=self._settings)
         ]
         return _hardware
 
@@ -301,7 +302,7 @@ class StackingSetupBackend:
         contain parts that cant be pickled).
         """
         self._logger = self._set_logger()
-        # self._emergency_breaker = self._init_emergency_breaker()
+        self._emergency_breaker = self._init_emergency_breaker()
         self._hardware = self._init_all_hardware()
         self._logger.info('Stacking setup initiated with connected hardware: {}'.format(self._hardware))
 

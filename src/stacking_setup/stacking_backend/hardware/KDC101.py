@@ -16,14 +16,14 @@ class KDC101():
     _controller = None
 
     @typechecked
-    def __init__(self, settings : ConfigParser, serial_nr : Union[str, bytes]='27263640') -> None:
+    def __init__(self, settings : ConfigParser) -> None:
         """
         Initialize the KCD101.
         
         Parameters
         ----------
-        serial_nr : str, bytes
-            The serial number of the KCD101.
+        settings : ConfigParser
+            The settings to use.
 
         Raises
         ------
@@ -31,10 +31,9 @@ class KDC101():
             If the KCD101 is not connected.
         """
         self._settings=settings
-        if not isinstance(serial_nr, str):
-            self._serial_nr = str(serial_nr)
-        else:
-            self._serial_nr = serial_nr
+        self._serial_nr = self._settings.get(self._type+'.DEFAULT', 'serial_nr')
+        if self._serial_nr == 'None':
+            raise HardwareNotConnectedError('It could not be determined if the device is connected because of missing serial nr in config.')
 
         # Check if the controller is connected.
         connected_devices = list_kinesis_devices()
@@ -45,7 +44,7 @@ class KDC101():
                 break
 
         if not device_found:
-            print('The connected deviced: {}'.format(list_kinesis_devices()))
+            print('The connected devices: {}'.format(list_kinesis_devices()))
             raise HardwareNotConnectedError('The external controller is not connected.')
 
     # CONNECTION FUNCTIONS
