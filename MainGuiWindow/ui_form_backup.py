@@ -23,9 +23,63 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
         MainWindow.setSizePolicy(sizePolicy)
-        
+        self.actionDefault = QAction(MainWindow)
+        self.actionDefault.setObjectName(u"actionDefault")
+        self.actionCustom_config = QAction(MainWindow)
+        self.actionCustom_config.setObjectName(u"actionCustom_config")
+        self.actionSave_config = QAction(MainWindow)
+        self.actionSave_config.setObjectName(u"actionSave_config")
+        self.actionScanning = QAction(MainWindow)
+        self.actionScanning.setObjectName(u"actionScanning")
+        self.actionBase_control = QAction(MainWindow)
+        self.actionBase_control.setObjectName(u"actionBase_control")
+        self.actionBase_control.setCheckable(True)
+        self.actionBase_control.setChecked(True)
+        self.actionMas_control = QAction(MainWindow)
+        self.actionMas_control.setObjectName(u"actionMas_control")
+        self.actionMas_control.setCheckable(True)
+        self.actionMas_control.setChecked(True)
+        self.actionSample_control = QAction(MainWindow)
+        self.actionSample_control.setObjectName(u"actionSample_control")
+        self.actionSample_control.setCheckable(True)
+        self.actionSample_control.setChecked(True)
+        self.actionControl_mode = QAction(MainWindow)
+        self.actionControl_mode.setObjectName(u"actionControl_mode")
+        self.actionControl_mode.setCheckable(True)
+        self.actionControl_mode.setChecked(True)
+        self.actionSystem_state = QAction(MainWindow)
+        self.actionSystem_state.setObjectName(u"actionSystem_state")
+        self.actionSystem_state.setCheckable(True)
+        self.actionSystem_state.setChecked(True)
+        self.actionTemperature_control = QAction(MainWindow)
+        self.actionTemperature_control.setObjectName(u"actionTemperature_control")
+        self.actionTemperature_control.setCheckable(True)
+        self.actionTemperature_control.setChecked(True)
+        self.actionSystem_messages = QAction(MainWindow)
+        self.actionSystem_messages.setObjectName(u"actionSystem_messages")
+        self.actionSystem_messages.setCheckable(True)
+        self.actionSystem_messages.setChecked(True)
+        self.actionEmergency_stop = QAction(MainWindow)
+        self.actionEmergency_stop.setObjectName(u"actionEmergency_stop")
         font = QFont()
         font.setBold(True)
+        self.actionEmergency_stop.setFont(font)
+        self.actionJoystick = QAction(MainWindow)
+        self.actionJoystick.setObjectName(u"actionJoystick")
+        self.actionJoystick.setCheckable(True)
+        self.actionJoystick.setChecked(False)
+        self.actionController = QAction(MainWindow)
+        self.actionController.setObjectName(u"actionController")
+        self.actionController.setCheckable(True)
+        self.actionController.setVisible(False)
+        self.actionUser_interface = QAction(MainWindow)
+        self.actionUser_interface.setObjectName(u"actionUser_interface")
+        self.actionUser_interface.setCheckable(True)
+        self.actionUser_interface.setChecked(True)
+        self.actionKeyboard = QAction(MainWindow)
+        self.actionKeyboard.setObjectName(u"actionKeyboard")
+        self.actionKeyboard.setCheckable(True)
+        self.actionKeyboard.setChecked(True)
         self.centralWidget = QWidget(MainWindow)
         self.centralWidget.setObjectName(u"centralWidget")
         self.gridLayout = QGridLayout(self.centralWidget)
@@ -36,7 +90,170 @@ class Ui_MainWindow(object):
         self.mainFrame.setFrameShadow(QFrame.Raised)
         self.gridLayout_11 = QGridLayout(self.mainFrame)
         self.gridLayout_11.setObjectName(u"gridLayout_11")
-        
+        self.maskControlBox = QGroupBox(self.mainFrame)
+        self.maskControlBox.setObjectName(u"maskControlBox")
+        sizePolicy.setHeightForWidth(self.maskControlBox.sizePolicy().hasHeightForWidth())
+        self.maskControlBox.setSizePolicy(sizePolicy)
+        self.maskControlBox.setMinimumSize(QSize(433, 390))
+        self.maskControlBox.setMaximumSize(QSize(433, 390))
+        self.gridLayout_2 = QGridLayout(self.maskControlBox)
+        self.gridLayout_2.setObjectName(u"gridLayout_2")
+        self.maskControlFrame = QFrame(self.maskControlBox)
+        self.maskControlFrame.setObjectName(u"maskControlFrame")
+        self.maskControlFrame.setMinimumSize(QSize(405, 370))
+        self.maskControlFrame.setMaximumSize(QSize(405, 370))
+        self.maskControlFrame.setFrameShape(QFrame.StyledPanel)
+        self.maskControlFrame.setFrameShadow(QFrame.Raised)
+        self.gridLayout_14 = QGridLayout(self.maskControlFrame)
+        self.gridLayout_14.setObjectName(u"gridLayout_14")
+        self.maskMoveModeFrame = QFrame(self.maskControlFrame)
+        self.maskMoveModeFrame.setObjectName(u"maskMoveModeFrame")
+        self.maskMoveModeFrame.setMaximumSize(QSize(88, 220))
+        self.maskMoveModeFrame.setFrameShape(QFrame.StyledPanel)
+        self.maskMoveModeFrame.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_2 = QVBoxLayout(self.maskMoveModeFrame)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.maskJogModeButton = QRadioButton(self.maskMoveModeFrame)
+        self.maskJogModeButton.setObjectName(u"maskJogModeButton")
+
+        self.verticalLayout_2.addWidget(self.maskJogModeButton)
+
+        self.maskDriveModeButton = QRadioButton(self.maskMoveModeFrame)
+        self.maskDriveModeButton.setObjectName(u"maskDriveModeButton")
+        self.maskDriveModeButton.setChecked(True)
+
+        self.verticalLayout_2.addWidget(self.maskDriveModeButton)
+
+
+        self.gridLayout_14.addWidget(self.maskMoveModeFrame, 0, 0, 1, 1)
+
+        self.maskMoveParamFrame = QFrame(self.maskControlFrame)
+        self.maskMoveParamFrame.setObjectName(u"maskMoveParamFrame")
+        self.maskMoveParamFrame.setMinimumSize(QSize(370, 0))
+        self.maskMoveParamFrame.setMaximumSize(QSize(435, 112))
+        self.maskMoveParamFrame.setFrameShape(QFrame.StyledPanel)
+        self.maskMoveParamFrame.setFrameShadow(QFrame.Raised)
+        self.gridLayout_10 = QGridLayout(self.maskMoveParamFrame)
+        self.gridLayout_10.setObjectName(u"gridLayout_10")
+        self.maskMovePresetLabel = QLabel(self.maskMoveParamFrame)
+        self.maskMovePresetLabel.setObjectName(u"maskMovePresetLabel")
+
+        self.gridLayout_10.addWidget(self.maskMovePresetLabel, 0, 0, 1, 1)
+
+        self.maskVelSliderLabel = QLabel(self.maskMoveParamFrame)
+        self.maskVelSliderLabel.setObjectName(u"maskVelSliderLabel")
+
+        self.gridLayout_10.addWidget(self.maskVelSliderLabel, 1, 0, 1, 1)
+
+        self.maskVelSlider = QSlider(self.maskMoveParamFrame)
+        self.maskVelSlider.setObjectName(u"maskVelSlider")
+        self.maskVelSlider.setOrientation(Qt.Horizontal)
+
+        self.gridLayout_10.addWidget(self.maskVelSlider, 1, 1, 1, 1)
+
+        self.maskVelDisp = QLCDNumber(self.maskMoveParamFrame)
+        self.maskVelDisp.setObjectName(u"maskVelDisp")
+        self.maskVelDisp.setFrameShape(QFrame.StyledPanel)
+        self.maskVelDisp.setDigitCount(3)
+        self.maskVelDisp.setSegmentStyle(QLCDNumber.Flat)
+
+        self.gridLayout_10.addWidget(self.maskVelDisp, 1, 2, 1, 1)
+
+        self.maskVelDispLabel = QLabel(self.maskMoveParamFrame)
+        self.maskVelDispLabel.setObjectName(u"maskVelDispLabel")
+
+        self.gridLayout_10.addWidget(self.maskVelDispLabel, 1, 3, 1, 1)
+
+        self.maskAccSliderLabel = QLabel(self.maskMoveParamFrame)
+        self.maskAccSliderLabel.setObjectName(u"maskAccSliderLabel")
+
+        self.gridLayout_10.addWidget(self.maskAccSliderLabel, 2, 0, 1, 1)
+
+        self.maskAccSlider = QSlider(self.maskMoveParamFrame)
+        self.maskAccSlider.setObjectName(u"maskAccSlider")
+        self.maskAccSlider.setOrientation(Qt.Horizontal)
+
+        self.gridLayout_10.addWidget(self.maskAccSlider, 2, 1, 1, 1)
+
+        self.maskAccDisp = QLCDNumber(self.maskMoveParamFrame)
+        self.maskAccDisp.setObjectName(u"maskAccDisp")
+        self.maskAccDisp.setFrameShape(QFrame.StyledPanel)
+        self.maskAccDisp.setDigitCount(3)
+        self.maskAccDisp.setSegmentStyle(QLCDNumber.Flat)
+
+        self.gridLayout_10.addWidget(self.maskAccDisp, 2, 2, 1, 1)
+
+        self.maskAccDispLabel = QLabel(self.maskMoveParamFrame)
+        self.maskAccDispLabel.setObjectName(u"maskAccDispLabel")
+
+        self.gridLayout_10.addWidget(self.maskAccDispLabel, 2, 3, 1, 1)
+
+        self.maskMovePresetCombo = QComboBox(self.maskMoveParamFrame)
+        self.maskMovePresetCombo.addItem("")
+        self.maskMovePresetCombo.addItem("")
+        self.maskMovePresetCombo.addItem("")
+        self.maskMovePresetCombo.addItem("")
+        self.maskMovePresetCombo.setObjectName(u"maskMovePresetCombo")
+
+        self.gridLayout_10.addWidget(self.maskMovePresetCombo, 0, 1, 1, 3)
+
+
+        self.gridLayout_14.addWidget(self.maskMoveParamFrame, 2, 0, 1, 3)
+
+        self.maskControlDiv = QFrame(self.maskControlFrame)
+        self.maskControlDiv.setObjectName(u"maskControlDiv")
+        self.maskControlDiv.setFrameShape(QFrame.HLine)
+        self.maskControlDiv.setFrameShadow(QFrame.Sunken)
+
+        self.gridLayout_14.addWidget(self.maskControlDiv, 1, 0, 1, 3)
+
+        self.maskArrowFrame = QFrame(self.maskControlFrame)
+        self.maskArrowFrame.setObjectName(u"maskArrowFrame")
+        self.maskArrowFrame.setMinimumSize(QSize(220, 220))
+        self.maskArrowFrame.setMaximumSize(QSize(220, 220))
+        self.maskArrowFrame.setFrameShape(QFrame.StyledPanel)
+        self.maskArrowFrame.setFrameShadow(QFrame.Raised)
+        self.gridLayout_7 = QGridLayout(self.maskArrowFrame)
+        self.gridLayout_7.setObjectName(u"gridLayout_7")
+        self.maskMoveLeft = QPushButton(self.maskArrowFrame)
+        self.maskMoveLeft.setObjectName(u"maskMoveLeft")
+        self.maskMoveLeft.setMinimumSize(QSize(60, 60))
+        self.maskMoveLeft.setMaximumSize(QSize(60, 60))
+        self.maskMoveLeft.setStyleSheet(u"image: url(:/icons/arrows/arrow-left-solid.svg);")
+
+        self.gridLayout_7.addWidget(self.maskMoveLeft, 1, 0, 1, 1)
+
+        self.maskMoveRight = QPushButton(self.maskArrowFrame)
+        self.maskMoveRight.setObjectName(u"maskMoveRight")
+        self.maskMoveRight.setMinimumSize(QSize(60, 60))
+        self.maskMoveRight.setMaximumSize(QSize(60, 60))
+        self.maskMoveRight.setStyleSheet(u"image: url(:/icons/arrows/arrow-right-solid.svg);")
+
+        self.gridLayout_7.addWidget(self.maskMoveRight, 1, 4, 1, 1)
+
+        self.maskMoveDown = QPushButton(self.maskArrowFrame)
+        self.maskMoveDown.setObjectName(u"maskMoveDown")
+        self.maskMoveDown.setMinimumSize(QSize(60, 60))
+        self.maskMoveDown.setMaximumSize(QSize(60, 60))
+        self.maskMoveDown.setStyleSheet(u"image: url(:/icons/arrows/arrow-down-solid.svg);")
+
+        self.gridLayout_7.addWidget(self.maskMoveDown, 2, 1, 1, 1)
+
+        self.maskMoveUp = QPushButton(self.maskArrowFrame)
+        self.maskMoveUp.setObjectName(u"maskMoveUp")
+        self.maskMoveUp.setMinimumSize(QSize(60, 60))
+        self.maskMoveUp.setMaximumSize(QSize(60, 60))
+        self.maskMoveUp.setStyleSheet(u"image: url(:/icons/arrows/arrow-up-solid.svg);")
+
+        self.gridLayout_7.addWidget(self.maskMoveUp, 0, 1, 1, 1)
+
+        self.maskLockMoveButton = QPushButton(self.maskArrowFrame)
+        self.maskLockMoveButton.setObjectName(u"maskLockMoveButton")
+        self.maskLockMoveButton.setMinimumSize(QSize(60, 60))
+        self.maskLockMoveButton.setMaximumSize(QSize(60, 60))
+        self.maskLockMoveButton.setStyleSheet(u"image: url(:/icons/arrows/arrow-up-solid.svg);")
+        self.maskLockMoveButton.setCheckable(True)
+
         self.gridLayout_7.addWidget(self.maskLockMoveButton, 1, 1, 1, 1)
 
 
@@ -430,7 +647,6 @@ class Ui_MainWindow(object):
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
         self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 338, 337))
         self.scrollAreaFrame.setWidget(self.scrollAreaWidgetContents)
-
         self.verticalLayout.addWidget(self.scrollAreaFrame)
 
 

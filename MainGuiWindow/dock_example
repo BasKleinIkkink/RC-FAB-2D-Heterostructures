@@ -1,0 +1,52 @@
+import sys
+from PySide6.QtWidgets import (QApplication, QMainWindow, QTextEdit, QDockWidget, QListWidget)
+from PySide6.QtCore import Qt
+from dock_widgets.base_control_dock import BaseControlDockWidget
+
+class ListDockWidget(QDockWidget):
+
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent)
+        self.textEdit = QTextEdit()
+        self.textEdit.setFontPointSize(16)
+
+        self.listWidget = QListWidget()
+        self.listWidget.addItem('Google')
+        self.listWidget.addItem('Facebook')
+        self.listWidget.addItem('Microsoft')
+        self.listWidget.addItem('Apple')
+        self.setWidget(self.listWidget)
+
+
+class MainWindow(QMainWindow):
+
+    def __init__(self):
+        super().__init__()
+        self.resize(800, 600)
+
+        self.listDockWidget = ListDockWidget('Dock', self)
+        self.listDockWidget.setFloating(False)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.listDockWidget)
+
+        self.textEdit = QTextEdit()
+        self.textEdit.setFontPointSize(16)
+        self.setCentralWidget(self.textEdit)
+
+        self.listDockWidget.listWidget.itemDoubleClicked.connect(self.get_list_item)
+
+        self.baseControlWidget = BaseControlDockWidget('Base Control', self)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.baseControlWidget)
+
+
+    def get_list_item(self):
+        self.textEdit.setPlainText(self.listDockWidget.listWidget.currentItem().text())
+
+
+
+if __name__ == '__main__':
+	app = QApplication(sys.argv)
+
+	window = MainWindow()
+	window.show()
+
+	sys.exit(app.exec_())
