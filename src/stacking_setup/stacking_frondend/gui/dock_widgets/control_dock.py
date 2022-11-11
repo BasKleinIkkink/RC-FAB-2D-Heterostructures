@@ -6,7 +6,7 @@ from PySide6.QtWidgets import *
 
 class ControlDockWidget(QDockWidget):
     name = 'ControlDock'
-    min_size = QSize(400, 400)
+    min_size = QSize(430, 380)
     max_size = min_size
 
     def __init__(self, parent=None):
@@ -43,8 +43,9 @@ class ControlDockWidget(QDockWidget):
 
         # Define the main frame and grid in the docking widget
         self.controlFrame = QFrame(self)
-        self.controlFrame.setMinimumSize(QSize(405, 370))
-        self.controlFrame.setMaximumSize(QSize(405, 370))
+        self.setWidget(self.controlFrame)
+        self.controlFrame.setMinimumSize(QSize(400, 370))
+        self.controlFrame.setMaximumSize(QSize(400, 370))
         self.controlFrame.setFrameShape(QFrame.StyledPanel)
         self.controlFrame.setFrameShadow(QFrame.Raised)
         self.grid_layout = QGridLayout(self.controlFrame)
