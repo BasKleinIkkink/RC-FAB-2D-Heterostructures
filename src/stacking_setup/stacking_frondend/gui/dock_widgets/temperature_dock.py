@@ -12,9 +12,9 @@ import random
 class TemperatureDockWidget(QDockWidget):
     name = 'Temperature Dock'
     min_size = QSize(450, 450)
-    max_size = min_size
+    max_size = QSize(500, 450)
 
-    def __init__(self, parent=None):
+    def __init__(self, settings, parent=None):
         """
         Initialize the control dock widget.
         
@@ -24,44 +24,58 @@ class TemperatureDockWidget(QDockWidget):
             Parent window of the dock widget.
         """
         super().__init__(self.name, parent)
-        self.setup_widget()
-
-    def setup_widget(self):
-        """Set up the widget."""
+        self.settings = settings
         # Define the main frame and grid in the docking widget
         self.mainFrame = QFrame(self)
         self.setWidget(self.mainFrame)
-        self.mainFrame.setMinimumSize(QSize(420, 420))
-        self.mainFrame.setMaximumSize(QSize(420, 420))
-        self.mainFrame.setFrameShape(QFrame.StyledPanel)
-        self.mainFrame.setFrameShadow(QFrame.Raised)
-        self.verticle_layout = QVBoxLayout(self.mainFrame)
+        self.mainVerticalLayout = QVBoxLayout(self.mainFrame)
+        self.setMinimumSize(self.min_size)
+        self.setMaximumSize(self.max_size)
 
         # Add the chart
-        self._add_chart()
+        self.mainVerticalLayout.addWidget(self._create_chart())
 
         # Add the divider
         self.controlDiv = QFrame(self.mainFrame)
         self.controlDiv.setFrameShape(QFrame.HLine)
         self.controlDiv.setFrameShadow(QFrame.Sunken)
-        self.verticle_layout.addWidget(self.controlDiv)
+        self.mainVerticalLayout.addWidget(self.controlDiv)
 
-        # Create the parameters frame and layout
-        self.tempParamFrame = QFrame(self.mainFrame)
-        self.tempParamFrame.setMinimumSize(QSize(370, 0))
-        self.tempParamFrame.setMaximumSize(QSize(435, 112))
-        self.tempParamFrame.setFrameShape(QFrame.StyledPanel)
-        self.tempParamFrame.setFrameShadow(QFrame.Raised)
-        self.grid_layout = QGridLayout(self.tempParamFrame)
+        # Add the temperature params
+        self.mainVerticalLayout.addWidget(self._create_temp_params())
 
+    def _create_save_and_reset(self):
+        pass
+
+    def _create_temp_params(self):
+        paramFrame = QFrame()
+        gridLayout = QGridLayout(paramFrame)
+        
+        # Add the presets and spinbox
         spin_box = QSpinBox()
         spin_box.setValue(50)
-        self.grid_layout.addWidget(spin_box, 0, 1, 1, 2)
 
-        # Add the parameters frame to the main grid layout
-        self.verticle_layout.addWidget(self.tempParamFrame)
+        # Add the spinbox label and unit label
+        tempSpinLabel = QLabel()
+        tempSpinLabel.setText("Temperature :")
+        tempSpinUnit = QLabel()
+        tempSpinUnit.setText("°C")
 
-    def _add_chart(self):
+        # Add the presets and combo box
+        self.tempPresetCombo = QComboBox()
+        presetLabel = QLabel()
+        presetLabel.setText("Presets :")
+
+        # Add the params to the grid
+        gridLayout.addWidget(tempSpinLabel, 1, 0, 1, 1)
+        gridLayout.addWidget(spin_box, 1, 1, 1, 1)
+        gridLayout.addWidget(tempSpinUnit, 1, 2, 1, 1)
+        gridLayout.addWidget(presetLabel, 0, 0, 1, 1)
+        gridLayout.addWidget(self.tempPresetCombo, 0, 1, 1, 1)
+
+        return paramFrame
+
+    def _create_chart(self):
         """Add the chart to the main frame."""
         chart = self.Chart()
         chart.setTitle("Temperature")
@@ -69,7 +83,12 @@ class TemperatureDockWidget(QDockWidget):
         chart.setAnimationOptions(QChart.AllAnimations)
         self.chart_view = QChartView(chart)
         self.chart_view.setRenderHint(QPainter.Antialiasing)
-        self.verticle_layout.addWidget(self.chart_view)
+        return self.chart_view
+
+    def add_temp_presets(self, presets=[]):
+        """Add the temperature presets to the combo box."""
+        for i in presets:
+            self.tempPresetCombo.addItem(i)
 
     class Chart(QChart):
 
@@ -84,8 +103,8 @@ class TemperatureDockWidget(QDockWidget):
             self._x = 5
             self._y = 1
 
-            self._timer.timeout.connect(self.handleTimeout)
-            self._timer.setInterval(1000)
+            #self._timer.timeout.connect(self.handleTimeout)
+            #self._timer.setInterval(1000)
 
             green = QPen(Qt.green)
             green.setWidth(3)

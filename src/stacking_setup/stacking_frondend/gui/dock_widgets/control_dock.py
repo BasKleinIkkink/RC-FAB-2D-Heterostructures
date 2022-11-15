@@ -9,7 +9,7 @@ class ControlDockWidget(QDockWidget):
     min_size = QSize(430, 380)
     max_size = min_size
 
-    def __init__(self, parent=None):
+    def __init__(self, settings, parent=None):
         """
         Initialize the control dock widget.
         
@@ -19,7 +19,45 @@ class ControlDockWidget(QDockWidget):
             Parent window of the dock widget.
         """
         super().__init__(self.name, parent)
-        self.setup_widget()
+        self.setting = settings
+
+        # Set some window attributes.
+        #self.textEdit = QTextEdit()
+        #self.textEdit.setFontPointSize(16)
+        self.setMinimumSize(self.min_size)
+        self.setMaximumSize(self.max_size)
+        
+        # Define the main frame and grid in the docking widget
+        mainFrame = QFrame(self)
+        mainVerticalLayout = QVBoxLayout(mainFrame)
+        self.setWidget(mainFrame)
+
+        # Ad the move modes and buttons
+        horizontalLayout = QHBoxLayout()
+        horizontalLayout.addWidget(self._create_move_mode_buttons())
+        horizontalLayout.addWidget(self._create_move_buttons_widget())
+
+        # Add a vertical divider (not a spacer)
+        verticalDivider = QFrame()
+        verticalDivider.setFrameShape(QFrame.VLine)
+        verticalDivider.setFrameShadow(QFrame.Sunken)
+        horizontalLayout.addWidget(verticalDivider)
+
+        # Add the position displays and labels
+        horizontalLayout.addWidget(self._create_position_display_widget())
+        mainVerticalLayout.addLayout(horizontalLayout)
+
+        # Add the divider between buttons and sliders
+        controlDiv = QFrame(mainFrame)
+        controlDiv.setFrameShape(QFrame.HLine)
+        controlDiv.setFrameShadow(QFrame.Sunken)
+        mainVerticalLayout.addWidget(controlDiv)
+
+        # Add the parameter sliders
+        mainVerticalLayout.addWidget(self._create_move_preset_widget())
+        self.mainVerticalLayout = mainVerticalLayout
+        self.mainFrame = mainFrame
+
 
     def add_vel_presets(self, presets=["50 um/s", "500 um/s", "1 mm/s"]):
         """
@@ -34,175 +72,269 @@ class ControlDockWidget(QDockWidget):
         for preset in presets:
             self.movePresetCombo.addItem(preset)
 
-    def setup_widget(self):
-        # Set some window attributes.
-        self.textEdit = QTextEdit()
-        self.textEdit.setFontPointSize(16)
-        self.setMinimumSize(self.min_size)
-        self.setMaximumSize(self.max_size)
+    def _create_move_buttons_widget(self):
+        # Create the move buttons
+        arrowFrame = QFrame()
+        arrowFrame.setMinimumSize(QSize(220, 220))
+        arrowFrame.setMaximumSize(QSize(220, 220))
+        grid_layout = QGridLayout(arrowFrame)
+        
+        # Create the layout and add the buttons
+        self.moveRight = QPushButton(arrowFrame)
+        self.moveRight.setMinimumSize(self.setting.button_size)
+        self.moveRight.setMaximumSize(self.setting.button_size)
+        self.moveRight.setStyleSheet(u"image: url(:/icons/arrows/arrow-right-solid.svg);")
+        
 
-        # Define the main frame and grid in the docking widget
-        self.controlFrame = QFrame(self)
-        self.setWidget(self.controlFrame)
-        self.controlFrame.setMinimumSize(QSize(400, 370))
-        self.controlFrame.setMaximumSize(QSize(400, 370))
-        self.controlFrame.setFrameShape(QFrame.StyledPanel)
-        self.controlFrame.setFrameShadow(QFrame.Raised)
-        self.grid_layout = QGridLayout(self.controlFrame)
+        self.moveLeft = QPushButton(arrowFrame)
+        self.moveLeft.setMinimumSize(self.setting.button_size)
+        self.moveLeft.setMaximumSize(self.setting.button_size)
+        self.moveLeft.setStyleSheet(u"image: url(:/icons/arrows/arrow-left-solid.svg);")
+        
+        self.moveDown = QPushButton(arrowFrame)
+        self.moveDown.setMinimumSize(self.setting.button_size)
+        self.moveDown.setMaximumSize(self.setting.button_size)
+        self.moveDown.setStyleSheet(u"image: url(:/icons/arrows/arrow-down-solid.svg);")
 
+        self.moveUp = QPushButton(arrowFrame)
+        self.moveUp.setMinimumSize(self.setting.button_size)
+        self.moveUp.setMaximumSize(self.setting.button_size)
+        self.moveUp.setStyleSheet("border-image:url(:/icons/arrows/arrow-up-solid.png);")
+        #self.moveUp.setIcon(QIcon("./icons/arrows/arrow-up-solid.png"))
+        #self.moveUp.setIconSize(QSize(60, 60))
+
+        # Add the move lock button
+        self.lockMoveButton = QPushButton(arrowFrame)
+        self.lockMoveButton.setMinimumSize(self.setting.button_size)
+        self.lockMoveButton.setMaximumSize(self.setting.button_size)
+        self.lockMoveButton.setStyleSheet(u"image: url(:/icons/arrows/arrow-down-up-lock-solid.svg);")
+        self.lockMoveButton.setCheckable(True)
+        
+        grid_layout.addWidget(self.moveRight, 1, 2, 1, 1)
+        grid_layout.addWidget(self.moveLeft, 1, 0, 1, 1)
+        grid_layout.addWidget(self.moveDown, 2, 1, 1, 1)
+        grid_layout.addWidget(self.moveUp, 0, 1, 1, 1)
+        grid_layout.addWidget(self.lockMoveButton, 1, 1, 1, 1)
+
+        self.arrowGrid = grid_layout
+        return arrowFrame
+
+    def _create_move_mode_buttons(self):
         # Add the drive and jog move mode frame and layout
-        self.moveModeFrame = QFrame(self.controlFrame)
-        self.moveModeFrame.setMaximumSize(QSize(88, 220))
-        self.moveModeFrame.setFrameShape(QFrame.StyledPanel)
-        self.moveModeFrame.setFrameShadow(QFrame.Raised)
+        moveModeFrame = QFrame()
+        moveModeFrame.setMinimumSize(QSize(80, 200))
+        moveModeFrame.setMaximumSize(QSize(80, 200))
+        verticalLayout_3 = QVBoxLayout(moveModeFrame)  # Add the layout
 
-        self.verticalLayout_3 = QVBoxLayout(self.moveModeFrame)  # Add the layout
-
-        self.jogModeButton = QRadioButton(self.moveModeFrame)
+        self.jogModeButton = QRadioButton(moveModeFrame)
         self.jogModeButton.setChecked(False)
         self.jogModeButton.setText(QCoreApplication.translate("MainWindow", u"Jog", None))
-        self.verticalLayout_3.addWidget(self.jogModeButton)
+        verticalLayout_3.addWidget(self.jogModeButton)
 
-        self.driveModeButton = QRadioButton(self.moveModeFrame)
+        self.driveModeButton = QRadioButton(moveModeFrame)
         self.driveModeButton.setChecked(True)
         self.driveModeButton.setText(QCoreApplication.translate("MainWindow", u"Drive", None))
-        self.verticalLayout_3.addWidget(self.driveModeButton)
+        verticalLayout_3.addWidget(self.driveModeButton)
 
-        # Place the move mode frame in the dock frame
-        self.grid_layout.addWidget(self.moveModeFrame, 0, 0, 1, 1)
+        return moveModeFrame
 
-        # Create the parameters frame and layout
-        self.moveParamFrame = QFrame(self.controlFrame)
-        self.moveParamFrame.setMinimumSize(QSize(370, 0))
-        self.moveParamFrame.setMaximumSize(QSize(435, 112))
-        self.moveParamFrame.setFrameShape(QFrame.StyledPanel)
-        self.moveParamFrame.setFrameShadow(QFrame.Raised)
-        self.grid_layout_9 = QGridLayout(self.moveParamFrame)
+    def _create_position_display_widget(self):
+        # Add the position display frame and layout
+        positionDisplayFrame = QFrame()
+        gridLayout = QGridLayout(positionDisplayFrame)
 
+        # Add the position labels
+        self.xPosLabel = QLabel(positionDisplayFrame)
+        self.xPosLabel.setText(QCoreApplication.translate("MainWindow", u"X:", None))
+        gridLayout.addWidget(self.xPosLabel, 0, 0, 1, 1)
+
+        self.yPosLabel = QLabel(positionDisplayFrame)
+        self.yPosLabel.setText(QCoreApplication.translate("MainWindow", u"Y:", None))
+        gridLayout.addWidget(self.yPosLabel, 1, 0, 1, 1)
+
+        # Add the position displays
+        self.xPosDisplay = QLCDNumber(positionDisplayFrame)
+        self.xPosDisplay.setFrameShape(QFrame.StyledPanel)
+        self.xPosDisplay.setSegmentStyle(QLCDNumber.Flat)
+        self.xPosDisplay.setFixedSize(self.setting.lcd_size)
+        gridLayout.addWidget(self.xPosDisplay, 0, 1, 1, 1)
+
+        self.yPosDisplay = QLCDNumber(positionDisplayFrame)
+        self.yPosDisplay.setFrameShape(QFrame.StyledPanel)
+        self.yPosDisplay.setSegmentStyle(QLCDNumber.Flat)
+        self.yPosDisplay.setFixedSize(self.setting.lcd_size)
+        gridLayout.addWidget(self.yPosDisplay, 1, 1, 1, 1)
+
+        self.positionDisplayGrid = gridLayout
+        return positionDisplayFrame
+
+    def _create_move_preset_widget(self):
+        ## Create the parameters frame and layout
+        moveParamFrame = QFrame()
+        moveParamGrid = QGridLayout(moveParamFrame)
+        
         # Create velocity presets
-        self.movePresetLabel = QLabel(self.moveParamFrame)
-        self.movePresetLabel.setText(QCoreApplication.translate("MainWindow", u"Presets :", None))
-        self.grid_layout_9.addWidget(self.movePresetLabel, 0, 0, 1, 1)
-        self.movePresetCombo = QComboBox(self.moveParamFrame)
-        self.grid_layout_9.addWidget(self.movePresetCombo, 0, 1, 1, 3)
+        self.movePresetLabel = QLabel(moveParamFrame)
+        self.movePresetLabel.setText(QCoreApplication.translate("MainWindow", u"Scale :", None))
+        self.movePresetCombo = QComboBox(moveParamFrame)
 
         # Create the velocity slider
-        self.velSliderLabel = QLabel(self.moveParamFrame)
+        self.velSliderLabel = QLabel(moveParamFrame)
         self.velSliderLabel.setText(QCoreApplication.translate("MainWindow", u"Velocity :", None))
-        self.grid_layout_9.addWidget(self.velSliderLabel, 1, 0, 1, 1)
-        self.velocitySlider = QSlider(self.moveParamFrame)  # Add the slider
+        self.velocitySlider = QSlider(moveParamFrame)  # Add the slider
         self.velocitySlider.setOrientation(Qt.Horizontal)
-        self.grid_layout_9.addWidget(self.velocitySlider, 1, 1, 1, 1)  # Add the slider to the layout
+        
 
         # Create the velocity value display
-        self.velDispLabel = QLabel(self.moveParamFrame)
-        self.grid_layout_9.addWidget(self.velDispLabel, 1, 3, 1, 1)
+        self.velDispLabel = QLabel(moveParamFrame)
         self.velDispLabel.setText(QCoreApplication.translate("MainWindow", u"um/s", None))
-        self.velDisp = QLCDNumber(self.moveParamFrame)
+        self.velDisp = QLCDNumber(moveParamFrame)
         self.velDisp.setFrameShape(QFrame.StyledPanel)
-        self.velDisp.setDigitCount(3)
         self.velDisp.setSegmentStyle(QLCDNumber.Flat)
-        self.grid_layout_9.addWidget(self.velDisp, 1, 2, 1, 1)
-        self.velDispLable = QLabel(self.moveParamFrame)
-        self.grid_layout_9.addWidget(self.velDispLable, 1, 3, 1, 1)
+        self.velDisp.setFixedSize(self.setting.lcd_size)
+        # Set the size to the same a the rest of the displays
+        
+        self.velDispLable = QLabel(moveParamFrame)
 
         # Connect the disp to the slider
         self.velocitySlider.sliderMoved.connect(self.velDisp.display)
 
         # Create the acceleration slider
-        self.accSliderLabel = QLabel(self.moveParamFrame)
+        self.accSliderLabel = QLabel(moveParamFrame)
         self.accSliderLabel.setText(QCoreApplication.translate("MainWindow", u"Acceleration :", None))
-        self.grid_layout_9.addWidget(self.accSliderLabel, 2, 0, 1, 1)
-        self.accSliderLabel = QLabel(self.moveParamFrame)
-        self.grid_layout_9.addWidget(self.accSliderLabel, 2, 0, 1, 1)
-        self.accSlider = QSlider(self.moveParamFrame)
+        self.accSlider = QSlider(moveParamFrame)
         self.accSlider.setOrientation(Qt.Horizontal)
-        self.grid_layout_9.addWidget(self.accSlider, 2, 1, 1, 1)
 
         # Create the acceleration value display
-        self.accDispLabel = QLabel(self.moveParamFrame)
+        self.accDispLabel = QLabel(moveParamFrame)
         self.accDispLabel.setText(QCoreApplication.translate("MainWindow", u"um/s^2", None))
-        self.grid_layout_9.addWidget(self.accDispLabel, 2, 3, 1, 1)
-        self.accDisp = QLCDNumber(self.moveParamFrame)
+        self.accDisp = QLCDNumber(moveParamFrame)
         self.accDisp.setFrameShape(QFrame.StyledPanel)
-        self.accDisp.setDigitCount(3)
         self.accDisp.setSegmentStyle(QLCDNumber.Flat)
-        self.grid_layout_9.addWidget(self.accDisp, 2, 2, 1, 1)
-        self.accDispLabel = QLabel(self.moveParamFrame)
-        self.grid_layout_9.addWidget(self.accDispLabel, 2, 3, 1, 1)
+        self.accDisp.setFixedSize(self.setting.lcd_size)
+
+        
+
+        # Add everything to the layout
+        moveParamGrid.addWidget(self.movePresetLabel, 0, 0, 1, 1)
+        moveParamGrid.addWidget(self.movePresetCombo, 0, 1, 1, 3)
+
+        moveParamGrid.addWidget(self.velSliderLabel, 1, 0, 1, 1)
+        moveParamGrid.addWidget(self.velocitySlider, 1, 1, 1, 2)  # Add the slider to the layout
+        moveParamGrid.addWidget(self.velDispLabel, 1, 4, 1, 1)
+        moveParamGrid.addWidget(self.velDisp, 1, 3, 1, 1)
+
+        moveParamGrid.addWidget(self.accSliderLabel, 2, 0, 1, 1)
+        moveParamGrid.addWidget(self.accSlider, 2, 1, 1, 2)
+        moveParamGrid.addWidget(self.accDispLabel, 2, 4, 1, 1)
+        moveParamGrid.addWidget(self.accDisp, 2, 3, 1, 1)
 
         # Connect the display to the slider
         self.accSlider.sliderMoved.connect(self.accDisp.display)
 
-        # Add the movment parameters to the grid layout 
-        self.grid_layout.addWidget(self.moveParamFrame, 3, 0, 1, 3)
-
-        # Add the divider between buttons and sliders
-        self.controlDiv = QFrame(self.controlFrame)
-        self.controlDiv.setFrameShape(QFrame.HLine)
-        self.controlDiv.setFrameShadow(QFrame.Sunken)
-        self.grid_layout.addWidget(self.controlDiv, 1, 0, 1, 3)
-
-        # Create the move buttons
-        self.arrowFrame = QFrame(self.controlFrame)
-        self.arrowFrame.setMinimumSize(QSize(220, 220))
-        self.arrowFrame.setMaximumSize(QSize(220, 220))
-        self.arrowFrame.setFrameShape(QFrame.StyledPanel)
-        self.arrowFrame.setFrameShadow(QFrame.Raised)
-
-        # Create the layout and add the buttons
-        self.grid_layout_8 = QGridLayout(self.arrowFrame)
-        self.moveRight = QPushButton(self.arrowFrame)
-        self.moveRight.setMinimumSize(QSize(60, 60))
-        self.moveRight.setMaximumSize(QSize(60, 60))
-        self.moveRight.setStyleSheet(u"image: url(:/icons/arrows/arrow-right-solid.svg);")
-
-        self.grid_layout_8.addWidget(self.moveRight, 1, 6, 1, 1)
-
-        self.moveLeft = QPushButton(self.arrowFrame)
-        self.moveLeft.setMinimumSize(QSize(60, 60))
-        self.moveLeft.setMaximumSize(QSize(60, 60))
-        self.moveLeft.setStyleSheet(u"image: url(:/icons/arrows/arrow-left-solid.svg);")
-
-        self.grid_layout_8.addWidget(self.moveLeft, 1, 2, 1, 1)
-
-        self.moveDown = QPushButton(self.arrowFrame)
-        self.moveDown.setMinimumSize(QSize(60, 60))
-        self.moveDown.setMaximumSize(QSize(60, 60))
-        self.moveDown.setStyleSheet(u"image: url(:/icons/arrows/arrow-down-solid.svg);")
-
-        self.grid_layout_8.addWidget(self.moveDown, 2, 4, 1, 1)
-
-        self.moveUp = QPushButton(self.arrowFrame)
-        self.moveUp.setMinimumSize(QSize(60, 60))
-        self.moveUp.setMaximumSize(QSize(60, 60))
-        self.moveUp.setStyleSheet(u"background-image: url(/icons/arrows/arrow-up-solid.png);")
-        #self.moveUp.setIcon(QIcon("/icons/arrows/arrow-up-solid.svg"))
-        #self.moveUp.setIconSize(QSize(60, 60))
-
-        self.grid_layout_8.addWidget(self.moveUp, 0, 4, 1, 1)
-
-        # Add the move lock button
-        self.lockMoveButton = QPushButton(self.arrowFrame)
-        self.lockMoveButton.setMinimumSize(QSize(60, 60))
-        self.lockMoveButton.setMaximumSize(QSize(60, 60))
-        self.lockMoveButton.setStyleSheet(u"image: url(:/icons/arrows/arrow-down-up-lock-solid.svg);")
-        self.lockMoveButton.setCheckable(True)
-        self.grid_layout_8.addWidget(self.lockMoveButton, 1, 4, 1, 1)
-        self.grid_layout.addWidget(self.arrowFrame, 0, 1, 1, 1)
-
+        self.moveParamGrid = moveParamGrid
+        return moveParamFrame
 
 class MaskControlDockWidget(ControlDockWidget):
-    name = "Mask Control"
+    name = "Mask and Sample Control"
+    max_size = QSize(430, 800)
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.add_vel_presets()
+    def __init__(self, settings, parent=None):
+        super().__init__(settings, parent)
+        self._add_extra_buttons()
+        self._add_extra_positions()
 
+        # Add a divider
+        self.divider = QFrame()
+        self.divider.setFrameShape(QFrame.HLine)
+        self.divider.setFrameShadow(QFrame.Sunken)
+        self.mainVerticalLayout.addWidget(self.divider)
+
+        self.mainVerticalLayout.addWidget(self._create_vacuum_settings())
+
+
+    def _add_extra_buttons(self):
+        #self.add_vel_presets()
+
+        # Add the rotation buttons to the linear move frame
+        self.rotateLeft = QPushButton()
+        self.rotateLeft.setMinimumSize(self.setting.button_size)
+        self.rotateLeft.setMaximumSize(self.setting.button_size)
+        self.rotateLeft.setStyleSheet(u"image: url(:/icons/arrows/rotate-left-solid.svg);")
+
+        self.rotateRight = QPushButton()
+        self.rotateRight.setMinimumSize(self.setting.button_size)
+        self.rotateRight.setMaximumSize(self.setting.button_size)
+        self.rotateRight.setStyleSheet(u"image: url(:/icons/arrows/rotate-left-solid.svg);")
+
+        # Add the move up and down buttons to the buttonframe
+        self.moveZUp = QPushButton()
+        self.moveZUp.setMinimumSize(self.setting.button_size)
+        self.moveZUp.setMaximumSize(self.setting.button_size)
+        self.moveZUp.setStyleSheet(u"image: url(:/icons/arrows/arrow-up-solid.svg);")
+
+
+        self.moveZDown = QPushButton()
+        self.moveZDown.setMinimumSize(self.setting.button_size)
+        self.moveZDown.setMaximumSize(self.setting.button_size)
+        self.moveZDown.setStyleSheet(u"image: url(:/icons/arrows/arrow-down-solid.svg);")
+
+        # Add the new buttons to the button frame
+        self.arrowGrid.addWidget(self.rotateLeft, 0, 0, 1, 1)
+        self.arrowGrid.addWidget(self.rotateRight, 0, 2, 1, 1)
+        self.arrowGrid.addWidget(self.moveZUp, 2, 0, 1, 1)
+        self.arrowGrid.addWidget(self.moveZDown, 2, 2, 1, 1)
+
+    def _add_extra_positions(self):
+        # Add the rotation buttons to the linear move frame
+        self.yPosLabel = QLabel()
+        self.yPosLabel.setText(QCoreApplication.translate("MainWindow", u"Z:", None))
+        self.positionDisplayGrid.addWidget(self.yPosLabel, 3, 0, 1, 1)
+
+        # Add the position displays
+        self.xPosDisplay = QLCDNumber()
+        self.xPosDisplay.setFrameShape(QFrame.StyledPanel)
+        self.xPosDisplay.setSegmentStyle(QLCDNumber.Flat)
+        self.xPosDisplay.setFixedSize(self.setting.lcd_size)
+        self.positionDisplayGrid.addWidget(self.xPosDisplay, 3, 1, 1, 1)
+
+        self.yPosLabel = QLabel()
+        self.yPosLabel.setText(QCoreApplication.translate("MainWindow", u"R:", None))
+        self.positionDisplayGrid.addWidget(self.yPosLabel, 4, 0, 1, 1)
+
+        # Add the position displays
+        self.xPosDisplay = QLCDNumber()
+        self.xPosDisplay.setFrameShape(QFrame.StyledPanel)
+        self.xPosDisplay.setSegmentStyle(QLCDNumber.Flat)
+        self.xPosDisplay.setFixedSize(self.setting.lcd_size)
+        self.positionDisplayGrid.addWidget(self.xPosDisplay, 4, 1, 1, 1)
+        
+
+    def _create_vacuum_settings(self):
+        # Add the divider between the presets and vacuum settings
+        vacFrame = QFrame()
+        horizontalLayout = QHBoxLayout(vacFrame)
+
+        # Add the start and stop vacuum buttons
+        self.vacuumLabel = QLabel()
+        horizontalLayout.addWidget(self.vacuumLabel)
+        self.vacuumLabel.setText("Vacuum pump: ")
+        self.startVacButton = QRadioButton()
+        self.startVacButton.setChecked(False)
+        self.startVacButton.setText("Start")
+        horizontalLayout.addWidget(self.startVacButton)
+        self.stopVacButton = QRadioButton()
+        self.stopVacButton.setChecked(True)
+        self.stopVacButton.setText("Stop")
+        horizontalLayout.addWidget(self.stopVacButton)
+
+        horizontalLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        
+        return vacFrame
 
 class BaseControlDockWidget(ControlDockWidget):
     name = "Base Control"
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.add_vel_presets()
+    def __init__(self, settings, parent=None):
+        super().__init__(settings, parent)
+        #self.add_vel_presets()
