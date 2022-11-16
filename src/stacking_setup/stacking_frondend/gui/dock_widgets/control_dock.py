@@ -2,6 +2,7 @@ import sys
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
+import qtawesome as qta
 
 
 class ControlDockWidget(QDockWidget):
@@ -80,34 +81,28 @@ class ControlDockWidget(QDockWidget):
         grid_layout = QGridLayout(arrowFrame)
         
         # Create the layout and add the buttons
-        self.moveRight = QPushButton(arrowFrame)
+        self.moveRight = QPushButton(qta.icon("fa.angle-right", options=[{'scale_factor': 2,}]), "")
         self.moveRight.setMinimumSize(self.setting.button_size)
         self.moveRight.setMaximumSize(self.setting.button_size)
         self.moveRight.setStyleSheet(u"image: url(:/icons/arrows/arrow-right-solid.svg);")
         
 
-        self.moveLeft = QPushButton(arrowFrame)
+        self.moveLeft = QPushButton(qta.icon("fa.angle-left", options=[{'scale_factor': 2,}]), "")
         self.moveLeft.setMinimumSize(self.setting.button_size)
         self.moveLeft.setMaximumSize(self.setting.button_size)
-        self.moveLeft.setStyleSheet(u"image: url(:/icons/arrows/arrow-left-solid.svg);")
         
-        self.moveDown = QPushButton(arrowFrame)
+        self.moveDown = QPushButton(qta.icon("fa.angle-down", options=[{'scale_factor': 2,}]), "")
         self.moveDown.setMinimumSize(self.setting.button_size)
         self.moveDown.setMaximumSize(self.setting.button_size)
-        self.moveDown.setStyleSheet(u"image: url(:/icons/arrows/arrow-down-solid.svg);")
 
-        self.moveUp = QPushButton(arrowFrame)
+        self.moveUp = QPushButton(qta.icon("fa.angle-up", options=[{'scale_factor': 2,}]), "")
         self.moveUp.setMinimumSize(self.setting.button_size)
         self.moveUp.setMaximumSize(self.setting.button_size)
-        self.moveUp.setStyleSheet("border-image:url(:/icons/arrows/arrow-up-solid.png);")
-        #self.moveUp.setIcon(QIcon("./icons/arrows/arrow-up-solid.png"))
-        #self.moveUp.setIconSize(QSize(60, 60))
 
         # Add the move lock button
-        self.lockMoveButton = QPushButton(arrowFrame)
+        self.lockMoveButton = QPushButton(qta.icon("fa.lock", options=[{'scale_factor': 1.5,}]), "")
         self.lockMoveButton.setMinimumSize(self.setting.button_size)
         self.lockMoveButton.setMaximumSize(self.setting.button_size)
-        self.lockMoveButton.setStyleSheet(u"image: url(:/icons/arrows/arrow-down-up-lock-solid.svg);")
         self.lockMoveButton.setCheckable(True)
         
         grid_layout.addWidget(self.moveRight, 1, 2, 1, 1)
@@ -243,6 +238,7 @@ class MaskControlDockWidget(ControlDockWidget):
         super().__init__(settings, parent)
         self._add_extra_buttons()
         self._add_extra_positions()
+        self.add_vel_presets()
 
         # Add a divider
         self.divider = QFrame()
@@ -252,29 +248,25 @@ class MaskControlDockWidget(ControlDockWidget):
 
         self.mainVerticalLayout.addWidget(self._create_vacuum_settings())
 
-
     def _add_extra_buttons(self):
         #self.add_vel_presets()
 
         # Add the rotation buttons to the linear move frame
-        self.rotateLeft = QPushButton()
+        self.rotateLeft = QPushButton(qta.icon("fa.rotate-left", options=[{'scale_factor': 1.3,}]), "")
         self.rotateLeft.setMinimumSize(self.setting.button_size)
         self.rotateLeft.setMaximumSize(self.setting.button_size)
-        self.rotateLeft.setStyleSheet(u"image: url(:/icons/arrows/rotate-left-solid.svg);")
 
-        self.rotateRight = QPushButton()
+        self.rotateRight = QPushButton(qta.icon("fa.rotate-right", options=[{'scale_factor': 1.3,}]), "")
         self.rotateRight.setMinimumSize(self.setting.button_size)
         self.rotateRight.setMaximumSize(self.setting.button_size)
-        self.rotateRight.setStyleSheet(u"image: url(:/icons/arrows/rotate-left-solid.svg);")
 
         # Add the move up and down buttons to the buttonframe
-        self.moveZUp = QPushButton()
+        self.moveZUp = QPushButton(qta.icon("fa.angle-double-up", options=[{'scale_factor': 2,}]), "")
         self.moveZUp.setMinimumSize(self.setting.button_size)
         self.moveZUp.setMaximumSize(self.setting.button_size)
-        self.moveZUp.setStyleSheet(u"image: url(:/icons/arrows/arrow-up-solid.svg);")
 
 
-        self.moveZDown = QPushButton()
+        self.moveZDown = QPushButton(qta.icon("fa.angle-double-down", options=[{'scale_factor': 2,}]), "")
         self.moveZDown.setMinimumSize(self.setting.button_size)
         self.moveZDown.setMaximumSize(self.setting.button_size)
         self.moveZDown.setStyleSheet(u"image: url(:/icons/arrows/arrow-down-solid.svg);")
@@ -337,4 +329,4 @@ class BaseControlDockWidget(ControlDockWidget):
 
     def __init__(self, settings, parent=None):
         super().__init__(settings, parent)
-        #self.add_vel_presets()
+        self.add_vel_presets()

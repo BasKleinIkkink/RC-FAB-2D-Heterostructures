@@ -2,6 +2,7 @@ import sys
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
+import qtawesome as qta
 
 
 class FocusDockWidget(QDockWidget):
@@ -74,9 +75,9 @@ class FocusDockWidget(QDockWidget):
         moveLayout = QVBoxLayout(moveFrame)
 
         # Add the up, lock and down buttons
-        self.upButton = QPushButton()
-        self.lockButton = QPushButton()
-        self.downButton = QPushButton()
+        self.upButton = QPushButton(qta.icon("fa.angle-double-up", options=[{'scale_factor': 2,}]), "")
+        self.lockButton = QPushButton(qta.icon("fa.lock", options=[{'scale_factor': 1.5,}]), "")
+        self.downButton = QPushButton(qta.icon("fa.angle-double-down", options=[{'scale_factor': 2,}]), "")
 
         moveLayout.addWidget(self.upButton)
         moveLayout.addWidget(self.lockButton)

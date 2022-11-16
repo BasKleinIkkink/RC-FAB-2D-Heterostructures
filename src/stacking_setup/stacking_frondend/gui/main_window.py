@@ -28,7 +28,7 @@ class MainWindow(QMainWindow):
         font = QFont()
         font.setBold(True)
         self.set_menubar()
-        self.set_toolbar()
+        # self.set_toolbar()
         self.set_central_widget()  # Set the central widget
         self.load_docks()  # Load the docks
 
