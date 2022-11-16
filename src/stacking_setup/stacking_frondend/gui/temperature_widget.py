@@ -2,7 +2,7 @@ import sys
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
-from PySide6.QtCharts import QChart, QSplineSeries, QValueAxis
+from PySide6.QtCharts import QChart, QLineSeries, QValueAxis
 from PySide6.QtCharts import QChart, QChartView
 from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QPen
@@ -89,7 +89,7 @@ class TemperatureWidget(QGroupBox):
         
         # Add the presets and spinbox
         self.target_spin_box = QSpinBox()
-        self.target_spin_box.setValue(50)
+        self.target_spin_box.setValue(0)
 
         # Add the spinbox label and unit label
         self.tempSpinLabel = QLabel()
@@ -99,9 +99,9 @@ class TemperatureWidget(QGroupBox):
 
         # Add the presets and combo box
         self.tempPresetCombo = QComboBox()
+        self.tempPresetCombo.addItem("Custom")
         self.presetLabel = QLabel()
         self.presetLabel.setText("Presets :")
-        self.tempPresetCombo.addItem("Custom")
 
         # Add the params to the grid
         gridLayout.addWidget(self.tempSpinLabel, 1, 0, 1, 1)
@@ -140,7 +140,7 @@ class TemperatureWidget(QGroupBox):
         """
         # Connect the spinbox to the target temp indicator
         self.target_spin_box.valueChanged.connect(self._change_target_indicator)
-        self.target_spin_box.valueChanged.connect(self._set_custom_preset)
+        # self.target_spin_box.valueChanged.connect(self._set_custom_preset)
 
         # Connect the target spinbox to the combobox change
         self.tempPresetCombo.currentIndexChanged.connect(self._change_spinbox_value)
@@ -156,35 +156,43 @@ class TemperatureWidget(QGroupBox):
         # Aslo update the value in the graph
         self.chart.target_temp = self.target_spin_box.value()
 
-    def _set_custom_preset(self):
+    def _set_custom_preset(self, event):
         """Add a custom preset to the presets combo box."""
         print('Set custom preset')
         # When the spinbox changes by user action set the combo box to custom
-        self.tempPresetCombo.setCurrentIndex(0)
+        
 
     def _change_spinbox_value(self):
         """Change the value of the spinbox depending on the selected preset."""
         print('Lock spinbox value')
-        if self.tempPresetCombo.currentIndex() != 0:
+        
+        if self.tempPresetCombo.currentIndex() == 0:
             # Set the max value to 250
+            self.target_spin_box.setDisabled(False)
             self.target_spin_box.setMaximum(250)
-            # Change the spinbox value
-            self.target_spin_box.setValue(int(self.tempPresetCombo.currentText().split(" ")[0]))
+        else:
+            # Set the spinbox to the selected value and disable
+            value = int(self.tempPresetCombo.currentText().split(" ")[0])
+            self.target_spin_box.setMaximum(value)
+            self.target_spin_box.setValue(value)
+            self.target_spin_box.setDisabled(True)
+
 
     class Chart(QChart):
 
         def __init__(self, parent=None):
             super().__init__(QChart.ChartTypeCartesian, parent, Qt.WindowFlags())
             self._timer = QTimer()
-            self._series = QSplineSeries(self)
-            self._set_temp = QSplineSeries(self)
+            self._series = QLineSeries(self)
+            self._set_temp = QLineSeries(self)
             self._titles = []
             self._axisX = QValueAxis()
             self._axisY = QValueAxis()
             self._step = 0
-            self._x = 5
-            self._y = 1
+            self._x = 0
+            self._y = 0
             self._target_temp = 0
+            self.step_size = 1
 
             self._timer.timeout.connect(self.handleTimeout)
             self._timer.setInterval(1000)
@@ -211,6 +219,10 @@ class TemperatureWidget(QGroupBox):
             self._axisX.setTickCount(10)
             self._axisX.setRange(0, 60)
             self._axisY.setRange(0, 50)
+            
+            # Change the background to transparent
+            brush = QBrush(Qt.transparent)
+            self.setBackgroundBrush(brush)
 
             # Set the ylasbel as the temperature unit
             self._axisY.setTitleText("Temp (°C)")
