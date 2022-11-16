@@ -11,6 +11,8 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QGridLayout,
                                QTreeView, QVBoxLayout, QWidget)
 from random import randint
 import datetime
+from settings import Settings
+import datetime
 
 
 REGULAR_EXPRESSION = 0
@@ -27,7 +29,7 @@ class Message:
         self._msg = msg
         self._args = args
         self._kwargs = kwargs
-        self._timestamp = datetime.datetime.now()
+        self._timestamp = str(datetime.datetime.now())
 
     @property
     def exit_code(self):
@@ -73,12 +75,25 @@ class Message:
 
 class SystemMessageWidget(QWidget):
     name = 'System Messages'
-    def __init__(self, parent=None):
+
+    def __init__(self, settings, parent=None):
+        """
+        Initialize the widget.
+        
+        Parameters
+        ----------
+        settings : Settings
+            The settings object.
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(parent)
+        self.settings = settings
         self.setup_widget()
         self.set_source_model(create_test_message_set(self))
 
     def setup_widget(self):
+        """Setup the widget."""
         self._proxy_model = QSortFilterProxyModel()
         self._proxy_model.setDynamicSortFilter(True)
 
@@ -149,16 +164,25 @@ class SystemMessageWidget(QWidget):
         self._proxy_view.sortByColumn(1, Qt.AscendingOrder)
         self._filter_column_combo_box.setCurrentIndex(1)
 
-        self._filter_pattern_line_edit.setText("Andy|Grace")
+        self._filter_pattern_line_edit.setText("")
         self._filter_case_sensitivity_check_box.setChecked(True)
         self._sort_case_sensitivity_check_box.setChecked(True)
 
     def set_source_model(self, model):
+        """
+        Set the source model.
+        
+        Parameters
+        ----------
+        model : QAbstractItemModel
+            The source model.
+        """
         self._proxy_model.setSourceModel(model)
         self._source_view.setModel(model)
 
     @Slot()
     def filter_reg_exp_changed(self):
+        """Filter the model using regex."""
         syntax_nr = self._filter_syntax_combo_box.currentData()
         pattern = self._filter_pattern_line_edit.text()
         if syntax_nr == WILDCARD:
@@ -175,10 +199,12 @@ class SystemMessageWidget(QWidget):
 
     @Slot()
     def filter_column_changed(self):
+        """Filter the model using a column."""
         self._proxy_model.setFilterKeyColumn(self._filter_column_combo_box.currentIndex())
 
     @Slot()
     def sort_changed(self):
+        """Sort the model."""
         if self._sort_case_sensitivity_check_box.isChecked():
             case_sensitivity = Qt.CaseSensitive
         else:
@@ -186,14 +212,38 @@ class SystemMessageWidget(QWidget):
 
         self._proxy_model.setSortCaseSensitivity(case_sensitivity)
 
+    def add_message(self, message):
+        """
+        Add a message to the model.
+        
+        Parameters
+        ----------
+        message : dict
+            The message to add.
+        """
+        self._source_view.insertRow(0)
+        self._source_view.setData(self._source_view.index(0, 0), message.timestamp)
+        self._source_view.setData(self._source_view.index(0, 1), message.exit_code)
+        self._source_view.setData(self._source_view.index(0, 2), message.command)
+        self._source_view.setData(self._source_view.index(0, 3), message.msg)
 
-    def add_message(model, message):
+
+def add_message(model, message):
+        """
+        Add a message to the model.
+        
+        Parameters
+        ----------
+        model : QAbstractItemModel
+            The model to add the message to.
+        message : dict
+            The message to add.
+        """
         model.insertRow(0)
         model.setData(model.index(0, 0), message.timestamp)
         model.setData(model.index(0, 1), message.exit_code)
         model.setData(model.index(0, 2), message.command)
         model.setData(model.index(0, 3), message.msg)
-
 
 def create_test_message_set(parent):
     model = QStandardItemModel(0, 4, parent)
@@ -206,14 +256,14 @@ def create_test_message_set(parent):
     # Generate a list of test Messages
     n = 20
     for i in range(n):
-        message = Message(str(randint(0, 100)), str(randint(0, 1)), str(randint(0, 100)), "Message %d" % i)
-        SystemMessageWidget.add_message(model, message)
+        message = Message(exit_code=str(randint(0, 100)), command=str(randint(0, 1)), msg=str(randint(0, 100)))
+        add_message(model, message)
     return model
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = SystemMessageWidget()
+    window = SystemMessageWidget(Settings())
     window.set_source_model(create_test_message_set(window))
     window.show()
     sys.exit(app.exec())

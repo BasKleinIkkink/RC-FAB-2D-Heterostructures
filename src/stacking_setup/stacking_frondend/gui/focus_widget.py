@@ -5,18 +5,26 @@ from PySide6.QtWidgets import *
 import qtawesome as qta
 
 
-class FocusDockWidget(QDockWidget):
+class FocusWidget(QGroupBox):
     name = 'FocusDock'
     min_size = QSize(500, 250)
     max_size = min_size
 
     def __init__(self, settings, parent=None):
+        """
+        Initialize the focus widget
+
+        Parameters
+        ----------
+        settings : Settings
+            The settings object
+        parent : QWidget
+            The parent widget
+        """
         super().__init__(self.name, parent)
         # Define the main frame and grid in the docking widget
         self.settings = settings
-        self.mainFrame = QFrame(self)
-        self.setWidget(self.mainFrame)
-        self.mainHorizontalLayout = QHBoxLayout(self.mainFrame)
+        self.mainHorizontalLayout = QHBoxLayout(self)
         self.setMinimumSize(self.min_size)
         self.setMaximumSize(self.max_size)
 
@@ -29,7 +37,7 @@ class FocusDockWidget(QDockWidget):
         self.mainHorizontalLayout.addLayout(moveModeLayout)
 
         # Add a vertical divider
-        self.controlDiv = QFrame(self.mainFrame)
+        self.controlDiv = QFrame(self)
         self.controlDiv.setFrameShape(QFrame.VLine)
         self.controlDiv.setFrameShadow(QFrame.Sunken)
         self.mainHorizontalLayout.addWidget(self.controlDiv)
@@ -48,11 +56,42 @@ class FocusDockWidget(QDockWidget):
         # Add the params
         vertLayout.addWidget(self._create_move_preset_widget())
 
+        self.add_vel_presets()
+
         # Add the frame to the main layout
         self.mainHorizontalLayout.addWidget(frame)
+        self.mainFrame = self
 
+    def add_vel_presets(self, presets=["50 um/s", "500 um/s", "1000 um/s"]):
+        """
+        Add velocity presets to the velocity preset combo box
+        
+        Parameters
+        ----------
+        presets : list
+            List of velocity presets to add to the combo box. Each entry has to
+            follow the following syntax: <value> <unit> (seperated by a space).
+        """
+        for preset in presets:
+            self.movePresetCombo.addItem(preset)
+
+        # Get the current selected
+        new_scale = self.movePresetCombo.currentText()
+        self.moveScale = float(new_scale.split(" ")[0])
+        self.moveUnit = new_scale.split(" ")[1]
+
+        # Set the units on the sliders
+        self.velDispLabel.setText(self.moveUnit)
+        # self.accDispLabel.setText(self.moveUnit + "^2")
+
+        # Change the range of the sliders
+        self.velocitySlider.setMaximum(int(self.moveScale))
+        # self.accSlider.setMaximum(int(self.moveScale))
+
+        self.velDisp.setMaximum(self.moveScale)
 
     def _create_move_mode_buttons(self):
+        """Create the move mode buttons"""
         # Create the move mode buttons
         moveModeFrame = QFrame()
         moveModeLayout = QVBoxLayout(moveModeFrame)
@@ -69,6 +108,7 @@ class FocusDockWidget(QDockWidget):
         return moveModeFrame
 
     def _create_move_buttons(self):
+        """Create the move buttons"""	
         moveFrame = QFrame()
         moveFrame.setMinimumSize(QSize(74, 220))
         moveFrame.setMaximumSize(QSize(74, 220))
@@ -81,6 +121,7 @@ class FocusDockWidget(QDockWidget):
 
         moveLayout.addWidget(self.upButton)
         moveLayout.addWidget(self.lockButton)
+        self.lockButton.setCheckable(True)
         moveLayout.addWidget(self.downButton)
 
         # Set the sizes to 60x60
@@ -91,6 +132,7 @@ class FocusDockWidget(QDockWidget):
         return moveFrame
 
     def _create_position_display_widget(self):
+        """Create the position display widget"""
         # Add the position display frame and layout
         positionDisplayFrame = QFrame()
         gridLayout = QGridLayout(positionDisplayFrame)
@@ -115,6 +157,7 @@ class FocusDockWidget(QDockWidget):
         return positionDisplayFrame
 
     def _create_move_preset_widget(self):
+        """Create the move preset widget"""
         ## Create the parameters frame and layout
         moveParamFrame = QFrame()
         moveParamGrid = QGridLayout(moveParamFrame)
@@ -131,31 +174,31 @@ class FocusDockWidget(QDockWidget):
         self.velocitySlider.setOrientation(Qt.Horizontal)
 
         # Create the velocity value display
-        self.velDispLabel = QLabel(moveParamFrame)
+        self.velDispLabel = QLabel()
         self.velDispLabel.setText(QCoreApplication.translate("MainWindow", u"um/s", None))
-        self.velDisp = QLCDNumber(moveParamFrame)
-        self.velDisp.setFrameShape(QFrame.StyledPanel)
-        self.velDisp.setSegmentStyle(QLCDNumber.Flat)
+        self.velDisp = QSpinBox()
         self.velDisp.setFixedSize(self.settings.lcd_size)
         # Set the size to the same a the rest of the displays
-        self.velDispLable = QLabel(moveParamFrame)
+        self.velDispLable = QLabel()
 
         # Connect the disp to the slider
-        self.velocitySlider.sliderMoved.connect(self.velDisp.display)
+        self.velocitySlider.valueChanged.connect(lambda : self.velDisp.setValue(self.velocitySlider.value()))
+        # Connect the spinbox to the slider
+        self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
 
         # Create the acceleration slider
-        self.accSliderLabel = QLabel(moveParamFrame)
-        self.accSliderLabel.setText(QCoreApplication.translate("MainWindow", u"Acceleration :", None))
-        self.accSlider = QSlider(moveParamFrame)
-        self.accSlider.setOrientation(Qt.Horizontal)
+        #self.accSliderLabel = QLabel()
+        #self.accSliderLabel.setText(QCoreApplication.translate("MainWindow", u"Acceleration :", None))
+        #self.accSlider = QSlider()
+        #self.accSlider.setOrientation(Qt.Horizontal)
 
         # Create the acceleration value display
-        self.accDispLabel = QLabel(moveParamFrame)
-        self.accDispLabel.setText(QCoreApplication.translate("MainWindow", u"um/s^2", None))
-        self.accDisp = QLCDNumber(moveParamFrame)
-        self.accDisp.setFrameShape(QFrame.StyledPanel)
-        self.accDisp.setSegmentStyle(QLCDNumber.Flat)
-        self.accDisp.setFixedSize(self.settings.lcd_size)
+        #self.accDispLabel = QLabel()
+        #self.accDispLabel.setText(QCoreApplication.translate("MainWindow", u"um/s^2", None))
+        #self.accDisp = QLCDNumber(moveParamFrame)
+        #self.accDisp.setFrameShape(QFrame.StyledPanel)
+        #self.accDisp.setSegmentStyle(QLCDNumber.Flat)
+        #self.accDisp.setFixedSize(self.settings.lcd_size)
         
         # Add everything to the layout
         moveParamGrid.addWidget(self.movePresetLabel, 0, 0, 1, 1)
@@ -166,13 +209,81 @@ class FocusDockWidget(QDockWidget):
         moveParamGrid.addWidget(self.velDispLabel, 1, 4, 1, 1)
         moveParamGrid.addWidget(self.velDisp, 1, 3, 1, 1)
 
-        moveParamGrid.addWidget(self.accSliderLabel, 2, 0, 1, 1)
-        moveParamGrid.addWidget(self.accSlider, 2, 1, 1, 2)
-        moveParamGrid.addWidget(self.accDispLabel, 2, 4, 1, 1)
-        moveParamGrid.addWidget(self.accDisp, 2, 3, 1, 1)
+        #moveParamGrid.addWidget(self.accSliderLabel, 2, 0, 1, 1)
+        #moveParamGrid.addWidget(self.accSlider, 2, 1, 1, 2)
+        #moveParamGrid.addWidget(self.accDispLabel, 2, 4, 1, 1)
+        #moveParamGrid.addWidget(self.accDisp, 2, 3, 1, 1)
 
         # Connect the display to the slider
-        self.accSlider.sliderMoved.connect(self.accDisp.display)
+        #self.accSlider.valueChanged.connect(self.accDisp.display)
 
         self.moveParamGrid = moveParamGrid
         return moveParamFrame
+
+    def connect_actions(self, menubar, toolbar):
+        """
+        Connect the actions to the buttons
+        
+        Parameters
+        ----------
+        menubar : QMenuBar
+            The menu bar
+        toolbar : QToolBar
+            The toolbar
+        """
+        # Connect the movment buttons
+        self.upButton.clicked.connect(self._move_z_up)
+        self.downButton.clicked.connect(self._move_z_down)
+
+        self.lockButton.clicked.connect(self._toggle_lock_movement)
+
+        # Connect the move mode buttons
+        self.jogButton.clicked.connect(self._turn_on_jog_mode)
+        self.driveButton.clicked.connect(self._turn_on_drive_mode)
+
+        self._connect_movement_scale()
+
+    def _connect_movement_scale(self):
+        """Connect the movement scale"""
+        # Connect a change the move preset combo box to the movement scale
+        self.movePresetCombo.currentIndexChanged.connect(self._change_movement_scale)
+
+    def _change_movement_scale(self):
+        """Change the movement scale"""
+        # The new scale is between 0 and the given value in the given unit
+        new_scale = self.movePresetCombo.currentText()
+        self.moveScale = float(new_scale.split(" ")[0])
+        self.moveUnit = new_scale.split(" ")[1]
+
+        # Set the units on the sliders
+        self.velDispLabel.setText(self.moveUnit)
+        #self.accDispLabel.setText(self.moveUnit + "^2")
+
+        # Change the range of the sliders
+        self.velocitySlider.setMaximum(int(self.moveScale))
+        #self.accSlider.setMaximum(int(self.moveScale))
+
+        self.velDisp.setMaximum(self.moveScale)
+
+    def _move_z_up(self):
+        """Move the z stage up"""
+        print("Move up")
+
+    def _move_z_down(self):
+        """Move the z stage down"""
+        print("Move down")
+
+    def _turn_on_drive_mode(self):
+        """Turn on drive mode"""
+        print("Turn on drive mode")
+
+    def _turn_on_jog_mode(self):
+        """Turn on jog mode"""
+        print("Turn on jog mode")
+
+    def _toggle_lock_movement(self):
+        """Toggle the lock movement button"""
+        print("Lock movement")
+        button_state = self.lockButton.isChecked()
+        self.upButton.setEnabled(not button_state)
+        self.downButton.setEnabled(not button_state)
