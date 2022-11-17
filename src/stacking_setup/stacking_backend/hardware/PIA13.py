@@ -1,6 +1,6 @@
 from typing import Union
 from typeguard import typechecked
-from configparser import ConfigParser
+from ..configs.settings import Settings
 
 try:
     from .base import Base, NotCalibratedError
@@ -14,7 +14,7 @@ class PIA13(Base):
     """Class to control a PIA13 Thorlabs piezo actuator."""
 
     def __init__(self, id : str, channel : int, actuator_id : str, hardware_controller : KIM101,
-                settings : ConfigParser) -> None:
+                settings : Settings) -> None:
         """
         Initialize the PIA13.
         
@@ -28,6 +28,8 @@ class PIA13(Base):
             The id of the actuator.
         hardware_controller: KIM101
             The hardware controller to use.
+        settings: Settings
+            The settings object.
         """
         self._id = id
         self._type = 'PIA13'

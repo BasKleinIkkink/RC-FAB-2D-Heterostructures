@@ -170,7 +170,7 @@ class StackingSetupBackend:
     _emergency_breaker = None
     _hardware = None
 
-    def __init__(self, to_main : Union[PipelineConnection, SerialConnection], settings : Settings) -> None:
+    def __init__(self, to_main : Union[PipelineConnection, SerialConnection]) -> None:
         """
         Initiate the backend class.
 
@@ -184,7 +184,7 @@ class StackingSetupBackend:
         self._con_to_main = to_main
         self._emergency_stop_event = mp.Event()
         self._shutdown = mp.Event()
-        self._settings = settings
+        self._settings = Settings()
 
         # TODO: #10 get the data from the config file
         self._positioning = 'REL'  # Always initiate in relative positining mode
@@ -207,7 +207,7 @@ class StackingSetupBackend:
         return logging.getLogger(__name__)
 
     @typechecked
-    def _echo(self, func : callable, command : Union[dict, None]=None) -> tuple:
+    def _echo(self, func : callable, command_id : str, command : Union[dict, None]=None) -> tuple:
         """
         Echo the command response (error code and msg) to the main process.
 
@@ -215,6 +215,10 @@ class StackingSetupBackend:
         ----------
         func : function
             The function to execute.
+        command_id : str
+            The command id.
+        command : dict, None
+            The command.
         *args : list
             The arguments to pass to the function.
         **kwargs : dict
@@ -238,7 +242,8 @@ class StackingSetupBackend:
         else:
             exit_code, msg = new_function()
 
-        self._con_to_main.send(Message(exit_code, msg))
+        self._con_to_main.send(Message(exit_code=exit_code, command_id=command_id, 
+                msg=str(msg), command=command))
 
         # Return the exit code and msg
         return exit_code, msg
@@ -246,7 +251,8 @@ class StackingSetupBackend:
     # STARTING AND STOPPING
     def _init_emergency_breaker(self) -> EmergencyBreaker:
         """Initiate the emergency breaker."""
-        return EmergencyBreaker(self._emergency_stop_event)
+        # return EmergencyBreaker(self._emergency_stop_event)
+        pass
 
     def _init_all_hardware(self) -> list:
         """
@@ -259,12 +265,8 @@ class StackingSetupBackend:
         hardware : list
             A list of the hardware controllers.
         """
-        # Load the config
-        config = configparser.ConfigParser()
-        config.read(self._config_filename)
-
         # self._piezo_controller = KIM101()
-        self._motor_controller = KDC101(settings=config)
+        self._motor_controller = KDC101(settings=self._settings)
 
         # Define the connected components.
         _hardware = [
@@ -296,10 +298,12 @@ class StackingSetupBackend:
         """
         Setup the backend components.
         
-        Create the hardware objects and connect them to the main process. This
-        has to be done in a seperate function so the object can be created
-        after the backend class is pickled for the new process (hardware objects
-        contain parts that cant be pickled).
+        Create the hardware objects and connect them to the main process. 
+        
+        .. note::
+            The hardware has to be connected in a seperate function so the object 
+            can be created after the backend class is pickled for the 
+            new process (hardware objects contain parts that cant be pickled).
         """
         self._logger = self._set_logger()
         self._emergency_breaker = self._init_emergency_breaker()
@@ -309,14 +313,14 @@ class StackingSetupBackend:
     def start_backend(self) -> None:
         """Start the hardware controller process."""
         self._controller_process = mp.Process(target=self._controller_loop, args=(self._emergency_stop_event,
-                                                                        self._shutdown, self._con_to_main,))    
+                                                                        self._shutdown, self._con_to_main, self._settings,))    
         self._controller_process.set_deamon=True
         self._controller_process.start()
 
     @catch_remote_exceptions
     @typechecked
     def _controller_loop(self, emergency_stop_event : mp.Event, shutdown_event : mp.Event, 
-                        con_to_main : Union[PipelineConnection, SerialConnection]) -> None:
+                        con_to_main : Union[PipelineConnection, SerialConnection], settings : Settings) -> None:
         """
         The main loop of the hardware controller process.
 
@@ -331,11 +335,14 @@ class StackingSetupBackend:
             The event that is set when the shutdown is triggered.
         con_to_main : multiprocessing.Pipe
             The pipe to the main process.
+        settings : Settings
+            The settings object.
         """
         # When starting a process the class is pickled and a new instance is created in the new process.
         # This means that attributes that were changed in the main process are not changed in the new process.
         # To fix this the attributes are set again in the new process.
         self._con_to_main = con_to_main
+        self._con_to_main.handshake()
         self._emergency_stop_event = emergency_stop_event
         self._shutdown = shutdown_event
         self.setup_backend()
@@ -360,7 +367,7 @@ class StackingSetupBackend:
                     try:
                         parsed_command = GcodeParser.parse_gcode_line(command)  # Parse the command
                     except ValueError as e:
-                        self._con_to_main.send(Message(1, str(e)))
+                        self._con_to_main.send(Message(exit_code=1, msg=str(e), command=command, command_id=''))
                         continue
                     self._execute_command(parsed_command) # Execute the command
 
@@ -395,12 +402,12 @@ class StackingSetupBackend:
 
         # Excecute the priority commands first
         if 'M112' in parsed_command.keys():
-            exit_code, msg = self._echo(self.M112)
+            exit_code, msg = self._echo(func=self.M112, command_id='M112')
             # Remove the command from the dict
             del parsed_command['M112']
 
         if 'M999' in parsed_command.keys():
-            exit_code, msg = self._echo_(self.M999)
+            exit_code, msg = self._echo_(func=self.M999, command_id='M999')
             # Remove the command from the dict
             del parsed_command['M999']
 
@@ -415,13 +422,14 @@ class StackingSetupBackend:
                 continue
             elif command_id == 'M105':
                 # Get the temperature
-                exit_code, msg = self._echo(self.M105)
+                exit_code, msg = self._echo(func=self.M105, command_id='M105')
             elif command_id == 'M113':
                 # Keep the host alive
-                exit_code, msg = self._echo(self.M113, parsed_command[command_id])
+                exit_code, msg = self._echo(func=self.M113, command_id='M113', 
+                        command=parsed_command[command_id])
             elif command_id == 'M114':
                 # Get the position
-                exit_code, msg = self._echo(self.M114)
+                exit_code, msg = self._echo(func=self.M114, command_id='M114')
             elif command_id == 'M140':
                 raise NotImplementedError('M140 not implemented.')
             elif command_id == 'M810':
@@ -430,12 +438,9 @@ class StackingSetupBackend:
                 raise NotImplementedError('M811 macro not implemented.')
             elif command_id == 'M812':
                 raise NotImplementedError('M812 macro not implemented.')
-            elif command_id == 'M999':
-                # Restart the controller from an emergency stop.
-                exit_code, msg = self._echo(self.M999)
             else:
                 exit_code = 1
-                self._con_to_main.send(Message(exit_code, 'Unknown command: {}'.format(command_id)))
+                self._con_to_main.send(Message(exit_code=exit_code, msg='Unknown command', command_id=command_id))
 
             # Delete the command from the list
             keys.remove(command_id)
@@ -454,22 +459,25 @@ class StackingSetupBackend:
 
             if command_id == 'G0':
                 # Move to all the given axes at the same time
-                exit_code, msg = self._echo(self.G0, parsed_command[command_id])
+                exit_code, msg = self._echo(func=self.G0, command_id='G0', 
+                        command=parsed_command[command_id])
             elif command_id == 'G1':
                 # Make an arc to the given position
-                exit_code, msg = self._echo(self.G1, parsed_command[command_id])
+                exit_code, msg = self._echo(func=self.G1, command_id='G1', 
+                        command=parsed_command[command_id])
             elif command_id == 'G28':
                 # Home all axes
-                exit_code, msg = self._echo(self.G28)
+                exit_code, msg = self._echo(func=self.G28, command_id='G28')
             elif command_id == 'G90':
                 # Set to absolute positioning
-                exit_code, msg = self._echo(self.G90)
+                exit_code, msg = self._echo(func=self.G90, command_id='G90')
             elif command_id == 'G91':
                 # Set to relative positioning
-                exit_code, msg = self._echo(self.G91)
+                exit_code, msg = self._echo(func=self.G91, command_id='G91')	
             else:
                 exit_code = 1
-                self._con_to_main.send(Message(exit_code, 'Unknown command: {}'.format(command_id)))
+                self._con_to_main.send(Message(exit_code=exit_code, msg='Unknown command', 
+                    command_id=command_id))
 
             # Delete the command from the dict
             keys.remove(command_id)
@@ -483,7 +491,7 @@ class StackingSetupBackend:
 
         if not exit_code and len(parsed_command) != 0:
             # Send the error message to the main process
-            msg = Message(exit_code=1, msg='Not all commands were executed: {}'.format(parsed_command))
+            msg = Message(exit_code=1, msg='Not all commands were executed', command=parsed_command)
             self._con_to_main.send(msg)
         
     # MOVEMENT FUNCTIONS
@@ -753,7 +761,7 @@ class StackingSetupBackend:
 
     def _keep_host_alive(self) -> None:
         """Send a keep alive message to the host. (support function for M113)"""
-        self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!'))
+        self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!', command='M113'))
 
     def M114(self) -> tuple:
         """

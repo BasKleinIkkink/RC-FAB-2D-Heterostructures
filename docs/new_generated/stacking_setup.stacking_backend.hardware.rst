@@ -1,18 +1,10 @@
 stacking\_setup.stacking\_backend.hardware package
 ==================================================
 
-The hardware package contains classes for all the currently supported
-hardware. All hardware classes inherit from the :class:`Base` module,
-this is done to ensure compatibility with the :class:`StackingSetupackend`
-
-.. note::
-   For programming guidelines on writing new hardware classes, see 
-   :ref:`programming_guidelines`.
-
 Submodules
 ----------
 
-stacking\_backend.hardware.KDC101 module
+stacking\_setup.stacking\_backend.hardware.KDC101 module
 --------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.hardware.KDC101
@@ -20,7 +12,7 @@ stacking\_backend.hardware.KDC101 module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.hardware.KIM101 module
+stacking\_setup.stacking\_backend.hardware.KIM101 module
 --------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.hardware.KIM101
@@ -28,7 +20,7 @@ stacking\_backend.hardware.KIM101 module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.hardware.PIA13 module
+stacking\_setup.stacking\_backend.hardware.PIA13 module
 -------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.hardware.PIA13
@@ -36,7 +28,7 @@ stacking\_backend.hardware.PIA13 module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.hardware.PRMTZ8 module
+stacking\_setup.stacking\_backend.hardware.PRMTZ8 module
 --------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.hardware.PRMTZ8
@@ -44,7 +36,7 @@ stacking\_backend.hardware.PRMTZ8 module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.hardware.TangoDesktop module
+stacking\_setup.stacking\_backend.hardware.TangoDesktop module
 --------------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.hardware.TangoDesktop
@@ -52,7 +44,7 @@ stacking\_backend.hardware.TangoDesktop module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.hardware.base module
+stacking\_setup.stacking\_backend.hardware.base module
 ------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.hardware.base
@@ -60,7 +52,7 @@ stacking\_backend.hardware.base module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.hardware.emergency\_breaker module
+stacking\_setup.stacking\_backend.hardware.emergency\_breaker module
 --------------------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.hardware.emergency_breaker
@@ -68,7 +60,7 @@ stacking\_backend.hardware.emergency\_breaker module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.hardware.sample\_bed module
+stacking\_setup.stacking\_backend.hardware.sample\_bed module
 -------------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_backend.hardware.sample_bed

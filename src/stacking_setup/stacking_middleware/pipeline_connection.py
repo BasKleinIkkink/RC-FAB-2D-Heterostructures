@@ -135,7 +135,7 @@ class PipelineConnection(BaseConnector):
     """
     _connection_method = "PIPELINE"
 
-    def __init__(self, connection, role, settings):
+    def __init__(self, connection, role, settings=None):
         """
         Initialize the connection.
 
@@ -150,7 +150,6 @@ class PipelineConnection(BaseConnector):
         """
         self._connection = connection
         self._role = role
-        self.handshake()
 
     @property
     def is_connected(self):
@@ -161,6 +160,7 @@ class PipelineConnection(BaseConnector):
         pass
 
     def send_sentinel(self):
+        print("Sending sentinel")
         PipeCom.write_pipe(self._connection, self.SENTINEL)
 
     def disconnect(self):
@@ -195,22 +195,4 @@ class PipelineConnection(BaseConnector):
         if not self._connection.poll():
             return None
         return PipeCom.read_pipe(self._connection)
-
-    def handshake(self):
-        self.send('Hello there.')
-
-        attempts = 0
-        max_attempts = 5
-        while attempts < max_attempts:
-            res = self.receive()
-            if len(res) == 0:
-                attempts += 1
-                sleep(0.1)
-            elif res[0] == 'Hello there general Kenobi.':
-                self._handshake_complete = True
-                return True
-
-        self._handshake_complete = False
-        return False
-
     

@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools", ""build", "wheel"]
+requires = ["setuptools", "build", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "stacking_setup"
-version = "0.0.2"
+version = "0.0.1a"
 description = "This package contains the code needed to control a custom stacking setup."
 readme = "README.md"
 license = {text = "BSD 3-Clause License"}
@@ -12,8 +12,8 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
-    "numpy", "pandas", "scipy", "pylablib-lightweight[extra,devio]",
-    "typeguard", "pyserial"
+    "numpy", "pylablib-lightweight[extra,devio]",
+    "typeguard", "pyserial", "PySide6",
     'importlib-metadata; python_version>"3.10"',
 ]
 

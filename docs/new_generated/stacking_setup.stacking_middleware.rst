@@ -1,20 +1,10 @@
 stacking\_setup.stacking\_middleware package
 ============================================
 
-.. _RST middleware:
-
-This package contains the middleware instances that can be used 
-to communicate between the frond and backend. 
-
-.. important::
-   All the middleware methods are variations of serialization methods.
-   This means that not all objects can be send without encoding them to 
-   a serial format. 
-
 Submodules
 ----------
 
-stacking\_middleware.base\_connector module
+stacking\_setup.stacking\_middleware.base\_connector module
 -----------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_middleware.base_connector
@@ -22,7 +12,7 @@ stacking\_middleware.base\_connector module
    :undoc-members:
    :show-inheritance:
 
-stacking\_middleware.message module
+stacking\_setup.stacking\_middleware.message module
 ---------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_middleware.message
@@ -30,7 +20,7 @@ stacking\_middleware.message module
    :undoc-members:
    :show-inheritance:
 
-stacking\_middleware.pipeline\_connection module
+stacking\_setup.stacking\_middleware.pipeline\_connection module
 ----------------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_middleware.pipeline_connection
@@ -38,7 +28,7 @@ stacking\_middleware.pipeline\_connection module
    :undoc-members:
    :show-inheritance:
 
-stacking\_middleware.serial\_connection module
+stacking\_setup.stacking\_middleware.serial\_connection module
 --------------------------------------------------------------
 
 .. automodule:: stacking_setup.stacking_middleware.serial_connection

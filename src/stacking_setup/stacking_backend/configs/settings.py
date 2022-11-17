@@ -2,6 +2,7 @@ import configparser
 from typing import Union
 from typeguard import typechecked
 from ast import literal_eval
+import os
 
 try:
     from .accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_AXES, ACCEPTED_LINEAR_AXES, ACCEPTED_ROTATIONAL_AXES
@@ -24,7 +25,7 @@ class Settings:
     """
 
     @typechecked
-    def __init__(self, filename : str) -> None:
+    def __init__(self, filename : str='hardware_config.ini') -> None:
         """
         Initialize the settings.
 
@@ -35,12 +36,16 @@ class Settings:
         """
         self._config = configparser.ConfigParser()
 
+        # Create the path to file
+        self._filename = filename
+        path = os.path.dirname(os.path.abspath(__file__)) + '\\' + self._filename
+
         # Check if the file exists
-        if not self._file_exists(filename):
-            raise FileNotFoundError(f'File {filename} not found.')
+        if not self._file_exists(path):
+            raise FileNotFoundError(f'File {path} not found.')
         
         # Load the settings
-        self._config.read(filename)
+        self._config.read(path)
         self._accepted_commands = ACCEPTED_COMMANDS
         self._accepted_axes = ACCEPTED_AXES
         self._accepted_linear_axes = ACCEPTED_LINEAR_AXES
@@ -118,7 +123,7 @@ class Settings:
         except FileNotFoundError:
             return False
 
-
+    @typechecked
     def get(self, section : str, key : str) -> Union[str, int, float, bool]:
         """
         Get the value of a key in a specific section.
@@ -146,11 +151,18 @@ class Settings:
         val = self._config.get(section, key, fallback=None)
         if val is None:  # Look in the default section
             val = self._config.get(section.split('.')[0]+'.DEFAULT', key, fallback=None)
+
         if val is None:  # Key not found
             raise KeyError(f'Key {key} not found in section {section}')
 
-        return literal_eval(val)
+        try:
+            val = literal_eval(val)
+        except ValueError:
+            pass
 
+        return val
+
+    @typechecked
     def set(self, section : str, key : str, value : Union[str, int, float, bool]) -> None:
         """
         Set the value of a key in a specific section.
@@ -173,24 +185,26 @@ class Settings:
         Raises
         ------
         KeyError
-            If the user tries to change a setting in the DEFAULT section or 
-            if the key does not exist in the given section.
+            If the user tries to change a setting in the DEFAULT section.
         """
         # Check if the section is a DEFAULT section
         if section.split('.')[-1] == 'DEFAULT':
             raise KeyError(f'Changing settings in DEFAULT sections is not allowed.')
-        # Check if the key exists
-        if key not in self._config[section]:
-            raise KeyError(f'Key {key} not found in section {section}')
+
+        if section not in self._config.sections():
+            raise KeyError(f'Section {section} not found.')
+
         # Set the value
         self._config[section][key] = str(value)
 
-    def save(self):
+    def save(self, filename : Union[str, None]=None) -> None:
         """Save the settings to the file."""
-        with open('settings.ini', 'w') as configfile:
+        if filename is None:
+            filename = self._filename
+        path = os.path.dirname(os.path.abspath(__file__)) + '\\' + filename
+        with open(path, 'w') as configfile:
             self._config.write(configfile)
 
 
 if __name__ == '__main__':
-    # Create the settings object and check some attributes
-    settings = Settings('hardware_config.ini')
+    settings = Settings()

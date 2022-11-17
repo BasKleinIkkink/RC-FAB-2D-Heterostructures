@@ -1,7 +1,7 @@
 from pylablib.devices.Thorlabs.kinesis import KinesisPiezoMotor, list_kinesis_devices, TPZMotorDriveParams, TPZMotorJogParams
 from typing import Union
 from typeguard import typechecked
-from configparser import ConfigParser
+from ..configs.settings import Settings
 
 try:
     from .base import HardwareNotConnectedError
@@ -16,13 +16,13 @@ class KIM101():
     _type = 'KIM101'
 
     @typechecked
-    def __init__(self, settings : ConfigParser) -> None:
+    def __init__(self, settings : Settings) -> None:
         """
         Initialize the KIM101.
         
         Parameters
         ----------
-        settings : ConfigParser
+        settings : Settings
             The settings to use.
 
         Raises
