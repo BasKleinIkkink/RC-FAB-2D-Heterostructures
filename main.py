@@ -7,8 +7,8 @@ from multiprocessing import Pipe
 if __name__ == '__main__':
     # Create the chosen middleware method
     par_con, ch_con = Pipe()
-    backend = StackingSetupBackend(Connection(par_con, "BACKEND"))
-    backend.start_backend()
+    #backend = StackingSetupBackend(Connection(par_con, "BACKEND"))
+    #backend.start_backend()
 
     # Run the tui main function
     ui_main(Connection(ch_con, "FRONDEND"))

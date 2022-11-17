@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         self._connector = connector
         self._q = queue.Queue()
         self._shutdown_event = threading.Event()
-        self._start_event_handeler()
+        # self._start_event_handeler()
 
         # Resize to the screen resolution
         self.resize(self.window_size[0], self.window_size[1])

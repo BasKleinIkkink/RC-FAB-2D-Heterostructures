@@ -1,8 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch, PropertyMock, Mock
 import multiprocessing as mp
-import threading as tr
-from time import sleep
 import configparser
 
 #Following lines are for assigning parent directory dynamically.
@@ -12,11 +10,11 @@ parent_dir_path = os.path.abspath(os.path.join(dir_path, os.pardir))
 sys.path.insert(0, parent_dir_path)
 
 # The code to be tested
-from src.stacking_setup.stacking_backend.stacking_setup import StackingSetupBackend
-from src.stacking_setup.stacking_backend.hardware.base import Base, NotSupportedError
-from src.stacking_setup.stacking_backend.configs.settings import Settings
-from src.stacking_setup.stacking_middleware.message import Message
-from src.stacking_setup.stacking_backend.configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_LINEAR_AXES, ACCEPTED_ROTATIONAL_AXES
+from stacking_backend.stacking_setup import StackingSetupBackend
+from stacking_backend.hardware.base import Base, NotSupportedError
+from stacking_backend.configs.settings import Settings
+from stacking_middleware.message import Message
+from stacking_backend.configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_LINEAR_AXES, ACCEPTED_ROTATIONAL_AXES
 
 
 def mock_pia13(id):
