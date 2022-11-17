@@ -1,6 +1,5 @@
 numpy
-pandas
-scipy
 pylablib-lightweight[extra,devio]
 typeguard
 pyserial
+PySide6
