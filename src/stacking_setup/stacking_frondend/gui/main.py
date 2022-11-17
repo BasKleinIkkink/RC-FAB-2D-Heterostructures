@@ -10,7 +10,7 @@ from .widgets.system_messages_widget import SystemMessageWidget
 from .widgets.control_widget import BaseControlWidget, MaskControlWidget
 from .widgets.focus_widget import FocusWidget
 from .widgets.temperature_widget import TemperatureWidget
-from .settings import Settings
+from .configs.settings import Settings
 from ...stacking_middleware.message import Message
 
 

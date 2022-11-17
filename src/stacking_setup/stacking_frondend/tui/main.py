@@ -1,9 +1,11 @@
 import os
 from threading import Thread, Lock, Event
 from time import sleep
+from typeguard import typechecked
 
 
-def check_for_response(con, lock, event):
+@typechecked
+def check_for_response(con, lock : Lock, event: Event) -> None:
     """
     Check for a response from the pipe connection.
     
@@ -47,7 +49,7 @@ def check_for_response(con, lock, event):
 
         
 
-def main(connector):
+def main(connector) -> None:
     """
     Start the TUI and the backend.
 
