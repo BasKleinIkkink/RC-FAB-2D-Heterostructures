@@ -5,10 +5,10 @@ from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import (QMainWindow, QToolBar, QFrame, QMenuBar,
                             QVBoxLayout, QHBoxLayout, QDockWidget,
                             QApplication)
-from .basicsortfiltermodel import SystemMessageWidget
-from .control_widget import BaseControlWidget, MaskControlWidget
-from .focus_widget import FocusWidget
-from .temperature_widget import TemperatureWidget
+from .widgets.system_messages_widget import SystemMessageWidget
+from .widgets.control_widget import BaseControlWidget, MaskControlWidget
+from .widgets.focus_widget import FocusWidget
+from .widgets.temperature_widget import TemperatureWidget
 from .settings import Settings
 
 
@@ -33,9 +33,12 @@ class MainWindow(QMainWindow):
         # Connect to the backend
         self._connector = connector
         self.shutdown_event = threading.Event()
+        self.start_event_handeler()
 
     def closeEvent(self, event):
         """Close the main window."""
+        self.stop_event_handeler()
+        self._connector.send_sentinel()
         self.close()
 
     def set_toolbar(self):
@@ -115,6 +118,11 @@ class MainWindow(QMainWindow):
     # Communication with the backend
     def start_event_handeler(self):
         """Start the event handeler."""
+        # Handshake with the frondend
+        time.sleep(1)
+        self._connector.handshake()
+
+        # Strart the handler
         self.event_handle_thread = threading.Thread(target=self._event_handeler)
         self.event_handle_thread.setDaemon(True)
         self.event_handle_thread.start()
@@ -127,8 +135,8 @@ class MainWindow(QMainWindow):
         """Thread that responds to messages from the backend."""
         while not self.shutdown_event.is_set():
             # Check if the connector has a message waiting
-            if self.connector.in_waiting():
-                msg = self.connector.receive()
+            if self._connector.message_waiting():
+                msg = self._connector.receive()
 
                 # Emit the right signal
                 

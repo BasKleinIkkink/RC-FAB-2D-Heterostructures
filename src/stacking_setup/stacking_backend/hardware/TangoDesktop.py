@@ -1,7 +1,7 @@
 import serial
 from typing import Union
 from typeguard import typechecked
-from configparser import ConfigParser
+from ..configs.settings import Settings
 import time
 
 try:
@@ -51,7 +51,7 @@ class TangoDesktop(Base):
     _ser = None
     _port = 'COM6'
 
-    def __init__(self, id : str, settings : ConfigParser) -> None:
+    def __init__(self, id : str, settings : Settings) -> None:
         """Initialize the tango desktop."""	
         # Check if the tango desktop is connected
         self._id = id

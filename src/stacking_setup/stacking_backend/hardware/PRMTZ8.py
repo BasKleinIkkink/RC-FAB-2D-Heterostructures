@@ -1,8 +1,7 @@
 from time import sleep
 from typing import Union
 from typeguard import typechecked
-from configparser import ConfigParser
-
+from ..configs.settings import Settings
 try:
     from .KDC101 import KDC101
     from .base import Base, HardwareNotConnectedError
@@ -16,7 +15,7 @@ class PRMTZ8(Base):
     """Class to control communication with the PRMTZ8 piezocontroller."""
 
     @typechecked
-    def __init__(self, hardware_controller : KDC101, settings : ConfigParser,
+    def __init__(self, hardware_controller : KDC101, settings : Settings,
                 id : str='L') -> None:
         """
         Initialize the PRMTZ8.
@@ -27,6 +26,8 @@ class PRMTZ8(Base):
             The hardware controller to use.
         id: str
             The id of the hardware.
+        settings: Settings
+            The settings object.
 
         Raises
         ------

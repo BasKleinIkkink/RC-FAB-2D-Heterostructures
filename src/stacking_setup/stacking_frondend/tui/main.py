@@ -27,23 +27,25 @@ def check_for_response(con, lock, event):
     response = None
     
     while not event.is_set():
-        lock.acquire()
-        if con.is_connected:
+        sleep(0.1)  # Sleep 100ms to prevent the thread from hogging the CPU
+
+        if con.is_connected and con.message_waiting():
+            lock.acquire()
             response = con.receive()
-        lock.release()
+            lock.release()
+        else:
+            continue
 
         if response is not None:
             if isinstance(response, list):
-                print_msg = ''
                 for msg in response:
-                    for key, value in msg.summary().items():
-                        print_msg += key+' : '+str(value)+'; '
-                print(print_msg+'\n >>>')
+                    print(msg.__dict__)
             else:
                 print(response)
+            
+            print('\n >>>')
 
-        sleep(0.1)  # Sleep 100ms to prevent the thread from hogging the CPU
-
+        
 
 def main(connector):
     """
@@ -63,6 +65,9 @@ def main(connector):
     os.system('cls')
     print("Welcome to the Stacking TUI!")
     print("Type exit() to exit the program and type help() for a list of possible commands.")
+
+    print('\n Performing handshake with backend...')
+    connector.handshake()
 
     # Create the response thread as a deamon so it will close when the program closes
     shutdown_event = Event()

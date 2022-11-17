@@ -9,9 +9,9 @@ from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QGridLayout,
                                QGroupBox, QHBoxLayout, QLabel, QLineEdit,
                                QTreeView, QVBoxLayout, QWidget)
+from ....stacking_middleware.message import Message
 from random import randint
 import datetime
-from settings import Settings
 import datetime
 
 
@@ -19,9 +19,9 @@ REGULAR_EXPRESSION = 0
 WILDCARD = 1
 FIXED_STRING = 2
 
-
+"""
 class Message:
-    """Class used to send status messages between the frond and backend."""
+    #Class used to send status messages between the frond and backend
 
     def __init__(self, exit_code, command, msg, *args, **kwargs):
         self._exit_code = exit_code
@@ -71,6 +71,7 @@ class Message:
 
     def values(self):
         return self.items().values()
+"""
 
 
 class SystemMessageWidget(QWidget):
@@ -256,14 +257,6 @@ def create_test_message_set(parent):
     # Generate a list of test Messages
     n = 20
     for i in range(n):
-        message = Message(exit_code=str(randint(0, 100)), command=str(randint(0, 1)), msg=str(randint(0, 100)))
+        message = Message(exit_code=randint(0, 1), command=str(randint(0, 100)), msg=str(randint(0, 100)), command_id=str(randint(0, 300)))
         add_message(model, message)
     return model
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = SystemMessageWidget(Settings())
-    window.set_source_model(create_test_message_set(window))
-    window.show()
-    sys.exit(app.exec())

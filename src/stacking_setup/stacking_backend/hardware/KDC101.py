@@ -2,6 +2,7 @@ from pylablib.devices.Thorlabs.kinesis import KinesisMotor, list_kinesis_devices
 from typing import Union
 from typeguard import typechecked
 from configparser import ConfigParser
+from ..configs.settings import Settings
 
 try:
     from .base import HardwareNotConnectedError
@@ -11,18 +12,18 @@ except ImportError:
 
 class KDC101():
     """Class to control communication with the KCD101 motorcontroller."""
-    _type = 'KCD101'
+    _type = 'KDC101'
     _connected = False
     _controller = None
 
     @typechecked
-    def __init__(self, settings : ConfigParser) -> None:
+    def __init__(self, settings : Settings) -> None:
         """
         Initialize the KCD101.
         
         Parameters
         ----------
-        settings : ConfigParser
+        settings : Settings
             The settings to use.
 
         Raises
