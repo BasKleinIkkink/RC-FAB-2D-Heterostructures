@@ -1,19 +1,21 @@
 import sys
-from PySide6.QtCore import *
-from PySide6.QtGui import *
-from PySide6.QtWidgets import *
-
-from basicsortfiltermodel import SystemMessageWidget
-from control_widget import BaseControlWidget, MaskControlWidget
-from focus_widget import FocusWidget
-from temperature_widget import TemperatureWidget
-from settings import Settings
+import time
+import threading
+from PySide6.QtCore import Qt, Slot
+from PySide6.QtWidgets import (QMainWindow, QToolBar, QFrame, QMenuBar,
+                            QVBoxLayout, QHBoxLayout, QDockWidget,
+                            QApplication)
+from .basicsortfiltermodel import SystemMessageWidget
+from .control_widget import BaseControlWidget, MaskControlWidget
+from .focus_widget import FocusWidget
+from .temperature_widget import TemperatureWidget
+from .settings import Settings
 
 
 class MainWindow(QMainWindow):
     window_size = (1280, 720)
 
-    def __init__(self):
+    def __init__(self, connector):
         """Initialize the main window."""
         super().__init__()
         # Resize to the screen resolution
@@ -27,6 +29,10 @@ class MainWindow(QMainWindow):
         # Load and set the widgets
         self.load_widgets()  # Load the docks
         self.connect_actions()
+
+        # Connect to the backend
+        self._connector = connector
+        self.shutdown_event = threading.Event()
 
     def closeEvent(self, event):
         """Close the main window."""
@@ -83,11 +89,16 @@ class MainWindow(QMainWindow):
     def connect_actions(self):
         """Connect the actions to the widgets."""
         # Add hide options in te vieuw menu for all the widgets
-        self._viewMenu.addAction("Base control", lambda : self._toggle_visibility(self.baseControlWidget))
-        self._viewMenu.addAction("Mask control", lambda : self._toggle_visibility(self.maskControlWidget))
-        self._viewMenu.addAction("Focus", lambda : self._toggle_visibility(self.microscopeWidget))
-        self._viewMenu.addAction("Temperature", lambda : self._toggle_visibility(self.temperatureWidget))
-        self._viewMenu.addAction("System messages", lambda : self._toggle_visibility(self.systemMessagesWidget))
+        self._viewMenu.addAction("Base control", 
+                lambda : self._toggle_visibility(self.baseControlWidget))
+        self._viewMenu.addAction("Mask control", 
+                lambda : self._toggle_visibility(self.maskControlWidget))
+        self._viewMenu.addAction("Focus", 
+                lambda : self._toggle_visibility(self.microscopeWidget))
+        self._viewMenu.addAction("Temperature", 
+                lambda : self._toggle_visibility(self.temperatureWidget))
+        self._viewMenu.addAction("System messages", 
+                lambda : self._toggle_visibility(self.systemMessagesWidget))
 
         # Make the menu actions checkable
         for action in self._viewMenu.actions():
@@ -101,10 +112,36 @@ class MainWindow(QMainWindow):
         else:
             widget.show()
 
-def main():
+    # Communication with the backend
+    def start_event_handeler(self):
+        """Start the event handeler."""
+        self.event_handle_thread = threading.Thread(target=self._event_handeler)
+        self.event_handle_thread.setDaemon(True)
+        self.event_handle_thread.start()
+
+    def stop_event_handeler(self):
+        """Stop the event handeler."""
+        self.shutdown_event.set()
+
+    def _event_handeler(self):
+        """Thread that responds to messages from the backend."""
+        while not self.shutdown_event.is_set():
+            # Check if the connector has a message waiting
+            if self.connector.in_waiting():
+                msg = self.connector.receive()
+
+                # Emit the right signal
+                
+            else:
+                pass
+            
+            time.sleep(0.01)  # Yield the processor
+
+
+def main(connector=None):
     """"Start the GUI application."""
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow(connector)
     window.show()
     sys.exit(app.exec())
 

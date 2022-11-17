@@ -82,12 +82,7 @@ class FocusWidget(QGroupBox):
 
         # Set the units on the sliders
         self.velDispLabel.setText(self.moveUnit)
-        # self.accDispLabel.setText(self.moveUnit + "^2")
-
-        # Change the range of the sliders
         self.velocitySlider.setMaximum(int(self.moveScale))
-        # self.accSlider.setMaximum(int(self.moveScale))
-
         self.velDisp.setMaximum(self.moveScale)
 
     def _create_move_mode_buttons(self):
@@ -104,7 +99,6 @@ class FocusWidget(QGroupBox):
 
         moveModeLayout.addWidget(self.jogButton)
         moveModeLayout.addWidget(self.driveButton)
-
         return moveModeFrame
 
     def _create_move_buttons(self):
@@ -178,45 +172,20 @@ class FocusWidget(QGroupBox):
         self.velDispLabel.setText(QCoreApplication.translate("MainWindow", u"um/s", None))
         self.velDisp = QSpinBox()
         self.velDisp.setFixedSize(self.settings.lcd_size)
-        # Set the size to the same a the rest of the displays
         self.velDispLable = QLabel()
 
         # Connect the disp to the slider
         self.velocitySlider.valueChanged.connect(lambda : self.velDisp.setValue(self.velocitySlider.value()))
         # Connect the spinbox to the slider
         self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
-
-        # Create the acceleration slider
-        #self.accSliderLabel = QLabel()
-        #self.accSliderLabel.setText(QCoreApplication.translate("MainWindow", u"Acceleration :", None))
-        #self.accSlider = QSlider()
-        #self.accSlider.setOrientation(Qt.Horizontal)
-
-        # Create the acceleration value display
-        #self.accDispLabel = QLabel()
-        #self.accDispLabel.setText(QCoreApplication.translate("MainWindow", u"um/s^2", None))
-        #self.accDisp = QLCDNumber(moveParamFrame)
-        #self.accDisp.setFrameShape(QFrame.StyledPanel)
-        #self.accDisp.setSegmentStyle(QLCDNumber.Flat)
-        #self.accDisp.setFixedSize(self.settings.lcd_size)
         
         # Add everything to the layout
         moveParamGrid.addWidget(self.movePresetLabel, 0, 0, 1, 1)
         moveParamGrid.addWidget(self.movePresetCombo, 0, 1, 1, 3)
-
         moveParamGrid.addWidget(self.velSliderLabel, 1, 0, 1, 1)
         moveParamGrid.addWidget(self.velocitySlider, 1, 1, 1, 2)  # Add the slider to the layout
         moveParamGrid.addWidget(self.velDispLabel, 1, 4, 1, 1)
         moveParamGrid.addWidget(self.velDisp, 1, 3, 1, 1)
-
-        #moveParamGrid.addWidget(self.accSliderLabel, 2, 0, 1, 1)
-        #moveParamGrid.addWidget(self.accSlider, 2, 1, 1, 2)
-        #moveParamGrid.addWidget(self.accDispLabel, 2, 4, 1, 1)
-        #moveParamGrid.addWidget(self.accDisp, 2, 3, 1, 1)
-
-        # Connect the display to the slider
-        #self.accSlider.valueChanged.connect(self.accDisp.display)
-
         self.moveParamGrid = moveParamGrid
         return moveParamFrame
 
@@ -234,7 +203,6 @@ class FocusWidget(QGroupBox):
         # Connect the movment buttons
         self.upButton.clicked.connect(self._move_z_up)
         self.downButton.clicked.connect(self._move_z_down)
-
         self.lockButton.clicked.connect(self._toggle_lock_movement)
 
         # Connect the move mode buttons
@@ -257,12 +225,7 @@ class FocusWidget(QGroupBox):
 
         # Set the units on the sliders
         self.velDispLabel.setText(self.moveUnit)
-        #self.accDispLabel.setText(self.moveUnit + "^2")
-
-        # Change the range of the sliders
         self.velocitySlider.setMaximum(int(self.moveScale))
-        #self.accSlider.setMaximum(int(self.moveScale))
-
         self.velDisp.setMaximum(self.moveScale)
 
     def _move_z_up(self):

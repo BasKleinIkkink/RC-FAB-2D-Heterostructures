@@ -1,9 +1,11 @@
 import sys
 from PySide6.QtCore import *
 from PySide6.QtGui import *
-from PySide6.QtWidgets import *
-from PySide6.QtCharts import QChart, QLineSeries, QValueAxis
-from PySide6.QtCharts import QChart, QChartView
+from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QFrame, QLabel,
+                                 QGroupBox, QComboBox, QCheckBox, QSpinBox,
+                                 QLCDNumber, QGridLayout)
+from PySide6.QtCharts import (QChart, QLineSeries, QValueAxis,
+                            QChart, QChartView)
 from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QPen
 import random

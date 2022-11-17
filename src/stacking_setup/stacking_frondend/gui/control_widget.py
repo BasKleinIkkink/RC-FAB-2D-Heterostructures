@@ -1,7 +1,8 @@
 import sys
-from PySide6.QtCore import *
-from PySide6.QtGui import *
-from PySide6.QtWidgets import *
+from PySide6.QtCore import Qt, QSize, QCoreApplication
+from PySide6.QtWidgets import (QComboBox, QGridLayout, QSpinBox, QLCDNumber,
+                               QGroupBox, QHBoxLayout, QVBoxLayout, QLabel,
+                               QFrame, QPushButton, QRadioButton, QSlider)
 import qtawesome as qta
 
 
@@ -25,8 +26,6 @@ class ControlWidget(QGroupBox):
         self.setting = settings
 
         # Set some window attributes.
-        #self.textEdit = QTextEdit()
-        #self.textEdit.setFontPointSize(16)
         self.setMinimumSize(self.min_size)
         self.setMaximumSize(self.max_size)
         
@@ -79,13 +78,7 @@ class ControlWidget(QGroupBox):
 
         # Set the units on the sliders
         self.velDispLabel.setText(self.moveUnit)
-        #self.accDispLabel.setText(self.moveUnit + "^2")
-
-        # Change the range of the sliders
         self.velocitySlider.setMaximum(int(self.moveScale))
-        #self.accSlider.setMaximum(int(self.moveScale))
-
-        # Update the max of the velDisp spinbox
         self.velDisp.setMaximum(self.moveScale)
 
     def _create_move_buttons_widget(self):
@@ -203,40 +196,15 @@ class ControlWidget(QGroupBox):
         self.velDispLabel.setText(QCoreApplication.translate("MainWindow", u"um/s", None))
         self.velDisp = QSpinBox()
         self.velDisp.setFixedSize(self.setting.lcd_size)
-        # Set the size to the same a the rest of the displays
-        
         self.velDispLable = QLabel(moveParamFrame)
     
-        # Create the acceleration slider
-        #self.accSliderLabel = QLabel(moveParamFrame)
-        #self.accSliderLabel.setText(QCoreApplication.translate("MainWindow", u"Acceleration :", None))
-        #self.accSlider = QSlider(moveParamFrame)
-        #self.accSlider.setOrientation(Qt.Horizontal)
-
-        # Create the acceleration value display
-        #self.accDispLabel = QLabel(moveParamFrame)
-        #self.accDispLabel.setText(QCoreApplication.translate("MainWindow", u"um/s^2", None))
-        #self.accDisp = QLCDNumber(moveParamFrame)
-        #self.accDisp.setFrameShape(QFrame.StyledPanel)
-        #self.accDisp.setSegmentStyle(QLCDNumber.Flat)
-        #self.accDisp.setFixedSize(self.setting.lcd_size)
-
         # Add everything to the layout
         moveParamGrid.addWidget(self.movePresetLabel, 0, 0, 1, 1)
         moveParamGrid.addWidget(self.movePresetCombo, 0, 1, 1, 3)
-
         moveParamGrid.addWidget(self.velSliderLabel, 1, 0, 1, 1)
         moveParamGrid.addWidget(self.velocitySlider, 1, 1, 1, 2)  # Add the slider to the layout
         moveParamGrid.addWidget(self.velDispLabel, 1, 4, 1, 1)
         moveParamGrid.addWidget(self.velDisp, 1, 3, 1, 1)
-
-        # moveParamGrid.addWidget(self.accSliderLabel, 2, 0, 1, 1)
-        # moveParamGrid.addWidget(self.accSlider, 2, 1, 1, 2)
-        # moveParamGrid.addWidget(self.accDispLabel, 2, 4, 1, 1)
-        # moveParamGrid.addWidget(self.accDisp, 2, 3, 1, 1)
-
-        # Connect the display to the slider
-        # self.accSlider.valueChanged.connect(self.accDisp.display)
 
         self.moveParamGrid = moveParamGrid
         return moveParamFrame
@@ -278,7 +246,6 @@ class MaskControlWidget(ControlWidget):
         self.moveZUp = QPushButton(qta.icon("fa.angle-double-up", options=[{'scale_factor': 2,}]), "")
         self.moveZUp.setMinimumSize(self.setting.button_size)
         self.moveZUp.setMaximumSize(self.setting.button_size)
-
 
         self.moveZDown = QPushButton(qta.icon("fa.angle-double-down", options=[{'scale_factor': 2,}]), "")
         self.moveZDown.setMinimumSize(self.setting.button_size)
@@ -334,9 +301,7 @@ class MaskControlWidget(ControlWidget):
         self.stopVacButton.setChecked(True)
         self.stopVacButton.setText("Stop")
         horizontalLayout.addWidget(self.stopVacButton)
-
         horizontalLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        
         return vacFrame
 
     def connect_actions(self, menubar, toolbar):
@@ -368,12 +333,10 @@ class MaskControlWidget(ControlWidget):
         # Connect the move mode buttons
         self.jogModeButton.clicked.connect(self._turn_on_jog_mode)
         self.driveModeButton.clicked.connect(self._turn_on_drive_mode)
-
         self._connect_movement_scale()
 
         # Connect the disp to the slider
         self.velocitySlider.valueChanged.connect(lambda : self.velDisp.setValue(self.velocitySlider.value()))
-        # Connect the spinbox to the slider
         self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
 
     def _connect_movement_scale(self):
@@ -388,16 +351,10 @@ class MaskControlWidget(ControlWidget):
         self.moveScale = float(new_scale.split(" ")[0])
         self.moveUnit = new_scale.split(" ")[1]
 
-        # Set the units on the sliders
+        # Set the units and scale on the sliders
         self.velDispLabel.setText(self.moveUnit)
-        # self.accDispLabel.setText(self.moveUnit + "^2")
-
-        # Change the range of the sliders
         self.velocitySlider.setMaximum(int(self.moveScale))
-        # self.accSlider.setMaximum(int(self.moveScale))
-
         self.velDisp.setMaximum(self.moveScale)
-
 
     def _move_left(self):
         """Move the stage left."""
@@ -512,12 +469,7 @@ class BaseControlWidget(ControlWidget):
 
         # Set the units on the sliders
         self.velDispLabel.setText(self.moveUnit)
-        # self.accDispLabel.setText(self.moveUnit + "^2")
-
-        # Change the range of the sliders
         self.velocitySlider.setMaximum(int(self.moveScale))
-        # self.accSlider.setMaximum(int(self.moveScale))
-
         self.velDisp.setMaximum(self.moveScale)
 
     def _move_left(self):

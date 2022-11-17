@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 import sys
-from PySide6.QtCore import (QDate, QDateTime, QRegularExpression,
-                            QSortFilterProxyModel, QTime, Qt, Slot)
+from PySide6.QtCore import (QRegularExpression,
+                            QSortFilterProxyModel, Qt, Slot)
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QGridLayout,
                                QGroupBox, QHBoxLayout, QLabel, QLineEdit,
