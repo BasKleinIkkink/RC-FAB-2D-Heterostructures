@@ -1,6 +1,7 @@
 import sys
 import time
 import threading
+import queue
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import (QMainWindow, QToolBar, QFrame, QMenuBar,
                             QVBoxLayout, QHBoxLayout, QDockWidget,
@@ -10,6 +11,7 @@ from .widgets.control_widget import BaseControlWidget, MaskControlWidget
 from .widgets.focus_widget import FocusWidget
 from .widgets.temperature_widget import TemperatureWidget
 from .settings import Settings
+from ...stacking_middleware.message import Message
 
 
 class MainWindow(QMainWindow):
@@ -18,6 +20,12 @@ class MainWindow(QMainWindow):
     def __init__(self, connector):
         """Initialize the main window."""
         super().__init__()
+        # Connect to the backend
+        self._connector = connector
+        self._q = queue.Queue()
+        self._shutdown_event = threading.Event()
+        self._start_event_handeler()
+
         # Resize to the screen resolution
         self.resize(self.window_size[0], self.window_size[1])
         self.setWindowTitle("Main Window")
@@ -30,14 +38,9 @@ class MainWindow(QMainWindow):
         self.load_widgets()  # Load the docks
         self.connect_actions()
 
-        # Connect to the backend
-        self._connector = connector
-        self.shutdown_event = threading.Event()
-        self.start_event_handeler()
-
     def closeEvent(self, event):
         """Close the main window."""
-        self.stop_event_handeler()
+        self._stop_event_handeler()
         self._connector.send_sentinel()
         self.close()
 
@@ -62,9 +65,9 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.centralFrame)
 
         # Load the main control widgets
-        self.baseControlWidget = BaseControlWidget(Settings(), self)
+        self.baseControlWidget = BaseControlWidget(Settings(), self._q, self)
         self.baseControlWidget.connect_actions(self._viewMenu, self.toolBar)
-        self.maskControlWidget = MaskControlWidget(Settings(), self)
+        self.maskControlWidget = MaskControlWidget(Settings(), self._q, self)
         self.maskControlWidget.connect_actions(self._viewMenu, self.toolBar)
         #self.maskControlWidget.connect_actions(self._viewMenu, self.toolBar)
         verticalLayout = QVBoxLayout()
@@ -74,9 +77,9 @@ class MainWindow(QMainWindow):
         self.centralHorizontalLayout.addLayout(verticalLayout)
 
         # Load the focus and temperature widgets
-        self.microscopeWidget = FocusWidget(Settings(), self)
+        self.microscopeWidget = FocusWidget(Settings(), self._q, self)
         self.microscopeWidget.connect_actions(self._viewMenu, self.toolBar)
-        self.temperatureWidget = TemperatureWidget(Settings(), self)
+        self.temperatureWidget = TemperatureWidget(Settings(), self._q, self)
         self.temperatureWidget.connect_actions(self._viewMenu, self.toolBar)
         verticalLayout = QVBoxLayout()
         verticalLayout.addWidget(self.microscopeWidget)
@@ -116,34 +119,46 @@ class MainWindow(QMainWindow):
             widget.show()
 
     # Communication with the backend
-    def start_event_handeler(self):
+    def _start_event_handeler(self):
         """Start the event handeler."""
         # Handshake with the frondend
         time.sleep(1)
         self._connector.handshake()
 
         # Strart the handler
-        self.event_handle_thread = threading.Thread(target=self._event_handeler)
+        self._connector.send('G91')  # Set absolute positioning
+        self.event_handle_thread = threading.Thread(target=self._event_handeler, args=(self._q, self._shutdown_event))
         self.event_handle_thread.setDaemon(True)
         self.event_handle_thread.start()
 
-    def stop_event_handeler(self):
+    def _stop_event_handeler(self):
         """Stop the event handeler."""
-        self.shutdown_event.set()
+        self._shutdown_event.set()
 
-    def _event_handeler(self):
+    def _event_handeler(self, q, shutdown_event):
         """Thread that responds to messages from the backend."""
-        while not self.shutdown_event.is_set():
+        while not shutdown_event.is_set():
             # Check if the connector has a message waiting
             if self._connector.message_waiting():
                 msg = self._connector.receive()
-
-                # Emit the right signal
+                self._update_gui(msg)
                 
             else:
-                pass
+                # Check if the gui send a message and pass it too the backend
+                if not q.empty():
+                    msg = q.get()
+                    self._connector.send(msg)
             
             time.sleep(0.01)  # Yield the processor
+
+    def _update_gui(self, messages : list):
+        """Get the content from the message and pass it to the correct widget."""
+        for i in messages:
+            self.systemMessagesWidget.add_message(i)
+            if i.command_id == 'G28':
+                # Set all the axis with a homing function to 0
+                pass
+            print(i.__dict__)
 
 
 def main(connector=None):

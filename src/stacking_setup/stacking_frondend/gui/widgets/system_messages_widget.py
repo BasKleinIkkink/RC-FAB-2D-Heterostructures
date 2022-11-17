@@ -14,64 +14,9 @@ from random import randint
 import datetime
 import datetime
 
-
 REGULAR_EXPRESSION = 0
 WILDCARD = 1
 FIXED_STRING = 2
-
-"""
-class Message:
-    #Class used to send status messages between the frond and backend
-
-    def __init__(self, exit_code, command, msg, *args, **kwargs):
-        self._exit_code = exit_code
-        self._command = command
-        self._msg = msg
-        self._args = args
-        self._kwargs = kwargs
-        self._timestamp = str(datetime.datetime.now())
-
-    @property
-    def exit_code(self):
-        return self._exit_code
-
-    @property
-    def msg(self):
-        return self._msg
-
-    @property
-    def args(self):
-        return self._args
-
-    @property
-    def kwargs(self):
-        return self._kwargs
-
-    @property
-    def timestamp(self):
-        return self._timestamp
-
-    @property
-    def command(self):
-        return self._command
-
-    def __str__(self):
-        return self._msg
-
-    def items(self):
-        return {'exit_code': self._exit_code,
-                'command': self._command,
-                'msg': self._msg,
-                'args': self._args,
-                'kwargs': self._kwargs,
-                'timestamp': self._timestamp}
-
-    def keys(self):
-        return self.items().keys()
-
-    def values(self):
-        return self.items().values()
-"""
 
 
 class SystemMessageWidget(QWidget):
@@ -91,7 +36,7 @@ class SystemMessageWidget(QWidget):
         super().__init__(parent)
         self.settings = settings
         self.setup_widget()
-        self.set_source_model(create_test_message_set(self))
+        self.set_source_model(self._create_model())
 
     def setup_widget(self):
         """Setup the widget."""
@@ -180,6 +125,7 @@ class SystemMessageWidget(QWidget):
         """
         self._proxy_model.setSourceModel(model)
         self._source_view.setModel(model)
+        self.model = model
 
     @Slot()
     def filter_reg_exp_changed(self):
@@ -222,11 +168,19 @@ class SystemMessageWidget(QWidget):
         message : dict
             The message to add.
         """
-        self._source_view.insertRow(0)
-        self._source_view.setData(self._source_view.index(0, 0), message.timestamp)
-        self._source_view.setData(self._source_view.index(0, 1), message.exit_code)
-        self._source_view.setData(self._source_view.index(0, 2), message.command)
-        self._source_view.setData(self._source_view.index(0, 3), message.msg)
+        self.model.insertRow(0)
+        self.model.setData(self.model.index(0, 0), str(message.timestamp))
+        self.model.setData(self.model.index(0, 1), str(message.exit_code))
+        self.model.setData(self.model.index(0, 2), str(message.command))
+        self.model.setData(self.model.index(0, 3), str(message.msg))
+
+    def _create_model(self):
+        model = QStandardItemModel(0, 4, self)
+        model.setHeaderData(0, Qt.Horizontal, "Time")
+        model.setHeaderData(1, Qt.Horizontal, "Exit-code")
+        model.setHeaderData(2, Qt.Horizontal, "Command")
+        model.setHeaderData(3, Qt.Horizontal, "Message")
+        return model
 
 
 def add_message(model, message):

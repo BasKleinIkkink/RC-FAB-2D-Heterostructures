@@ -16,7 +16,7 @@ class TemperatureWidget(QGroupBox):
     min_size = QSize(450, 450)
     max_size = QSize(500, 450)
 
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings, q, parent=None):
         """
         Initialize the control dock widget.
         
@@ -29,6 +29,7 @@ class TemperatureWidget(QGroupBox):
         """
         super().__init__(self.name, parent)
         self.settings = settings
+        self.q = q
         # Define the main frame and grid in the docking widget
         self.mainVerticalLayout = QVBoxLayout(self)
         self.setMinimumSize(self.min_size)

@@ -10,7 +10,7 @@ class FocusWidget(QGroupBox):
     min_size = QSize(500, 250)
     max_size = min_size
 
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings, q, parent=None):
         """
         Initialize the focus widget
 
@@ -24,6 +24,7 @@ class FocusWidget(QGroupBox):
         super().__init__(self.name, parent)
         # Define the main frame and grid in the docking widget
         self.settings = settings
+        self.q = q
         self.mainHorizontalLayout = QHBoxLayout(self)
         self.setMinimumSize(self.min_size)
         self.setMaximumSize(self.max_size)

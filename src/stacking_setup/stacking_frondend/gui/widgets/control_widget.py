@@ -11,7 +11,7 @@ class ControlWidget(QGroupBox):
     min_size = QSize(430, 380)
     max_size = min_size
 
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings, q, parent=None):
         """
         Initialize the control dock widget.
         
@@ -21,9 +21,12 @@ class ControlWidget(QGroupBox):
             The settings object.
         parent : QMainWindow
             Parent window of the dock widget.
+        q : Queue
+            Queue to send messages to the main thread.
         """
         super().__init__(self.name, parent)
         self.setting = settings
+        self.q = q
 
         # Set some window attributes.
         self.setMinimumSize(self.min_size)
@@ -215,9 +218,9 @@ class MaskControlWidget(ControlWidget):
     max_size = QSize(430, 450)
     min_size = max_size
 
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings, q, parent=None):
         """Create the mask control widget."""
-        super().__init__(settings, parent)
+        super().__init__(settings, q, parent)
         self._add_extra_buttons()
         self._add_extra_positions()
         self.add_vel_presets()
@@ -374,10 +377,12 @@ class MaskControlWidget(ControlWidget):
 
     def _rotate_left(self):
         """Rotate the stage left."""
+        self.q.put('G1 L1')
         print("Rotate left")
 
     def _rotate_right(self):
         """Rotate the stage right."""
+        self.q.put('G1 L-1')
         print("Rotate right")
 
     def _move_z_up(self):
@@ -421,9 +426,9 @@ class MaskControlWidget(ControlWidget):
 class BaseControlWidget(ControlWidget):
     name = "Base Control"
 
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings, q, parent=None):
         """Initialize the base control widget."""
-        super().__init__(settings, parent)
+        super().__init__(settings, q, parent)
         self.add_vel_presets()
 
     def connect_actions(self, menubar, toolbar):
