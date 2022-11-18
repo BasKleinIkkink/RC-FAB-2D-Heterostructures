@@ -60,18 +60,25 @@ class Settings:
         buttons_size = literal_eval(config.get('WIDGET.SIZE', 'button_size'))
         self._button_size = QSize(buttons_size[0], buttons_size[1])
 
+        # General backend settings
         self._keep_alive_interval = config.getfloat('BACKEND', 'keep_alive_interval')
         self._pos_auto_update_interval = config.getfloat('BACKEND', 'pos_autoupdate_interval')
         self._temp_auto_update_interval = config.getfloat('BACKEND', 'temp_autoupdate_interval')
 
+        # Temp settings
         self._max_temp = config.getfloat('WIDGET.TEMPERATURE', 'max_temp')	
 
-        self._mask_vel_presets = config.get('WIDGET.MASK', 'vel_presets')
-        self._base_vel_presets = config.get('WIDGET.BASE', 'vel_presets')
-        self._foruc_vel_presets = config.get('WIDGET.FOCUS', 'vel_presets')
-        self._mask_dist_per_drive_click = config.getfloat('WIDGET.MASK', 'dist_per_drive_click')
-        self._base_dist_per_drive_click = config.getfloat('WIDGET.BASE', 'dist_per_drive_click')
-        self._focus_dist_per_drive_click = config.getfloat('WIDGET.FOCUS', 'dist_per_drive_click')
+        # Mask settings
+        self._mask_vel_presets = literal_eval(config.get('WIDGET.MASK', 'vel_presets'))
+        self._mask_drive_step_presets = literal_eval(config.get('WIDGET.MASK', 'drive_step_presets'))
+
+        # Base settings
+        self._base_vel_presets = literal_eval(config.get('WIDGET.BASE', 'vel_presets'))
+        self._base_drive_step_presets = literal_eval(config.get('WIDGET.BASE', 'drive_step_presets'))
+
+        # Focus settings
+        self._focus_vel_presets = literal_eval(config.get('WIDGET.FOCUS', 'vel_presets'))
+        self._focus_drive_step_presets = literal_eval(config.get('WIDGET.FOCUS', 'drive_step_presets'))
 
     # SOME GENERAL BACKEND SETTINGS
     @property
@@ -150,16 +157,16 @@ class Settings:
         return self._mask_vel_presets
 
     @property
-    def dist_per_drive_click(self) -> Union[float, int]:
+    def mask_drive_step_presets(self) -> list:
         """
-        Get the distance per drive click.
+        Get the distance per drive click presets.
 
         Returns
         -------
         int or float
             The distance per drive click.
         """
-        return self._dist_per_drive_click
+        return self._mask_drive_step_presets
 
     # SETTINGS FOR THE BASE WIDGET
     @property
@@ -175,7 +182,7 @@ class Settings:
         return self._base_vel_presets
 
     @property
-    def base_dist_per_drive_click(self) -> Union[float, int]:
+    def base_drive_step_presets(self) -> list:
         """
         Get the distance per drive click.
 
@@ -184,7 +191,7 @@ class Settings:
         int or float
             The distance per drive click.
         """
-        return self._base_dist_per_drive_click
+        return self._base_drive_step_presets
 
     # SETTINGS FOR THE FOCUS WIDGET
     @property
@@ -197,10 +204,10 @@ class Settings:
         list
             The focus velocity presets.
         """
-        return self._foruc_vel_presets
+        return self._focus_vel_presets
 
     @property
-    def focus_dist_per_drive_click(self) -> Union[float, int]:
+    def focus_drive_step_presets(self) -> list:
         """
         Get the distance per drive click.
 
@@ -209,5 +216,5 @@ class Settings:
         int or float
             The distance per drive click.
         """
-        return self._focus_dist_per_drive_click
+        return self._focus_drive_step_presets
 
