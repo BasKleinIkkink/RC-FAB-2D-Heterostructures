@@ -45,16 +45,11 @@ class GcodeParser():
     - L : Move the sample holder
 
     - M0 : Unconditional stop
-    - M80 : Power on
-    - M81 : Power off
-    - M85 : Inactivity shutdown
-    - M92 : Set axis steps per unit
     - M105 : Report current temperature
     - M111 : Debug level
     - M112 : Emergency stop
     - M113 : Keep host alive
     - M114 : Report current position
-    - M119 : Report endstop status
     - M120 : Enable endstops
     - M121 : Disable endstops
     - M140 : Set bed temperature

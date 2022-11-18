@@ -800,6 +800,98 @@ class StackingSetupBackend:
         self._initiate_all_hardware()  # Reconnect all the hardware.
         return 0, None
 
+    def M154(self, interval):
+        """
+        Auto position report.
+
+        If the interval None is given the current settings will be returned if a 
+        auto position update has been set. Otherwise the auto position timer will be
+        set to the given amount of seconds. If 0 is given the timer is disabled.
+        
+        Parameters
+        ----------
+        interval : dict
+            A dict with the interval to set under key 'S'.
+        
+        Returns
+        -------
+        exit_code : int
+            0 if the command was executed successfully, 1 otherwise.
+        msg : str
+            If no error the set interval in seconds, otherwise an error message.
+        """
+        if 'S' not in interval.keys():
+            # Return the current interval
+            try:
+                interval = self._auto_position_timer.interval
+            except AttributeError:
+                return 1, 'Auto position update interval set.'
+
+            return 0, interval
+        elif interval['S'] == 0:
+            # Disable the keep alive timer
+            self._auto_position_timer.stop()
+            return 0, None
+        else:
+            self._auto_position_timer = RepeatedTimer(interval=interval['S'], 
+                                                function=self._auto_position_report)
+            self._auto_position_timer.start()
+            return 0, None
+
+    def _auto_position_report(self) -> None:
+        """Send a position update to the host. (support function for M154)"""
+        exit_code, positions = self.M114()
+        if exit_code == 0:
+            self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M154', command=''))
+        else:
+            self._con_to_main.send(Message(exit_code=1, msg='Could not get positions.', command_id='M154', command=''))
+
+    def M155(self, interval):
+        """
+        Auto temperature report.
+
+        If the interval None is given the current settings will be returned if a 
+        auto temperature update has been set. Otherwise the auto temperature timer will be
+        set to the given amount of seconds. If 0 is given the timer is disabled.
+        
+        Parameters
+        ----------
+        interval : dict
+            A dict with the interval to set under key 'S'.
+        
+        Returns
+        -------
+        exit_code : int
+            0 if the command was executed successfully, 1 otherwise.
+        msg : str
+            If no error the set interval in seconds, otherwise an error message.
+        """
+        if 'S' not in interval.keys():
+            # Return the current interval
+            try:
+                interval = self._auto_temperature_timer.interval
+            except AttributeError:
+                return 1, 'Auto temperature update interval set.'
+
+            return 0, interval
+        elif interval['S'] == 0:
+            # Disable the keep alive timer
+            self._auto_temperature_timer.stop()
+            return 0, None
+        else:
+            self._auto_temperature_timer = RepeatedTimer(interval=interval['S'], 
+                                                function=self._auto_temperature_report)
+            self._auto_temperature_timer.start()
+            return 0, None
+
+    def _auto_temperature_report(self) -> None:
+        """Send a position update to the host. (support function for M154)"""
+        exit_code, positions = self.M105()
+        if exit_code == 0:
+            self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M155', command=''))
+        else:
+            self._con_to_main.send(Message(exit_code=1, msg='Could not get positions.', command_id='M155', command=''))
+
     # JOGGING AND DRIVING FUNCTIONS
     def M811(self, command : dict) -> tuple:
         """
