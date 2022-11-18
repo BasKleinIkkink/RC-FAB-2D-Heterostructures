@@ -12,6 +12,7 @@ from .widgets.focus_widget import FocusWidget
 from .widgets.temperature_widget import TemperatureWidget
 from .configs.settings import Settings
 from ...stacking_middleware.message import Message
+from ast import literal_eval
 
 
 class MainWindow(QMainWindow):
@@ -24,10 +25,11 @@ class MainWindow(QMainWindow):
         self._connector = connector
         self._q = queue.Queue()
         self._shutdown_event = threading.Event()
-        # self._start_event_handeler()
-
+        self._settings = Settings()
+        self._connect_backend()
+        
         # Resize to the screen resolution
-        self.resize(self.window_size[0], self.window_size[1])
+        # self.resize(self.window_size[0], self.window_size[1])
         self.setWindowTitle("Main Window")
 
         # Set the menu and toolbar
@@ -37,6 +39,15 @@ class MainWindow(QMainWindow):
         # Load and set the widgets
         self.load_widgets()  # Load the docks
         self.connect_actions()
+
+    def _connect_backend(self):
+        # Handshake with the frondend
+        time.sleep(1)
+        self._connector.handshake()
+
+        self._start_event_handeler()
+        self._q.put('M154 S{}'.format(self._settings.pos_auto_update_interval))
+        self._q.put('M155 S{}'.format(self._settings.temp_auto_update_interval))
 
     def closeEvent(self, event):
         """Close the main window."""
@@ -65,9 +76,9 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.centralFrame)
 
         # Load the main control widgets
-        self.baseControlWidget = BaseControlWidget(Settings(), self._q, self)
+        self.baseControlWidget = BaseControlWidget(self._settings, self._q, self)
         self.baseControlWidget.connect_actions(self._viewMenu, self.toolBar)
-        self.maskControlWidget = MaskControlWidget(Settings(), self._q, self)
+        self.maskControlWidget = MaskControlWidget(self._settings, self._q, self)
         self.maskControlWidget.connect_actions(self._viewMenu, self.toolBar)
         #self.maskControlWidget.connect_actions(self._viewMenu, self.toolBar)
         verticalLayout = QVBoxLayout()
@@ -77,9 +88,9 @@ class MainWindow(QMainWindow):
         self.centralHorizontalLayout.addLayout(verticalLayout)
 
         # Load the focus and temperature widgets
-        self.microscopeWidget = FocusWidget(Settings(), self._q, self)
+        self.microscopeWidget = FocusWidget(self._settings, self._q, self)
         self.microscopeWidget.connect_actions(self._viewMenu, self.toolBar)
-        self.temperatureWidget = TemperatureWidget(Settings(), self._q, self)
+        self.temperatureWidget = TemperatureWidget(self._settings, self._q, self)
         self.temperatureWidget.connect_actions(self._viewMenu, self.toolBar)
         verticalLayout = QVBoxLayout()
         verticalLayout.addWidget(self.microscopeWidget)
@@ -88,7 +99,7 @@ class MainWindow(QMainWindow):
         self.centralHorizontalLayout.addLayout(verticalLayout)
         
         # Load the message dock
-        self.systemMessagesWidget = SystemMessageWidget(Settings(), self)
+        self.systemMessagesWidget = SystemMessageWidget(self._settings, self)
         self.centralHorizontalLayout.addWidget(self.systemMessagesWidget)
         self.centralHorizontalLayout.setAlignment(Qt.AlignTop)
 
@@ -104,12 +115,16 @@ class MainWindow(QMainWindow):
         self._viewMenu.addAction("Temperature", 
                 lambda : self._toggle_visibility(self.temperatureWidget))
         self._viewMenu.addAction("System messages", 
-                lambda : self._toggle_visibility(self.systemMessagesWidget))
+                lambda : self._toggle_visibility(self.systemMessagesWidget))    
+        self.systemMessagesWidget.setVisible(False)
 
         # Make the menu actions checkable
         for action in self._viewMenu.actions():
             action.setCheckable(True)
             action.setChecked(True)
+        
+        # Except for the messaging widget
+        self._viewMenu.actions()[-1].setChecked(False)
 
     def _toggle_visibility(self, widget):
         """Toggle the visibility of the widget."""
@@ -121,10 +136,6 @@ class MainWindow(QMainWindow):
     # Communication with the backend
     def _start_event_handeler(self):
         """Start the event handeler."""
-        # Handshake with the frondend
-        time.sleep(1)
-        self._connector.handshake()
-
         # Strart the handler
         self._connector.send('G91')  # Set absolute positioning
         self.event_handle_thread = threading.Thread(target=self._event_handeler, args=(self._q, self._shutdown_event))
@@ -155,10 +166,22 @@ class MainWindow(QMainWindow):
         """Get the content from the message and pass it to the correct widget."""
         for i in messages:
             self.systemMessagesWidget.add_message(i)
-            if i.command_id == 'G28':
-                # Set all the axis with a homing function to 0
-                pass
-            print(i.__dict__)
+            if i.command_id == 'M154':
+                # Set all the positions to the correct values
+                try:
+                    positions = dict(i.msg)
+                except ValueError:
+                    continue
+                self.maskControlWidget.update_positions(positions)
+                self.baseControlWidget.update_positions(positions)
+                self.microscopeWidget.update_positions(positions)
+            elif i.command_id == 'M155':
+                # Set the temperature to the correct value
+                try:
+                    temps = dict(i.msg)
+                except ValueError:
+                    continue
+                self.temperatureWidget.update_temperatures(temps)
 
 
 def main(connector=None):

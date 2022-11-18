@@ -3,6 +3,7 @@ from typing import Union
 from typeguard import typechecked
 from configparser import ConfigParser
 from ..configs.settings import Settings
+import threading as tr
 
 try:
     from .base import HardwareNotConnectedError
@@ -31,6 +32,7 @@ class KDC101():
         HardwareNotConnectedError
             If the KCD101 is not connected.
         """
+        self._lock = tr.Lock()  # To ensure threadsafe serial communication
         self._settings=settings
         self._serial_nr = self._settings.get(self._type+'.DEFAULT', 'serial_nr')
         if self._serial_nr == 'None':
@@ -52,17 +54,23 @@ class KDC101():
     def connect(self) -> None:
         """Connect the KCD101."""
         # Device model PRM1-Z8 is used bcause the PRMTZ8/M is not officially supported by pylablib.
+        self._lock.acquire()
         self._controller = KinesisMotor(self._serial_nr, scale="PRM1-Z8")
         self._connected = True
+        self._lock.release()
 
     def disconnect(self) -> None:
         """Disconnect the KCD101."""
+        self._lock.acquire()
         self._controller.stop
         del self
+        self.lock.release()
 
     def emergency_stop(self) -> None:
         """Stop all the connected motors and disconnect the controller."""
+        self._lock.acquire()
         self._controller.stop()
+        self._lock.release()
 
     # STATUS FUNCTIONS
     @typechecked
@@ -75,7 +83,10 @@ class KDC101():
         bool
             True if the KCD101 is connected, False otherwise.
         """
-        return self._connected
+        self._lock.acquire()
+        state = self._connected
+        self._lock.release()
+        return state
 
     @typechecked
     def is_moving(self) -> bool:
@@ -87,7 +98,10 @@ class KDC101():
         bool
             True if the motor is moving, False otherwise.
         """
-        return self._controller.is_moving()
+        self._lock.acquire()
+        state = self._controller.is_moving()
+        self._lock.release()
+        return state
 
     @typechecked
     def get_position(self) -> Union[int, float]:
@@ -99,7 +113,10 @@ class KDC101():
         int, float
             The position of the motor.
         """
-        return self._controller.get_position()
+        self._lock.acquire()
+        pos = self._controller.get_position()
+        self._lock.release()
+        return pos
 
     @typechecked
     def is_homed(self) -> bool:
@@ -111,7 +128,10 @@ class KDC101():
         bool
             True if the motor is homed, False otherwise.
         """
-        return self._controller.is_homed()
+        self._lock.acquire()
+        state = self._controller.is_homed()
+        self._lock.release()
+        return state
 
     @typechecked
     def is_homing(self) -> bool:
@@ -123,7 +143,10 @@ class KDC101():
         bool
             True if the motor is homing, False otherwise.
         """
-        return self._controller.is_homing()
+        self._lock.acquire()
+        state = self._controller.is_homing()
+        self._lock.release()
+        return state
 
     # HOMING FUNCTIONS
     @typechecked
@@ -136,9 +159,11 @@ class KDC101():
         hold_until_done : bool
             If True, the function will wait until the motor is homed.
         """
+        self._lock.acquire()
         self._controller.home()
         if hold_until_done:
             self._controller.wait_for_home()
+        self._lock.release()
 
     @typechecked
     def get_homing_parameters(self) -> dict:
@@ -150,8 +175,11 @@ class KDC101():
         dict
             The homing parameters. Homing velocity (vel) and homing direction (dir).
         """
+        self._lock.acquire()
         params = self._controller.get_homing_parameters()
+        self._lock.release()
         return {'vel': params[2], 'dir': params[0]}
+
 
     @typechecked
     def setup_homing(self, velocity : Union[float, int, None]=None, acceleration : Union[float, int, None]=None) -> None:
@@ -167,7 +195,9 @@ class KDC101():
         acceleration : float
             The acceleration to home with.
         """
+        self._lock.acquire()
         self._controller.setup_homing(velocity=velocity, acceleration=acceleration)
+        self._lock.release()
 
     # JOG AND DRIVE PARAMETERS
     @typechecked
@@ -185,8 +215,10 @@ class KDC101():
         dict
             Dictionary containing the velocity (vel) and acceleration (acc)
         """
+        self._lock.acquire()
         # Format the parameters to dict format.
         params = self._controller.get_velocity_params(scale=scale)
+        self._lock.release()
         return {'vel': params[2], 'acc': params[1]}
         
     @typechecked
@@ -205,7 +237,9 @@ class KDC101():
         scale : bool
             If True, the parameters will be scaled to the correct units.
         """
+        self._lock.acquire()
         self._controller.setup_velocity(max_velocity=velocity, acceleration=acceleration, scale=scale)
+        self._lock.release()
     
     @typechecked
     def get_jog_parameters(self, scale : bool=True) -> dict:
@@ -225,7 +259,9 @@ class KDC101():
         dict
             The jog parameters. Step size, velocity (vel) and acceleration (acc).
         """
+        self._lock.acquire()
         params = self._controller.get_jog_params(scale=scale)
+        self._lock.release()
         return {'step_size': params[1], 'vel': params[2], 'acc': params[3]}
 
     @typechecked
@@ -244,7 +280,9 @@ class KDC101():
         scale : bool
             If True, the parameters will be scaled to the correct units.
         """
+        self._lock.acquire()
         self._controller.setup_jog(max_velocity=velocity, acceleration=acceleration, scale=scale)
+        self._lock.release()
 
     # MOVEMENT FUNCTIONS
     @typechecked
@@ -268,11 +306,15 @@ class KDC101():
         kind : str
             The kind of movement. Can be 'continuous' or 'single'.
         """
+        self._lock.acquire()
         self._controller.jog(direction=direction, kind=kind)
+        self._lock.release()
 
     def stop_jog(self) -> None:
         """Stop the jog movement."""
+        self._lock.acquire()
         self._controller.stop()
+        self._lock.release()
 
     @typechecked
     def rotate_to(self, position : Union[float, int], hold_until_done : bool=True, scale : bool=True) -> None:
@@ -292,9 +334,11 @@ class KDC101():
         hold_until_done : bool
             If True, the function will wait until the movement is done.
         """
+        self._lock.acquire()
         self._controller.move_to(position=position, scale=scale)
         if hold_until_done:
             self._controller.wait_move()
+        self._lock.release()
 
     @typechecked
     def rotate_by(self, distance : Union[float, int], hold_until_done : bool=True, scale : bool=True) -> None:
@@ -314,9 +358,11 @@ class KDC101():
         hold_until_done : bool
             If True, the function will wait until the movement is done.
         """
+        self._lock.acquire()
         self._controller.move_by(distance=distance, scale=scale)
         if hold_until_done:
             self._controller.wait_move()
+        self._lock.release()
 
     def stop(self) -> None:
         """
@@ -327,7 +373,9 @@ class KDC101():
         channel : int
             The channel of the motor to stop.
         """
+        self._lock.acquire()
         self._controller.stop(immediate=True)
+        self._lock.release()
 
 
 if __name__ == '__main__':
