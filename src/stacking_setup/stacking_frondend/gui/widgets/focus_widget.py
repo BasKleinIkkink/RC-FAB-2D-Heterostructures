@@ -59,8 +59,8 @@ class FocusWidget(QGroupBox):
         # Add the params
         vertLayout.addWidget(self._create_move_preset_widget())
 
-        self.add_vel_presets()
-        self.add_drive_step_presets()
+        self.add_vel_presets(self.settings.focus_vel_presets)
+        self.add_drive_step_presets(self.settings.focus_drive_step_presets)
 
         # Add the frame to the main layout
         self.mainHorizontalLayout.addWidget(frame)

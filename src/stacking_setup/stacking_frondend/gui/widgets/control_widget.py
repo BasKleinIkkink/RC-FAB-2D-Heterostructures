@@ -248,8 +248,10 @@ class MaskControlWidget(ControlWidget):
         super().__init__(settings, q, parent)
         self._add_extra_buttons()
         self._add_extra_positions()
-        self.add_vel_presets()
-        self.add_drive_step_presets()
+
+        # Get and set the preset vaues
+        self.add_vel_presets(self.setting.mask_vel_presets)
+        self.add_drive_step_presets(self.setting.mask_drive_step_presets)
 
         # Add a divider
         self.divider = QFrame()
@@ -455,8 +457,8 @@ class BaseControlWidget(ControlWidget):
     def __init__(self, settings, q, parent=None):
         """Initialize the base control widget."""
         super().__init__(settings, q, parent)
-        self.add_vel_presets()
-        self.add_drive_step_presets()
+        self.add_vel_presets(self.setting.base_vel_presets)
+        self.add_drive_step_presets(self.setting.base_drive_step_presets)
 
     def connect_actions(self, menubar, toolbar):
         """
