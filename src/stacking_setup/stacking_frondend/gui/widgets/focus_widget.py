@@ -6,7 +6,7 @@ import qtawesome as qta
 
 
 class FocusWidget(QGroupBox):
-    name = 'FocusDock'
+    name = 'Focus Widget'
     min_size = QSize(500, 250)
     max_size = min_size
 
@@ -18,6 +18,8 @@ class FocusWidget(QGroupBox):
         ----------
         settings : Settings
             The settings object
+        q : Queue
+            The queue to send commands to
         parent : QWidget
             The parent widget
         """
@@ -58,6 +60,7 @@ class FocusWidget(QGroupBox):
         vertLayout.addWidget(self._create_move_preset_widget())
 
         self.add_vel_presets()
+        self.add_drive_step_presets()
 
         # Add the frame to the main layout
         self.mainHorizontalLayout.addWidget(frame)
@@ -85,6 +88,24 @@ class FocusWidget(QGroupBox):
         self.velDispLabel.setText(self.moveUnit)
         self.velocitySlider.setMaximum(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
+
+    def add_drive_step_presets(self, presets=["1 um", "10 um", "100 um"]):
+        """
+        Add drive step presets to the drive step combo box
+        
+        Parameters
+        ----------
+        presets : list
+            List of drive step presets to add to the combo box. Each entry has to
+            follow the following syntax: <value> <unit> (seperated by a space).
+        """
+        for preset in presets:
+            self.driveStepCombo.addItem(preset)
+
+        # Get the current selected
+        new_scale = self.driveStepCombo.currentText()
+        self.driveScale = float(new_scale.split(" ")[0])
+        self.driveUnit = new_scale.split(" ")[1]
 
     def _create_move_mode_buttons(self):
         """Create the move mode buttons"""
@@ -175,11 +196,11 @@ class FocusWidget(QGroupBox):
         self.velDisp.setFixedSize(self.settings.lcd_size)
         self.velDispLable = QLabel()
 
-        # Connect the disp to the slider
-        self.velocitySlider.valueChanged.connect(lambda : self.velDisp.setValue(self.velocitySlider.value()))
-        # Connect the spinbox to the slider
-        self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
-        
+        # Add the drive step dropdown box
+        self.driveStepLabel = QLabel(moveParamFrame)
+        self.driveStepLabel.setText(QCoreApplication.translate("MainWindow", u"Drive step :", None))
+        self.driveStepCombo = QComboBox(moveParamFrame)
+
         # Add everything to the layout
         moveParamGrid.addWidget(self.movePresetLabel, 0, 0, 1, 1)
         moveParamGrid.addWidget(self.movePresetCombo, 0, 1, 1, 3)
@@ -187,6 +208,8 @@ class FocusWidget(QGroupBox):
         moveParamGrid.addWidget(self.velocitySlider, 1, 1, 1, 2)  # Add the slider to the layout
         moveParamGrid.addWidget(self.velDispLabel, 1, 4, 1, 1)
         moveParamGrid.addWidget(self.velDisp, 1, 3, 1, 1)
+        moveParamGrid.addWidget(self.driveStepLabel, 2, 0, 1, 1)
+        moveParamGrid.addWidget(self.driveStepCombo, 2, 1, 1, 3)
         self.moveParamGrid = moveParamGrid
         return moveParamFrame
 
@@ -201,6 +224,11 @@ class FocusWidget(QGroupBox):
         toolbar : QToolBar
             The toolbar
         """
+        
+        # Connect the disp to the slider
+        self.velocitySlider.valueChanged.connect(lambda : self.velDisp.setValue(self.velocitySlider.value()))
+        self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
+
         # Connect the movment buttons
         self.upButton.clicked.connect(self._move_z_up)
         self.downButton.clicked.connect(self._move_z_down)

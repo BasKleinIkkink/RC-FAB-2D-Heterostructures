@@ -84,6 +84,24 @@ class ControlWidget(QGroupBox):
         self.velocitySlider.setMaximum(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
 
+    def add_drive_step_presets(self, presets=["1 um", "500 nm",]):
+        """
+        Add drive step presets to the drive step combo box
+        
+        Parameters
+        ----------
+        presets : list
+            List of drive step presets to add to the combo box. Each entry has to
+            follow the following syntax: <value> <unit> (seperated by a space).
+        """
+        for preset in presets:
+            self.driveStepCombo.addItem(preset)
+
+        # Get the current selected
+        new_scale = self.driveStepCombo.currentText()
+        self.driveScale = float(new_scale.split(" ")[0])
+        self.driveUnit = new_scale.split(" ")[1]
+
     def _create_move_buttons_widget(self):
         """Create the move buttons widget."""
         # Create the move buttons
@@ -200,7 +218,12 @@ class ControlWidget(QGroupBox):
         self.velDisp = QSpinBox()
         self.velDisp.setFixedSize(self.setting.lcd_size)
         self.velDispLable = QLabel(moveParamFrame)
-    
+
+        # Drive step preset dropdown box
+        self.driveStepLabel = QLabel(moveParamFrame)
+        self.driveStepLabel.setText(QCoreApplication.translate("MainWindow", u"Drive step :", None))
+        self.driveStepCombo = QComboBox(moveParamFrame)
+
         # Add everything to the layout
         moveParamGrid.addWidget(self.movePresetLabel, 0, 0, 1, 1)
         moveParamGrid.addWidget(self.movePresetCombo, 0, 1, 1, 3)
@@ -208,6 +231,8 @@ class ControlWidget(QGroupBox):
         moveParamGrid.addWidget(self.velocitySlider, 1, 1, 1, 2)  # Add the slider to the layout
         moveParamGrid.addWidget(self.velDispLabel, 1, 4, 1, 1)
         moveParamGrid.addWidget(self.velDisp, 1, 3, 1, 1)
+        moveParamGrid.addWidget(self.driveStepLabel, 2, 0, 1, 1)
+        moveParamGrid.addWidget(self.driveStepCombo, 2, 1, 1, 3)
 
         self.moveParamGrid = moveParamGrid
         return moveParamFrame
@@ -224,6 +249,7 @@ class MaskControlWidget(ControlWidget):
         self._add_extra_buttons()
         self._add_extra_positions()
         self.add_vel_presets()
+        self.add_drive_step_presets()
 
         # Add a divider
         self.divider = QFrame()
@@ -430,6 +456,7 @@ class BaseControlWidget(ControlWidget):
         """Initialize the base control widget."""
         super().__init__(settings, q, parent)
         self.add_vel_presets()
+        self.add_drive_step_presets()
 
     def connect_actions(self, menubar, toolbar):
         """
