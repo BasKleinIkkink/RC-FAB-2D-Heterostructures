@@ -2,7 +2,7 @@ import sys
 from PySide6.QtCore import Qt, QSize, QCoreApplication
 from PySide6.QtWidgets import (QComboBox, QGridLayout, QSpinBox, QLCDNumber,
                                QGroupBox, QHBoxLayout, QVBoxLayout, QLabel,
-                               QFrame, QPushButton, QRadioButton, QSlider)
+                               QFrame, QRadioButton, QSlider, QPushButton)
 import qtawesome as qta
 
 
@@ -101,6 +101,7 @@ class ControlWidget(QGroupBox):
         new_scale = self.driveStepCombo.currentText()
         self.driveScale = float(new_scale.split(" ")[0])
         self.driveUnit = new_scale.split(" ")[1]
+        self.driveScale *= self.setting.known_units[self.driveUnit]
 
     def _create_move_buttons_widget(self):
         """Create the move buttons widget."""
@@ -292,27 +293,27 @@ class MaskControlWidget(ControlWidget):
     def _add_extra_positions(self):
         """Add the extra positions to the widget."""
         # Add the rotation buttons to the linear move frame
-        self.yPosLabel = QLabel()
-        self.yPosLabel.setText(QCoreApplication.translate("MainWindow", u"Z:", None))
-        self.positionDisplayGrid.addWidget(self.yPosLabel, 3, 0, 1, 1)
+        self.zPosLabel = QLabel()
+        self.zPosLabel.setText(QCoreApplication.translate("MainWindow", u"Z:", None))
+        self.positionDisplayGrid.addWidget(self.zPosLabel, 3, 0, 1, 1)
 
         # Add the position displays
-        self.xPosDisplay = QLCDNumber()
-        self.xPosDisplay.setFrameShape(QFrame.StyledPanel)
-        self.xPosDisplay.setSegmentStyle(QLCDNumber.Flat)
-        self.xPosDisplay.setFixedSize(self.setting.lcd_size)
-        self.positionDisplayGrid.addWidget(self.xPosDisplay, 3, 1, 1, 1)
+        self.zPosDisplay = QLCDNumber()
+        self.zPosDisplay.setFrameShape(QFrame.StyledPanel)
+        self.zPosDisplay.setSegmentStyle(QLCDNumber.Flat)
+        self.zPosDisplay.setFixedSize(self.setting.lcd_size)
+        self.positionDisplayGrid.addWidget(self.zPosDisplay, 3, 1, 1, 1)
 
-        self.yPosLabel = QLabel()
-        self.yPosLabel.setText(QCoreApplication.translate("MainWindow", u"R:", None))
-        self.positionDisplayGrid.addWidget(self.yPosLabel, 4, 0, 1, 1)
+        self.rPosLabel = QLabel()
+        self.rPosLabel.setText(QCoreApplication.translate("MainWindow", u"R:", None))
+        self.positionDisplayGrid.addWidget(self.rPosLabel, 4, 0, 1, 1)
 
         # Add the position displays
-        self.xPosDisplay = QLCDNumber()
-        self.xPosDisplay.setFrameShape(QFrame.StyledPanel)
-        self.xPosDisplay.setSegmentStyle(QLCDNumber.Flat)
-        self.xPosDisplay.setFixedSize(self.setting.lcd_size)
-        self.positionDisplayGrid.addWidget(self.xPosDisplay, 4, 1, 1, 1)
+        self.rPosDisplay = QLCDNumber()
+        self.rPosDisplay.setFrameShape(QFrame.StyledPanel)
+        self.rPosDisplay.setSegmentStyle(QLCDNumber.Flat)
+        self.rPosDisplay.setFixedSize(self.setting.lcd_size)
+        self.positionDisplayGrid.addWidget(self.rPosDisplay, 4, 1, 1, 1)
 
     def _create_vacuum_settings(self):
         """Create the vacuum settings frame."""
@@ -347,28 +348,67 @@ class MaskControlWidget(ControlWidget):
             The toolbar to connect the actions to.
         """
         # Connect the buttons to the actions
-        self.moveLeft.clicked.connect(self._move_left)
-        self.moveRight.clicked.connect(self._move_right)
-        self.moveUp.clicked.connect(self._move_up)
-        self.moveDown.clicked.connect(self._move_down)
-        self.rotateLeft.clicked.connect(self._rotate_left)
-        self.rotateRight.clicked.connect(self._rotate_right)
-        self.moveZUp.clicked.connect(self._move_z_up)
-        self.moveZDown.clicked.connect(self._move_z_down)
-        self.lockMoveButton.clicked.connect(self._lock_movement)
+        self.moveLeft.pressed.connect(
+            lambda : self.q.put('M811 X1' if self.jogModeButton.isChecked() else self.q.put('G0 X{}'.format(self.driveScale))))
+        self.moveLeft.released.connect(
+            lambda : self.q.put('M811 X0' if self.jogModeButton.isChecked() else None))
+            
+        self.moveRight.pressed.connect(
+            lambda : self.q.put('M811 X-1' if self.jogModeButton.isChecked() else self.q.put('G0 X-{}'.format(self.driveScale))))
+        self.moveRight.released.connect(
+            lambda : self.q.put('M811 X0') if self.jogModeButton.isChecked() else None)
+
+        self.moveUp.pressed.connect(
+            lambda : self.q.put('M811 Y1' if self.jogModeButton.isChecked() else self.q.put('G0 Y{}'.format(self.driveScale))))
+        self.moveUp.released.connect(
+            lambda : self.q.put('M811 Y0') if self.jogModeButton.isChecked() else None)
+
+        self.moveDown.pressed.connect(
+            lambda : self.q.put('M811 Y-1' if self.jogModeButton.isChecked() else self.q.put('G0 Y-{}'.format(self.driveScale))))
+        self.moveDown.released.connect(
+            lambda : self.q.put('M811 Y0') if self.jogModeButton.isChecked() else None)
+
+        self.rotateLeft.pressed.connect(
+            lambda : self.q.put('M811 L1' if self.jogModeButton.isChecked() else self.q.put('G1 L{}'.format(self.driveScale))))
+        self.rotateLeft.released.connect(
+            lambda : self.q.put('M811 L0') if self.jogModeButton.isChecked() else None)
+        
+        self.rotateRight.pressed.connect(
+            lambda : self.q.put('M811 L-1' if self.jogModeButton.isChecked() else self.q.put('G1 L-{}'.format(self.driveScale))))
+        self.rotateRight.released.connect(
+            lambda : self.q.put('M811 L0') if self.jogModeButton.isChecked() else None)
+
+        self.moveZUp.pressed.connect(
+            lambda : self.q.put('M811 Z1' if self.jogModeButton.isChecked() else self.q.put('G1 Z{}'.format(self.driveScale))))
+        self.moveZUp.released.connect(
+            lambda : self.q.put('M811 Z0') if self.jogModeButton.isChecked() else None)
+
+        self.moveZDown.clicked.connect(
+            lambda : self.q.put('M811 Z-1' if self.jogModeButton.isChecked() else self.q.put('G1 Z-{}'.format(self.driveScale))))
+        self.lockMoveButton.clicked.connect(
+            lambda : self.q.put('M811 Z0') if self.jogModeButton.isChecked() else None)
 
         # Connect vacuum pump buttons
         self.startVacButton.clicked.connect(self._turn_on_vacuum)
         self.stopVacButton.clicked.connect(self._turn_off_vacuum)
 
         # Connect the move mode buttons
-        self.jogModeButton.clicked.connect(self._turn_on_jog_mode)
-        self.driveModeButton.clicked.connect(self._turn_on_drive_mode)
         self._connect_movement_scale()
 
         # Connect the disp to the slider
         self.velocitySlider.valueChanged.connect(lambda : self.velDisp.setValue(self.velocitySlider.value()))
         self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
+
+        self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)
+
+    def _update_drive_step_scale(self):
+        """Update the drive step scale."""
+        # Get the current selected
+        new_scale = self.driveStepCombo.currentText()
+        self.driveScale = float(new_scale.split(" ")[0])
+        self.driveUnit = new_scale.split(" ")[1]
+
+        self.driveScale *= self.setting.known_units[self.driveUnit]
 
     def _connect_movement_scale(self):
         """Connect the movement scale to the movement buttons."""
@@ -387,40 +427,6 @@ class MaskControlWidget(ControlWidget):
         self.velocitySlider.setMaximum(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
 
-    def _move_left(self):
-        """Move the stage left."""
-        print("Move left")
-
-    def _move_right(self):
-        """Move the stage right."""
-        print("Move right")
-
-    def _move_up(self):
-        """Move the stage up."""
-        print("Move up")
-
-    def _move_down(self):
-        """Move the stage down."""
-        print("Move down")
-
-    def _rotate_left(self):
-        """Rotate the stage left."""
-        self.q.put('G1 L1')
-        print("Rotate left")
-
-    def _rotate_right(self):
-        """Rotate the stage right."""
-        self.q.put('G1 L-1')
-        print("Rotate right")
-
-    def _move_z_up(self):
-        """Move the stage up in the z direction."""
-        print("Move z up")
-
-    def _move_z_down(self):
-        """Move the stage down in the z direction."""
-        print("Move z down")
-
     def _turn_on_vacuum(self):
         """Turn on the vacuum pump."""
         print("Turn on vacuum")
@@ -428,14 +434,6 @@ class MaskControlWidget(ControlWidget):
     def _turn_off_vacuum(self):
         """Turn off the vacuum pump."""
         print("Turn off vacuum")
-
-    def _turn_on_drive_mode(self):
-        """Turn on drive mode."""
-        print("Turn on drive mode")
-
-    def _turn_on_jog_mode(self):
-        """Turn on jog mode."""
-        print("Turn on jog mode")
 
     def _lock_movement(self):
         """Lock the movement of the stage."""
@@ -449,6 +447,17 @@ class MaskControlWidget(ControlWidget):
         self.rotateRight.setEnabled(not button_state)
         self.moveZUp.setEnabled(not button_state)
         self.moveZDown.setEnabled(not button_state)
+
+    def update_positions(self, dict):
+        """Update the position labels."""
+        if 'X' in dict:
+            self.xPosDisplay.display(dict['X'])
+        if 'Y' in dict:
+            self.yPosDisplay.display(dict['Y'])
+        if 'Z' in dict:
+            self.zPosDisplay.display(dict['Z'])
+        if 'L' in dict:
+            self.rPosDisplay.display(dict['L'])
 
     
 class BaseControlWidget(ControlWidget):
@@ -472,15 +481,23 @@ class BaseControlWidget(ControlWidget):
             The toolbar to add the buttons to.
         """
         # Connect the buttons to the actions
-        self.moveLeft.clicked.connect(self._move_left)
-        self.moveRight.clicked.connect(self._move_right)
-        self.moveUp.clicked.connect(self._move_up)
-        self.moveDown.clicked.connect(self._move_down)
+        self.moveLeft.pressed.connect(
+            lambda : self.q.put('M811 J-1' if self.jogModeButton.isChecked() else self.q.put('G1 J-{}'.format(self.driveScale))))
+        self.moveLeft.released.connect(
+            lambda : self.q.put('M811 J0') if self.jogModeButton.isChecked() else None)
+        self.moveRight.pressed.connect(
+            lambda : self.q.put('M811 J1' if self.jogModeButton.isChecked() else self.q.put('G1 J{}'.format(self.driveScale))))
+        self.moveRight.released.connect(
+            lambda : self.q.put('M811 J0') if self.jogModeButton.isChecked() else None)
+        self.moveUp.pressed.connect(
+            lambda : self.q.put('M811 H1' if self.jogModeButton.isChecked() else self.q.put('G1 H{}'.format(self.driveScale))))
+        self.moveUp.released.connect(
+            lambda : self.q.put('M811 H0') if self.jogModeButton.isChecked() else None)
+        self.moveDown.pressed.connect(
+            lambda : self.q.put('M811 H-1' if self.jogModeButton.isChecked() else self.q.put('G1 H-{}'.format(self.driveScale))))
+        self.moveDown.released.connect(
+            lambda : self.q.put('M811 H0') if self.jogModeButton.isChecked() else None)
         self.lockMoveButton.clicked.connect(self._lock_movement)
-
-        # Connect the move mode buttons
-        self.jogModeButton.clicked.connect(self._turn_on_jog_mode)
-        self.driveModeButton.clicked.connect(self._turn_on_drive_mode)
 
         # Connect the disp to the slider
         self.velocitySlider.valueChanged.connect(lambda : self.velDisp.setValue(self.velocitySlider.value()))
@@ -488,6 +505,17 @@ class BaseControlWidget(ControlWidget):
         self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
 
         self._connect_movement_scale()
+
+        self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)
+
+    def _update_drive_step_scale(self):
+        """Update the drive step scale."""
+        # Get the current selected
+        new_scale = self.driveStepCombo.currentText()
+        self.driveScale = float(new_scale.split(" ")[0])
+        self.driveUnit = new_scale.split(" ")[1]
+
+        self.driveScale *= self.setting.known_units[self.driveUnit]
 
     def _connect_movement_scale(self):
         """Connect the movement scale to the movement buttons."""
@@ -538,3 +566,11 @@ class BaseControlWidget(ControlWidget):
     def _turn_on_jog_mode(self):
         """Turn on jog mode."""
         print("Turn on jog mode")
+
+    def update_positions(self, dict):
+        """Update the position labels."""
+        if 'H' in dict:
+            self.xPosDisplay.display(dict['H'])
+        if 'J' in dict:
+            self.yPosLabel.setText(dict['J'])
+        

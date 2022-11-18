@@ -15,7 +15,7 @@ Movment comamands are not allowed to have attributes
 """
 
 ACCEPTED_ATTRIBUTES = ('S', 'I', 'R', 'A')
-ACCEPTED_AXES = ('X', 'Y', 'Z', 'H', 'J', 'K', 'L',)
+ACCEPTED_AXES = ('X', 'Y', 'Z', 'H', 'J', 'K', 'L', 'N')
 ACCEPTED_LINEAR_AXES = ('X', 'Y', 'Z', 'H', 'J', 'K',)
 ACCEPTED_ROTATIONAL_AXES = ('L',)
 ACCEPTED_COMMANDS = {
@@ -39,8 +39,8 @@ ACCEPTED_COMMANDS = {
     # 'M121' : {},
     'M140' : {'I': [int],
               'S' : [int, float]},
-    'M154' : {'S': [int]},
-    'M155' : {'S': [int]},
+    'M154' : {'S': [int, float]},
+    'M155' : {'S': [int, float]},
     'M190' : {'I': [int],
               'R': [int, float],
               'S': [int, float]

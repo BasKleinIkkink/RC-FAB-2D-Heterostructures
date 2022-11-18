@@ -159,12 +159,6 @@ class TemperatureWidget(QGroupBox):
         # Aslo update the value in the graph
         self.chart.target_temp = self.target_spin_box.value()
 
-    def _set_custom_preset(self, event):
-        """Add a custom preset to the presets combo box."""
-        print('Set custom preset')
-        # When the spinbox changes by user action set the combo box to custom
-        
-
     def _change_spinbox_value(self):
         """Change the value of the spinbox depending on the selected preset."""
         print('Lock spinbox value')
@@ -179,6 +173,12 @@ class TemperatureWidget(QGroupBox):
             self.target_spin_box.setMaximum(value)
             self.target_spin_box.setValue(value)
             self.target_spin_box.setDisabled(True)
+
+    def update_temperatures(self, temps):
+        """Update the current temperature of the indicator."""
+        if 'N' in temps:
+            self.currentTempDisp.display(temps['N']['current'])
+            self.targetTempDisp.display(temps['N']['target'])
 
 
     class Chart(QChart):

@@ -9,7 +9,7 @@ from typing import Union
 import configparser
 
 try:
-    from .gcode_parser import GcodeParser
+    from .gcode_parser import GcodeParser, GcodeAttributeError, GcodeParsingError
     from .hardware.base import NotSupportedError
     from ..stacking_middleware.message import Message
     from .hardware.KDC101 import KDC101
@@ -21,7 +21,7 @@ try:
     from ..stacking_middleware.serial_connection import SerialConnection
     from .configs.settings import Settings
 except ImportError:
-    from gcode_parser import GcodeParser
+    from gcode_parser import GcodeParser, GcodeAttributeError, GcodeParsingError
     from hardware.base import NotSupportedError
     from stacking_middleware.message import Message
     from hardware.KDC101 import KDC101
@@ -364,12 +364,15 @@ class StackingSetupBackend:
 
                 for command in commands:
                     # Excecute all the commands
-                    try:
-                        parsed_command = GcodeParser.parse_gcode_line(command)  # Parse the command
-                    except ValueError as e:
-                        self._con_to_main.send(Message(exit_code=1, msg=str(e), command=command, command_id=''))
-                        continue
-                    self._execute_command(parsed_command) # Execute the command
+                    if command is not None:
+                        try:
+                            parsed_command = GcodeParser.parse_gcode_line(command)  # Parse the command
+                        except (GcodeAttributeError, GcodeParsingError) as e:
+                            self._con_to_main.send(Message(exit_code=1, msg=str(e), command=command, command_id=''))
+                            continue
+                        self._execute_command(parsed_command) # Execute the command
+                    else:
+                        self._con_to_main.send(Message(exit_code=1, msg='Received None command', command=command, command_id=''))
 
         if not self._emergency_stop_event.is_set():
             # Put all the parts in a save position
@@ -430,14 +433,22 @@ class StackingSetupBackend:
             elif command_id == 'M114':
                 # Get the position
                 exit_code, msg = self._echo(func=self.M114, command_id='M114')
-            elif command_id == 'M140':
-                raise NotImplementedError('M140 not implemented.')
-            elif command_id == 'M810':
-                raise NotImplementedError('M810 macro not implemented.')
+            elif command_id == 'M154':
+                # Position autoreport
+                exit_code, msg = self._echo(func=self.M154, command_id='M154', 
+                        command=parsed_command[command_id])
+            elif command_id == 'M155':
+                # Temperature autoreport
+                exit_code, msg = self._echo(func=self.M155, command_id='M155', 
+                        command=parsed_command[command_id])
             elif command_id == 'M811':
-                raise NotImplementedError('M811 macro not implemented.')
+                # Use jogging
+                exit_code, msg = self._echo(func=self.M811, command_id='M811',
+                        command=parsed_command[command_id])
             elif command_id == 'M812':
-                raise NotImplementedError('M812 macro not implemented.')
+                # Set driving parameters
+                exit_code, msg = self._echo(func=self.M812, command_id='M812',
+                        command=parsed_command[command_id])
             else:
                 exit_code = 1
                 self._con_to_main.send(Message(exit_code=exit_code, msg='Unknown command', command_id=command_id))
@@ -695,6 +706,10 @@ class StackingSetupBackend:
     def M105(self) -> tuple:
         """
         Get the temperature report.
+
+        .. note::
+            The temperature report is returned in the following format:
+            {<axis_id> : {'current' : <current_temperature>, 'target' : <target_temperature>}}
         
         Returns
         -------
@@ -761,11 +776,18 @@ class StackingSetupBackend:
 
     def _keep_host_alive(self) -> None:
         """Send a keep alive message to the host. (support function for M113)"""
-        self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!', command='M113'))
+        if self._con_to_main.is_connected:
+            self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!', command='M113'))
+        else:
+            self._keep_host_alive_timer.stop()
 
     def M114(self) -> tuple:
         """
         Get the current positions.
+
+        .. note::
+            The positions are returned in the following format:
+            {<axis_id> : <position>, ...}
         
         Returns
         -------
@@ -807,6 +829,10 @@ class StackingSetupBackend:
         If the interval None is given the current settings will be returned if a 
         auto position update has been set. Otherwise the auto position timer will be
         set to the given amount of seconds. If 0 is given the timer is disabled.
+
+        .. note::
+            The data is returned in the msg variable in the following format:
+            {<axis_id> : <position>, ...}
         
         Parameters
         ----------
@@ -841,10 +867,13 @@ class StackingSetupBackend:
     def _auto_position_report(self) -> None:
         """Send a position update to the host. (support function for M154)"""
         exit_code, positions = self.M114()
-        if exit_code == 0:
-            self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M154', command=''))
+        if self._con_to_main.is_connected:
+            if exit_code == 0:
+                self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M154', command=''))
+            else:
+                self._con_to_main.send(Message(exit_code=1, msg='Could not get positions.', command_id='M154', command=''))
         else:
-            self._con_to_main.send(Message(exit_code=1, msg='Could not get positions.', command_id='M154', command=''))
+            self._auto_position_timer.stop()
 
     def M155(self, interval):
         """
@@ -853,6 +882,10 @@ class StackingSetupBackend:
         If the interval None is given the current settings will be returned if a 
         auto temperature update has been set. Otherwise the auto temperature timer will be
         set to the given amount of seconds. If 0 is given the timer is disabled.
+
+        .. note::
+            The data is returned in the msg variable in the following format:
+            {<axis_id> : {'current' : <current_temperature>, 'target' : <target_temperature>}, ...}
         
         Parameters
         ----------
@@ -887,10 +920,13 @@ class StackingSetupBackend:
     def _auto_temperature_report(self) -> None:
         """Send a position update to the host. (support function for M154)"""
         exit_code, positions = self.M105()
-        if exit_code == 0:
-            self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M155', command=''))
+        if self._con_to_main.is_connected:
+            if exit_code == 0:
+                self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M155', command=''))
+            else:
+                self._con_to_main.send(Message(exit_code=1, msg='Could not get positions.', command_id='M155', command=''))
         else:
-            self._con_to_main.send(Message(exit_code=1, msg='Could not get positions.', command_id='M155', command=''))
+            self._auto_temperature_timer.stop()
 
     # JOGGING AND DRIVING FUNCTIONS
     def M811(self, command : dict) -> tuple:
@@ -908,9 +944,13 @@ class StackingSetupBackend:
         """
         for axis in self._hardware:
             if axis.id in command.keys():
-                if command[axis.id] == 1:
+                if abs(command[axis.id]) == 1:
+                    if command[axis.id] < 0:
+                        dir = '-'
+                    else:
+                        dir = '+'
                     try:
-                        axis.jog()
+                        axis.start_jog(dir)
                     except NotSupportedError:
                         pass
                 elif command[axis.id] == 0:
@@ -918,6 +958,7 @@ class StackingSetupBackend:
                         axis.stop_jog()
                     except NotSupportedError:
                         pass
+        return 0, None
 
     @typechecked
     def M812(self, command : dict) -> tuple:
@@ -943,7 +984,7 @@ class StackingSetupBackend:
                 except KeyError:
                     pass
 
-                return 0, None
+        return 0, None
 
     def M813(self, command : dict) -> tuple:
         """
@@ -968,4 +1009,4 @@ class StackingSetupBackend:
                 except KeyError:
                     pass
 
-                return 0, None
+        return 0, None

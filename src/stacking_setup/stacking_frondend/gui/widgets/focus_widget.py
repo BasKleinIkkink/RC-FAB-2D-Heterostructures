@@ -230,14 +230,15 @@ class FocusWidget(QGroupBox):
         self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
 
         # Connect the movment buttons
-        self.upButton.clicked.connect(self._move_z_up)
-        self.downButton.clicked.connect(self._move_z_down)
+        self.upButton.pressed.connect(
+            lambda : self.q.put('M811 K1') if self.jogButton.isChecked() else self.q.put('G1 K{}'.format(self.driveScale)))
+        self.upButton.released.connect(
+            lambda : self.q.put('M811 K0') if self.jogButton.isChecked() else None)
+        self.downButton.pressed.connect(
+            lambda : self.q.put('M811 K-1') if self.jogButton.isChecked() else self.q.put('G1 K-{}'.format(self.driveScale)))
+        self.downButton.released.connect(
+            lambda : self.q.put('M811 K0') if self.jogButton.isChecked() else None)
         self.lockButton.clicked.connect(self._toggle_lock_movement)
-
-        # Connect the move mode buttons
-        self.jogButton.clicked.connect(self._turn_on_jog_mode)
-        self.driveButton.clicked.connect(self._turn_on_drive_mode)
-
         self._connect_movement_scale()
 
     def _connect_movement_scale(self):
@@ -279,3 +280,9 @@ class FocusWidget(QGroupBox):
         button_state = self.lockButton.isChecked()
         self.upButton.setEnabled(not button_state)
         self.downButton.setEnabled(not button_state)
+
+    def update_positions(self, dict):
+        """Update the position labels."""
+        if 'K' in dict:
+            self.zPosDisplay.display(dict['K'])
+       
