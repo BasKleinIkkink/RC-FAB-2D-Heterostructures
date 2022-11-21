@@ -32,7 +32,7 @@ class KIM101():
             If the KIM101 is not connected.
         """
         self._settings = settings
-        self._serial_nr = self._settings.get(self._type+'.DEFAULT')
+        self._serial_nr = self._settings.get(self._type+'.DEFAULT', 'serial_nr')
         self._lock = tr.Lock()
         if self._serial_nr == 'None':
             raise HardwareNotConnectedError('It could not be determined if the device is connected because of missing serial nr in config.')

@@ -154,30 +154,34 @@ class PRMTZ8(Base):
     def is_connected(self) -> bool:
         """
         Check if the PRMTZ8 is connected.
+
+        .. important::
+            This function is mostly used as a support function for other functions,
+            and does not capture the lock. This means this function alone is not thread safe.
         
         Returns
         -------
         connected: bool
             True if the PRMTZ8 is connected, False otherwise.
         """
-        self.lock.acquire()
         state = self._controller.is_connected()
-        self.lock.release()
         return state
 
     @typechecked
     def is_moving(self) -> bool:	
         """
         Check if the piezo is moving.
+
+        .. important::
+            This function is mostly used as a support function for other functions,
+            and does not capture the lock. This means this function alone is not thread safe.
         
         Returns
         -------
         moving: bool
             True if the piezo is moving, False otherwise.
         """
-        self.lock.acquire()
         state = self._controller.is_moving()
-        self.lock.release()
         return state
 
     @typechecked
@@ -195,10 +199,14 @@ class PRMTZ8(Base):
         return pos
 
     def is_homed(self) -> None:
-        """Check if the motor is homed."""
-        self.lock.acquire()
+        """
+        Check if the motor is homed.
+        
+        .. important::
+            This function is mostly used as a support function for other functions,
+            and does not capture the lock. This means this function alone is not thread safe.
+        """
         state = self._controller.is_homed()
-        self.lock.release()
         return state
 
     # MOVEMENT FUNCTIONS

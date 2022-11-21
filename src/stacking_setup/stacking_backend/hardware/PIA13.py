@@ -14,7 +14,7 @@ except ImportError:
 class PIA13(Base):
     """Class to control a PIA13 Thorlabs piezo actuator."""
 
-    def __init__(self, id : str, channel : int, actuator_id : str, hardware_controller : KIM101,
+    def __init__(self, id : str, channel : int, hardware_controller : KIM101,
                 settings : Settings) -> None:
         """
         Initialize the PIA13.
@@ -36,7 +36,6 @@ class PIA13(Base):
         self._type = 'PIA13'
         self._channel = channel
         self._hardware_controller = hardware_controller
-        self._actuator_id = actuator_id  # Used for identifien the section in the settings
         self._settings = settings
         self._steps_calibrated = False  # Steps per nm were calibrated
         self._steps_per_nm = 0  # Steps per nm
@@ -171,28 +170,29 @@ class PIA13(Base):
         self._lock.release()
 
     # STATUS FUNCTIONS
-    def is_connected(self) -> None:
-        """Check if the hardware is connected."""
-        self._lock.acquire()
+    def is_connected(self) -> bool:
+        """
+        Check if the hardware is connected.
+        
+        .. important::
+            This function is mostly used as a support function for other functions,
+            and does not capture the lock. This means this function is not thread safe.
+        """
         state = self._hardware_controller.is_connected()
-        self._lock.release()
         return state
 
-    def get_status(self) -> None:
-        """Get the statusreport of the hardware."""
-        self._lock.acquire()
-        status = self._hardware_controller.get_status(self._channel)
-        self._lock.release()
-        return status
-
-    def is_moving(self) -> None:
-        """Check if the hardware is moving."""
-        self._lock.acquire()
+    def is_moving(self) -> bool:
+        """
+        Check if the hardware is moving.
+        
+        .. important::
+            This function is mostly used as a support function for other functions,
+            and does not capture the lock. This means this function is not thread safe.
+        """
         state = self._hardware_controller.is_moving(self._channel)
-        self._lock.release()
         return state
 
-    def get_status(self) -> None:
+    def get_status(self) -> dict:
         """Get the statusreport of the hardware."""
         self._lock.acquire()
         status = {'id': self._id,

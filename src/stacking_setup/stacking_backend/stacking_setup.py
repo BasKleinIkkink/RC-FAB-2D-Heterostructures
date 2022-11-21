@@ -16,6 +16,7 @@ try:
     from .hardware.KIM101 import KIM101
     from .hardware.PIA13 import PIA13
     from .hardware.PRMTZ8 import PRMTZ8
+    from .hardware.TangoDesktop import TangoDesktop
     from .hardware.emergency_breaker import EmergencyBreaker
     from ..stacking_middleware.pipeline_connection import PipelineConnection
     from ..stacking_middleware.serial_connection import SerialConnection
@@ -265,15 +266,16 @@ class StackingSetupBackend:
         hardware : list
             A list of the hardware controllers.
         """
-        # self._piezo_controller = KIM101()
+        self._piezo_controller = KIM101(settings=self._settings)
         self._motor_controller = KDC101(settings=self._settings)
 
         # Define the connected components.
         _hardware = [
-            # PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, settings=self._settings), 
-            # PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, settings=self._settings), 
-            # PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller, settings=self._settings),
-            PRMTZ8(id='L', hardware_controller=self._motor_controller, settings=self._settings)
+            #PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, settings=self._settings), 
+            #PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, settings=self._settings), 
+            #PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller, settings=self._settings),
+            # PRMTZ8(id='L', hardware_controller=self._motor_controller, settings=self._settings),
+            TangoDesktop(id='K', settings=self._settings)
         ]
         return _hardware
 
@@ -308,6 +310,7 @@ class StackingSetupBackend:
         self._logger = self._set_logger()
         self._emergency_breaker = self._init_emergency_breaker()
         self._hardware = self._init_all_hardware()
+        self._connect_all_hardware()
         self._logger.info('Stacking setup initiated with connected hardware: {}'.format(self._hardware))
 
     def start_backend(self) -> None:

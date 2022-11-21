@@ -44,19 +44,21 @@ class TangoDesktop(Base):
 
     """
     _id = None
-    _type = "TANGO DESKTOP"
+    _type = "TANGODESKTOP"
     _controller = None
-    _baud_rate = 9600
-    _timeout = 1
-    _serial_nr = '220313104'
     _ser = None
-    _port = 'COM6'
 
     def __init__(self, id : str, settings : Settings) -> None:
         """Initialize the tango desktop."""	
         # Check if the tango desktop is connected
         self._id = id
         self._lock = tr.Lock()
+
+        # Get the settings
+        self._port = settings.get(self._type+'.DEFAULT', 'port')
+        self._baud_rate = settings.get(self._type+'.DEFAULT', 'baud_rate')
+        self._timeout = settings.get(self._type+'.DEFAULT', 'timeout')
+        self._serial_nr = settings.get(self._type+'.DEFAULT', 'serial_nr')
 
         if self._controller is None:
             # Controller is not initiated, check if the port can be captured
@@ -138,11 +140,19 @@ class TangoDesktop(Base):
         self._lock.release()
 
     # CONNECTION FUNCTIONS
-    def _message_waiting(self):
-        """Check if a message is waiting."""
-        self._lock.acquire()
+    def _message_waiting(self) -> bool:
+        """
+        Check if a message is waiting.
+        
+        .. warning::
+            This function is mostly used as a support function and does not capture the lock.
+
+        Returns
+        -------
+        bool
+            True if a message is waiting, False otherwise.
+        """
         state = True if self._ser.in_waiting > 0 else False
-        self._lock.release()
         return state
 
     #@typechecked
