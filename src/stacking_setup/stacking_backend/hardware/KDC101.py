@@ -62,8 +62,7 @@ class KDC101():
     def disconnect(self) -> None:
         """Disconnect the KCD101."""
         self._lock.acquire()
-        self._controller.stop
-        del self
+        self._controller.stop()
         self._lock.release()
 
     def emergency_stop(self) -> None:
