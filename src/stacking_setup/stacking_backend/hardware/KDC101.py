@@ -64,7 +64,7 @@ class KDC101():
         self._lock.acquire()
         self._controller.stop
         del self
-        self.lock.release()
+        self._lock.release()
 
     def emergency_stop(self) -> None:
         """Stop all the connected motors and disconnect the controller."""

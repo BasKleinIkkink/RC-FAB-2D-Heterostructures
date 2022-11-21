@@ -3,6 +3,7 @@ from typing import Union
 from typeguard import typechecked
 from ..configs.settings import Settings
 import time
+import threading as tr
 
 try:
     from .base import Base, HardwareNotConnectedError
@@ -55,6 +56,7 @@ class TangoDesktop(Base):
         """Initialize the tango desktop."""	
         # Check if the tango desktop is connected
         self._id = id
+        self._lock = tr.Lock()
 
         if self._controller is None:
             # Controller is not initiated, check if the port can be captured
@@ -78,22 +80,29 @@ class TangoDesktop(Base):
     #@typechecked
     def steps_per_um(self) -> float:
         """Get the steps per um."""
+        self._lock.acquire()
         steps_per_rev = float(self._send_and_receive('?motorsteps z', expect_response=True, expect_confirmation=False))
         spindle_pitch = float(self._send_and_receive('?pitch z', expect_response=True, expect_confirmation=False))
+        self._lock.release()
         return round(steps_per_rev / spindle_pitch, 3)
 
     @property
     #@typechecked
     def position(self) -> float:
         """Get the current position."""
-        return float(self._send_and_receive('?pos z', expect_response=True, expect_confirmation=False))
+        self._lock.acquire()
+        pos = float(self._send_and_receive('?pos z', expect_response=True, expect_confirmation=False))
+        self._lock.release()
+        return pos
 
     @property
     #@typechecked
     def speed(self) -> float:
         """Get the current speed."""
+        self._lock.acquire()
         spindle_pitch = float(self._send_and_receive('?pitch z', expect_response=True, expect_confirmation=False))
         rev_per_s = float(self._send_and_receive('?vel z', expect_response=True, expect_confirmation=False))
+        self._lock.release()
         return round(rev_per_s / spindle_pitch, 3)
 
     @speed.setter
@@ -101,15 +110,19 @@ class TangoDesktop(Base):
     def speed(self, speed : Union[float, int]) -> None:
         """Set the speed of the tango desktop."""
         # Calculate the needed revolutions per second
+        self._lock.acquire()
         spindle_pitch = float(self._send_and_receive('?pitch z', expect_response=True, expect_confirmation=False))
         rev_per_s = round(speed / spindle_pitch, 3)
         self._send_and_receive('!vel z {}'.format(rev_per_s), expect_confirmation=False, expect_response=False)
+        self._lock.release()
 
     @property
     #@typechecked
     def acceleration(self) -> float:
         """Get the acceleration of the tango desktop."""
+        self._lock.acquire()
         acc = float(self._send_and_receive('?accel z', expect_response=True, expect_confirmation=False))
+        self._lock.release()
         acc *= 10e6
         return acc
 
@@ -119,17 +132,28 @@ class TangoDesktop(Base):
         """Set the acceleration of the tango desktop."""
         # The acceleration is given in mm/s^2
         # The tango desktop needs the acceleration in um/s^2
+        self._lock.acquire()
         acc = round(acceleration / 10e-6, 3)
         self._send_and_receive('!accel z {}'.format(acc), expect_confirmation=False, expect_response=False)
+        self._lock.release()
 
     # CONNECTION FUNCTIONS
     def _message_waiting(self):
-        return True if self._ser.in_waiting > 0 else False
+        """Check if a message is waiting."""
+        self._lock.acquire()
+        state = True if self._ser.in_waiting > 0 else False
+        self._lock.release()
+        return state
 
     #@typechecked
     def _send_and_receive(self, command : str, expect_confirmation : bool=True, expect_response : bool=False) -> Union[None, str]:
         """
         Send a command to the tango desktop and receive the response.
+
+        .. important::
+            Most functions acquire a lock before sending a command to the tango desktop, this is to prevent
+            multiple threads from sending commands at the same time. This function is an exception to this rule,
+            it is the responsibility of the calling function to acquire the lock before calling this function.
         
         Parameters:
         -----------
@@ -198,6 +222,7 @@ class TangoDesktop(Base):
     #@typechecked
     def connect(self) -> None:
         """Connect to the tango desktop."""
+        self._lock.acquire()
         if self._ser is None:
             # Connect the tango desktop
             self._ser = serial.Serial(self._port, self._baud_rate, timeout=self._timeout)
@@ -220,10 +245,12 @@ class TangoDesktop(Base):
             resp = self._send_and_receive('?nosetlimit z', expect_response=True, expect_confirmation=False)
             if resp != '1':
                 self._send_and_receive('!nosetlimit z 1', expect_response=False, expect_confirmation=False)
+        self._lock.release()
 
     #@typechecked
     def disconnect(self) -> None:
         """Disconnect from the tango desktop."""
+        self._lock.acquire()
         if self._ser is None:
             pass
         else:
@@ -232,12 +259,16 @@ class TangoDesktop(Base):
                 pass
 
             self._ser.close()  # Disconnect the tango desktop
+        self._lock.release()
 
     # STATUS FUNCTIONS
     #@typechecked
     def is_connected(self) -> bool:
         """Check if the tango desktop is connected."""
-        return True if self._ser is not None else False
+        self._lock.acquire()
+        state = True if self._ser is not None else False
+        self._lock.release()
+        return state
 
     #@typechecked
     def is_moving(self) -> bool:
@@ -266,11 +297,14 @@ class TangoDesktop(Base):
         bool:
             True if the axis is moving, False if not.
         """
+        self._lock.acquire()
         resp = self._send_and_receive('sa z', expect_response=True, expect_confirmation=False)
         if resp in ['E', '-', 'T']: raise ValueError("The axis responded with: {}".format(resp))
-        elif resp == 'M': return True
-        elif resp in ['@', 'J']: return False
+        elif resp == 'M': state = True
+        elif resp in ['@', 'J']: state = False
         else: raise KeyError('Unknown response: {}'.format(resp))
+        self._lock.release()
+        return state
 
     # HOMING FUNCTIONS
     def home(self):
@@ -283,7 +317,9 @@ class TangoDesktop(Base):
             otherwise it will move to the first snapshot position in the snapshot array.
 
         """
+        self._lock.acquire()
         self._send_and_receive('!home z', expect_response=False, expect_confirmation=False)
+        self._lock.release()
 
     # MOVEMENT FUNCTIONS
     #@typechecked
@@ -295,29 +331,40 @@ class TangoDesktop(Base):
         if direction not in ['+', '-']:
             raise ValueError("The direction {} is not allowed.".format(direction))
 
+        self._lock.acquire()
         rev_per_s = self._send_and_receive('?vel', expect_response=True, expect_confirmation=False).split(' ')[2]
         rev_per_s = float(rev_per_s)
         self._send_and_receive('!speed z {}{}'.format(direction, rev_per_s), expect_response=False, expect_confirmation=False)
+        self._lock.release()
 
     def stop_jog(self) -> None:
+        """Stop the continuous jog."""
+        self._lock.acquire()
         self._send_and_receive('!speed z 0', expect_response=False, expect_confirmation=False)
+        self._lock.release()
 
     #@typechecked
     def move_to(self, position : Union[float, int]) -> None:
         """Move the tango desktop to the given position."""
+        self._lock.acquire()
         self._send_and_receive('!moa z {}'.format(position), expect_response=False, expect_confirmation=False)
+        self._lock.release()
 
     #@typechecked
     def move_by(self, distance : Union[float, int]) -> None:
         """Move the tango desktop by the given distance."""
+        self._lock.acquire()
         self._send_and_receive('!mor z {}'.format(distance), expect_response=False, expect_confirmation=False)
+        self._lock.release()
 
     def stop(self) -> None:
         """Stop the tango desktop."""
+        self._lock.acquire()
         # Stop all moves
         self._send_and_receive('!a', expect_response=False, expect_confirmation=False)
         # Stop all other commands
         self._send_and_receive('!stop', expect_response=False, expect_confirmation=False)
+        self._lock.release()
 
 
 if __name__ == '__main__':

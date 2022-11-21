@@ -32,13 +32,11 @@ class TemperatureWidget(QGroupBox):
         self.q = q
         # Define the main frame and grid in the docking widget
         self.mainVerticalLayout = QVBoxLayout(self)
-        self.setMinimumSize(self.min_size)
-        self.setMaximumSize(self.max_size)
+        #self.setMinimumSize(self.min_size)
+        #self.setMaximumSize(self.max_size)
 
         # Add the chart
         self.mainVerticalLayout.addWidget(self._create_chart())
-
-        # Add the numeric temperature indicator
         self.mainVerticalLayout.addWidget(self._create_numeric_temp_indicator())
 
         # Add the divider
@@ -50,6 +48,14 @@ class TemperatureWidget(QGroupBox):
         # Add the temperature params
         self.mainVerticalLayout.addWidget(self._create_temp_params())
         self.mainFrame = self
+
+        # Add another divider
+        self.controlDiv = QFrame(self)
+        self.controlDiv.setFrameShape(QFrame.HLine)
+        self.controlDiv.setFrameShadow(QFrame.Sunken)
+        self.mainVerticalLayout.addWidget(self.controlDiv)
+
+        self.mainVerticalLayout.addWidget(self._create_custom_ramping())
 
         self.add_temp_presets()
 
@@ -114,6 +120,26 @@ class TemperatureWidget(QGroupBox):
         gridLayout.addWidget(self.tempPresetCombo, 0, 1, 1, 1)
 
         return paramFrame
+
+    def _create_custom_ramping(self):
+        """Create the widgets needed for custom ramping"""
+        self.coolRampLabel = QLabel()
+        self.coolRampLabel.setText("Cooling ramp :")
+        self.coolRampCombo = QComboBox()
+        self.coolRampCombo.addItem("Default")
+
+        self.heatRampLabel = QLabel()
+        self.heatRampLabel.setText("Heating ramp :")
+        self.heatRampCombo = QComboBox()
+        self.heatRampCombo.addItem("Default")
+
+        frame = QFrame()
+        grid = QGridLayout(frame)
+        grid.addWidget(self.coolRampLabel, 0, 0, 1, 1)
+        grid.addWidget(self.coolRampCombo, 0, 1, 1, 2)
+        grid.addWidget(self.heatRampLabel, 1, 0, 1, 1)
+        grid.addWidget(self.heatRampCombo, 1, 1, 1, 2)
+        return frame
 
     def _create_chart(self):
         """Add the chart to the main frame."""

@@ -2,6 +2,7 @@ from pylablib.devices.Thorlabs.kinesis import KinesisPiezoMotor, list_kinesis_de
 from typing import Union
 from typeguard import typechecked
 from ..configs.settings import Settings
+import threading as tr
 
 try:
     from .base import HardwareNotConnectedError
@@ -32,6 +33,7 @@ class KIM101():
         """
         self._settings = settings
         self._serial_nr = self._settings.get(self._type+'.DEFAULT')
+        self._lock = tr.Lock()
         if self._serial_nr == 'None':
             raise HardwareNotConnectedError('It could not be determined if the device is connected because of missing serial nr in config.')
 
@@ -50,7 +52,9 @@ class KIM101():
     # CONNECTION FUNCTIONS
     def connect(self) -> None:
         """Connect the KIM101."""
+        self._lock.acquire()
         self._controller = KinesisPiezoMotor(self._serial_nr)
+        self._lock.release()
 
     def disconnect(self) -> None:
         """Disconnect the KIM101."""
@@ -58,8 +62,10 @@ class KIM101():
 
     def emergency_stop(self) -> None:
         """Stop all the connected piezos and disconnect the controller."""
+        self._lock.acquire()
         for i in range(4):
             self._controller.stop(channel=i)
+        self._lock.release()
 
     # STATUS FUNCTIONS
     @typechecked
@@ -72,10 +78,13 @@ class KIM101():
         bool
             True if the KIM101 is connected.
         """
+        self._lock.acquire()
         if self._connected:
-            return self._controller.is_connected()
+            state = self._controller.is_connected()
         else:
-            return False
+            state = False
+        self._lock.release()
+        return state
 
     @typechecked
     def is_moving(self, channel : int) -> bool:
@@ -93,7 +102,10 @@ class KIM101():
             True if the piezo is moving, False otherwise.
 
         """
-        return self._controller.is_moving(channel=channel)
+        self._lock.acquire()
+        state = self._controller.is_moving(channel=channel)
+        self._lock.release()
+        return state
 
     @typechecked
     def get_position(self, channel : int) -> Union[float, int]:
@@ -116,7 +128,10 @@ class KIM101():
             The position of the piezo.
 
         """
-        return self._controller.get_position(channel=channel)
+        self._lock.acquire()
+        pos = self._controller.get_position(channel=channel)
+        self._lock.release()
+        return pos
 
     @typechecked
     def _wait_move(self, channel : int) -> None:
@@ -134,7 +149,9 @@ class KIM101():
             True if the piezo is not moving anymore, False otherwise.
 
         """
+        self._lock.acquire()
         self._controller.wait_move(channel=channel)
+        self._lock.release()
 
     # JOG AND DRIVE PARAMETERS
     @typechecked
@@ -150,7 +167,9 @@ class KIM101():
         acceleration : float, int, None
             The acceleration of the piezo in um/s^2. If None, the acceleration is not changed.
         """
+        self._lock.acquire()
         self._controller.setup_jog(velocity=velocity, acceleration=acceleration)
+        self._lock.release()
 
     @typechecked
     def get_jog_parameters(self) -> dict:
@@ -163,7 +182,9 @@ class KIM101():
             The jog parameters of the piezo. Velpocity (vel) and acceleration (acc) 
             are in um/s and um/s^2.
         """
+        self._lock.acquire()
         params = self._controller.get_jog_parameters()
+        self._lock.release()
         return {'step_size': params[1], 'vel': params[3], 'acc': params[4]}
 
     @typechecked
@@ -184,7 +205,9 @@ class KIM101():
         acceleration : float, int, None
             The acceleration of the piezo in um/s^2. If None, the acceleration is not changed.
         """
+        self._lock.acquire()
         self._controller.setup_drive(max_voltage=max_voltage, velocity=velocity, acceleration=acceleration,)
+        self._lock.release()
     
     @typechecked
     def get_drive_parameters(self) -> dict:
@@ -198,7 +221,9 @@ class KIM101():
         dict
             The drive parameters of the piezo. Velocity (vel) and acceleration (acc)
         """
+        self._lock.acquire()
         params = self._controller.get_drive_parameters()
+        self._lock.release()
         return {'vel': params[1], 'acc': params[2]}
 
     # MOVEMENT FUNCTIONS
@@ -225,7 +250,9 @@ class KIM101():
         kind : str
             The kind of the jog. Can be ``"continuous"`` or ``"builtin"``.
         """
+        self._lock.acquire()
         self._controller.jog(direction=direction, kind=kind, channel=channel)
+        self._lock.release()
 
     def stop_jog(self, channel : Union[None, int]=None) -> None:
         """
@@ -236,7 +263,9 @@ class KIM101():
         channel : int, None
             The channel of the piezo to stop. If None, all channels are stopped.
         """
+        self._lock.acquire()
         self._controller.stop(channel=channel)
+        self._lock.release()
 
     @typechecked
     def move_to(self, channel : int, position : Union[float, int], 
@@ -255,9 +284,11 @@ class KIM101():
         wait_until_done : bool
             If True, wait until the movement is done.
         """
+        self._lock.acquire()
         self._controller.move_to(position=position, channel=channel)
         if wait_until_done:
             self._wait_move(channel=channel)
+        self._lock.release()
 
     @typechecked
     def move_by(self, channel : int, distance : Union[float, int], 
@@ -276,9 +307,11 @@ class KIM101():
         wait_until_done : bool
             If True, wait until the movement is done.
         """
+        self._lock.acquire()
         self._controller.move_by(distance=distance, channel=channel)
         if wait_until_done:
             self._wait_move(channel=channel)
+        self._lock.release()
 
     @typechecked
     def stop(self, channel : Union[int, None]=None) -> None:
@@ -290,11 +323,13 @@ class KIM101():
         channel : int, None
             The channel of the piezo to stop. If None, all piezos are stopped.
         """
+        self._lock.acquire()
         if channel is None:
             for i in range(4):
                 self._controller.stop(channel=i)
         else:
             self._controller.stop(channel=channel)
+        self._lock.release()
 
     
 if __name__ == '__main__':
