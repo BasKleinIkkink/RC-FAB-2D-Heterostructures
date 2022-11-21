@@ -1,6 +1,7 @@
 from typing import Union
 from typeguard import typechecked
 from ..configs.settings import Settings
+import threading as tr
 
 try:
     from .base import Base, NotCalibratedError
@@ -13,7 +14,7 @@ except ImportError:
 class PIA13(Base):
     """Class to control a PIA13 Thorlabs piezo actuator."""
 
-    def __init__(self, id : str, channel : int, actuator_id : str, hardware_controller : KIM101,
+    def __init__(self, id : str, channel : int, hardware_controller : KIM101,
                 settings : Settings) -> None:
         """
         Initialize the PIA13.
@@ -35,26 +36,32 @@ class PIA13(Base):
         self._type = 'PIA13'
         self._channel = channel
         self._hardware_controller = hardware_controller
-        self._actuator_id = actuator_id  # Used for identifien the section in the settings
         self._settings = settings
         self._steps_calibrated = False  # Steps per nm were calibrated
         self._steps_per_nm = 0  # Steps per nm
+        self._lock = tr.Lock()  # Lock for the hardware
 
     # ATTRIBUTES
     @property
     def device_info(self) -> dict:
         """Get the device info."""
-        return {'id': self._id,
+        self._lock.acquire()
+        info = {'id': self._id,
                 'type': self._type,
                 'channel': self._channel,
                 'controller': self._hardware_controller
                 }
+        self._lock.release()
+        return info
 
     @property
     def steps_per_um(self) -> None:
         """Get the steps per um."""
         # Return the steps per um
-        return self._steps_per_um
+        self._lock.acquire()
+        steps = self._steps_per_um
+        self._lock.release()
+        return steps
 
     @steps_per_um.setter
     @typechecked
@@ -67,23 +74,31 @@ class PIA13(Base):
         steps_per_mm: float or int
             The steps per um.
         """
+        self._lock.acquire()
         if not self._steps_calibrated:
             raise NotCalibratedError('Steps per nm were not calibrated/set.')
 
         # Set the jog settings on the hardware controller.
-        return self._hardware_controller.set_steps_per_nm(self._channel, 
+        steps = self._hardware_controller.set_steps_per_nm(self._channel, 
                                                         steps_per_mm)
+        self._lock.release()
+        return steps
 
     @property
     @typechecked
     def position(self) -> Union[float, int]:
         """Get the position of the hardware."""
-        return self._hardware_controller.get_position(self._channel)
+        self._lock.acquire()
+        pos = self._hardware_controller.get_position(self._channel)
+        self._lock.release()
+        return pos
 
     @property
     def speed(self) -> None:
         """Get the speed of the hardware."""
+        self._lock.acquire()
         drive = self._hardware_controller.get_drive_parameters(self._channel)
+        self._lock.release()
         return drive[3]
 
     @speed.setter
@@ -96,10 +111,12 @@ class PIA13(Base):
         speed: float or int
             The speed to set the hardware to.
         """
+        self._lock.acquire()
         if speed >= self._max_speed:
             self._hardware_controller.setup_drive(self._channel, velocity=speed)
         else:
             self._hardware_controller.setup_drive(self._channel, velocity=self._max_speed)
+        self._lock.release()
 
     @property
     def acceleration(self) -> float:
@@ -111,7 +128,9 @@ class PIA13(Base):
         acceleration: float
             The acceleration of the hardware.
         """
+        self._lock.acquire()
         drive = self._hardware_controller.get_drive_parameters(self._channel)
+        self._lock.release()
         return drive[4]
 
     @acceleration.setter
@@ -124,41 +143,59 @@ class PIA13(Base):
         acceleration: float or int
             The acceleration to set the hardware to. 
         """
+        self._lock.acquire()
         if acceleration >= self._max_acceleration:
             self._hardware_controller.setup_drive(self._channel, acceleration=acceleration)
         else:
             self._hardware_controller.setup_drive(self._channel, acceleration=self._max_acceleration)
+        self._lock.release()
 
     # CONNECTION FUNCTIONS
     def connect(self) -> None:
         """Connect the hardware."""
+        self._lock.acquire()
         if not self._hardware_controller.is_connected():
             self._hardware_controller.connect()
         else:
             pass
+        self._lock.release()
 
     def disconnect(self) -> None:
         """Disconnect the hardware."""
+        self._lock.acquire()
         if self._hardware_controller.is_connected():
             self._hardware_controller.disconnect()
         else:
             pass
+        self._lock.release()
 
     # STATUS FUNCTIONS
-    def is_connected(self) -> None:
-        """Check if the hardware is connected."""
-        return self._hardware_controller.is_connected()
+    def is_connected(self) -> bool:
+        """
+        Check if the hardware is connected.
+        
+        .. important::
+            This function is mostly used as a support function for other functions,
+            and does not capture the lock. This means this function is not thread safe.
+        """
+        state = self._hardware_controller.is_connected()
+        return state
 
-    def get_status(self) -> None:
+    def is_moving(self) -> bool:
+        """
+        Check if the hardware is moving.
+        
+        .. important::
+            This function is mostly used as a support function for other functions,
+            and does not capture the lock. This means this function is not thread safe.
+        """
+        state = self._hardware_controller.is_moving(self._channel)
+        return state
+
+    def get_status(self) -> dict:
         """Get the statusreport of the hardware."""
-        return self._hardware_controller.get_status(self._channel)
-
-    def is_moving(self) -> None:
-        """Check if the hardware is moving."""
-        return self._hardware_controller.is_moving(self._channel)
-
-    def get_status(self) -> None:
-        return {'id': self._id,
+        self._lock.acquire()
+        status = {'id': self._id,
                 'is_moving': self.is_moving(),
                 'position': self.position,
                 'speed': self.speed,
@@ -167,6 +204,8 @@ class PIA13(Base):
                 'max_speed': self._max_speed,
                 'max_acceleration': self._max_acceleration,
                 }
+        self._lock.release()
+        return status
 
     # MOVEMENT FUNCTIONS
     def start_jog(self, direction : str) -> None:
@@ -178,11 +217,15 @@ class PIA13(Base):
         direction: str
             The direction to jog in (+ or -).
         """
+        self._lock.acquire()
         self._hardware_controller.start_jog(self._channel, direction)
+        self._lock.release()
 
     def stop_jog(self) -> None:
         """Stop the jog."""
+        self._lock.acquire()
         self._hardware_controller.stop_jog(self._channel)
+        self._lock.release()
         
     def move_by(self, distance : Union[float, int]) -> None:
         """
@@ -193,7 +236,9 @@ class PIA13(Base):
         distance: float or int
             The distance to move the hardware.
         """
+        self._lock.acquire()
         self._hardware_controller.move_by(self._channel, distance)
+        self._lock.release()
 
     def move_to(self, position : Union[float, int]) -> None:
         """
@@ -204,14 +249,18 @@ class PIA13(Base):
         position: float or int
             The position to move the hardware to.
         """
+        self._lock.acquire()
         if not self._steps_calibrated:
             raise NotCalibratedError('Steps per nm were not calibrated/set.')
 
         self._hardware_controller.move_to(self._channel, position)
+        self._lock.release()
 
     def stop(self):
         """Stop the hardware."""
+        self._lock.acquire()
         self._hardware_controller.stop(self._channel)
+        self._lock.release()
 
 
 if __name__ == '__main__':

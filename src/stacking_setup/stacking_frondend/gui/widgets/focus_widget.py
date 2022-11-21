@@ -231,11 +231,11 @@ class FocusWidget(QGroupBox):
 
         # Connect the movment buttons
         self.upButton.pressed.connect(
-            lambda : self.q.put('M811 K1') if self.jogButton.isChecked() else self.q.put('G1 K{}'.format(self.driveScale)))
+            lambda : self.q.put('M811 K1') if self.jogButton.isChecked() else self.q.put('G0 K{}'.format(self.driveScale)))
         self.upButton.released.connect(
             lambda : self.q.put('M811 K0') if self.jogButton.isChecked() else None)
         self.downButton.pressed.connect(
-            lambda : self.q.put('M811 K-1') if self.jogButton.isChecked() else self.q.put('G1 K-{}'.format(self.driveScale)))
+            lambda : self.q.put('M811 K-1') if self.jogButton.isChecked() else self.q.put('G0 K-{}'.format(self.driveScale)))
         self.downButton.released.connect(
             lambda : self.q.put('M811 K0') if self.jogButton.isChecked() else None)
         self.lockButton.clicked.connect(self._toggle_lock_movement)
@@ -257,22 +257,6 @@ class FocusWidget(QGroupBox):
         self.velDispLabel.setText(self.moveUnit)
         self.velocitySlider.setMaximum(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
-
-    def _move_z_up(self):
-        """Move the z stage up"""
-        print("Move up")
-
-    def _move_z_down(self):
-        """Move the z stage down"""
-        print("Move down")
-
-    def _turn_on_drive_mode(self):
-        """Turn on drive mode"""
-        print("Turn on drive mode")
-
-    def _turn_on_jog_mode(self):
-        """Turn on jog mode"""
-        print("Turn on jog mode")
 
     def _toggle_lock_movement(self):
         """Toggle the lock movement button"""

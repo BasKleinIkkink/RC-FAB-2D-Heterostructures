@@ -160,7 +160,6 @@ class TestControlBackend(unittest.TestCase):
     def test_connect_hardware(self, _init_emergency_breaker_mock, _init_all_hardware_mock):
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend()
-        stack._connect_all_hardware()
 
         # Check if the right functions were called.
         _init_all_hardware_mock.assert_called_once()

@@ -3,3 +3,4 @@ pylablib-lightweight[extra,devio]
 typeguard
 pyserial
 PySide6
+qtawesome

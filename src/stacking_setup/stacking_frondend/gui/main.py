@@ -60,7 +60,8 @@ class MainWindow(QMainWindow):
         # Add the toolbar
         self.toolBar = QToolBar(self)
         self.addToolBar(Qt.LeftToolBarArea, self.toolBar)
-        self.toolBar.addAction("Open")
+        self.toolBar.addAction("Home all", lambda : self._q.put('G28'))
+        self.toolBar.addAction("Estop", lambda : self._q.put('M112'))
 
     def set_menubar(self):
         """Add the menu bar and the options to it."""
