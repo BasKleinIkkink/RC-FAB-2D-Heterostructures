@@ -131,6 +131,8 @@ class TangoDesktop(Base):
         self._send_and_receive('!vel z {}'.format(rev_per_s), expect_confirmation=False, expect_response=False)
         self._lock.release()
 
+        # self.acceleration = speed * 4
+
     @property
     @typechecked
     def acceleration(self) -> float:

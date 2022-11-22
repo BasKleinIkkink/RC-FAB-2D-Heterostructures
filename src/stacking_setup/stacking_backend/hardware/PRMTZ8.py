@@ -147,7 +147,8 @@ class PRMTZ8(Base):
         self._controller.setup_drive(velocity=speed)
         self._controller.setup_jog(velocity=speed)
         self.lock.release()
-        print('Speed set to {}'.format(speed))
+        
+        self.acceleration = speed * 4
 
     @property
     @typechecked

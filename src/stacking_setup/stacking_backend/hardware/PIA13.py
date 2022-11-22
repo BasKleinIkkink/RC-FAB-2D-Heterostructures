@@ -102,6 +102,9 @@ class PIA13(Base):
         self._hardware_controller.setup_jog(channel=self._channel, velocity=speed)
         self._lock.release()
 
+        # Also change the acceleration
+        self.acceleration = speed * 2
+
     @property
     def acceleration(self) -> float:
         """
@@ -222,6 +225,8 @@ class PIA13(Base):
         distance: float or int
             The distance to move the hardware.
         """
+        # Convert to steps
+        distance *= self._steps_per_um
         self._lock.acquire()
         self._hardware_controller.move_by(self._channel, distance)
         self._lock.release()
@@ -235,6 +240,8 @@ class PIA13(Base):
         position: float or int
             The position to move the hardware to.
         """
+        # Convert to steps
+        position *= self._steps_per_um
         self._lock.acquire()
         if not self._steps_calibrated:
             raise NotCalibratedError('Steps per nm were not calibrated/set.')

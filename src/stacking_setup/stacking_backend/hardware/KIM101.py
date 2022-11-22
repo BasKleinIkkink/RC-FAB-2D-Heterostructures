@@ -83,7 +83,7 @@ class KIM101():
         """
         self._lock.acquire()
         if self._connected:
-            state = self._controller.is_connected()
+            state = self._controller._connected
         else:
             state = False
         self._lock.release()
@@ -162,9 +162,9 @@ class KIM101():
         Parameters
         ----------
         velocity : float, int, None
-            The velocity of the piezo in um/s. If None, the velocity is not changed.
+            The velocity of the piezo in steps/s. If None, the velocity is not changed.
         acceleration : float, int, None
-            The acceleration of the piezo in um/s^2. If None, the acceleration is not changed.
+            The acceleration of the piezo in steps/s^2. If None, the acceleration is not changed.
         """
         self._lock.acquire()
         self._controller.setup_jog(velocity=velocity, acceleration=acceleration, channel=channel)
@@ -200,9 +200,9 @@ class KIM101():
         max_voltage : float, int, None
             The maximum voltage of the piezo in V. If None, the max voltage is not changed.
         velocity : float, int, None
-            The velocity of the piezo in um/s. If None, the velocity is not changed.
+            The velocity of the piezo in steps/s. If None, the velocity is not changed.
         acceleration : float, int, None
-            The acceleration of the piezo in um/s^2. If None, the acceleration is not changed.
+            The acceleration of the piezo in steps/s^2. If None, the acceleration is not changed.
         """
         self._lock.acquire()
         self._controller.setup_drive(max_voltage=max_voltage, velocity=velocity, acceleration=acceleration, channel=channel)
