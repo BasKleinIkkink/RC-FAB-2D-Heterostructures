@@ -37,6 +37,8 @@ class PIA13(Base):
         self._channel = channel
         self._hardware_controller = hardware_controller
         self._settings = settings
+        self._max_speed = self._settings.get(self._type+'.'+self._id, 'max_vel')
+        self._max_acceleration = self._settings.get(self._type+'.'+self._id, 'max_acc')
         self._steps_per_um = self._settings.get(self._type+'.'+self._id, 'steps_per_um')
         self._lock = tr.Lock()  # Lock for the hardware
 
@@ -83,17 +85,20 @@ class PIA13(Base):
     def speed(self, speed : Union[float, int]) -> None:
         """
         Set the speed of the hardware.
+
+        Speed is always in um/s.
         
         Parameters:
         -----------
         speed: float or int
             The speed to set the hardware to.
         """
+        # First convert to steps/s
+        speed *= self._steps_per_um
+        if speed > self._max_speed:
+            speed = self._max_speed
         self._lock.acquire()
-        if speed >= self._max_speed:
-            self._hardware_controller.setup_drive(self._channel, velocity=speed)
-        else:
-            self._hardware_controller.setup_drive(self._channel, velocity=self._max_speed)
+        self._hardware_controller.setup_drive(self._channel, velocity=speed)
         self._lock.release()
 
     @property
@@ -121,11 +126,12 @@ class PIA13(Base):
         acceleration: float or int
             The acceleration to set the hardware to. 
         """
+        # First convert to steps/s^2
+        acceleration *= self._steps_per_um
+        if acceleration > self._max_acceleration:
+            acceleration = self._max_acceleration
         self._lock.acquire()
-        if acceleration >= self._max_acceleration:
-            self._hardware_controller.setup_drive(self._channel, acceleration=acceleration)
-        else:
-            self._hardware_controller.setup_drive(self._channel, acceleration=self._max_acceleration)
+        self._hardware_controller.setup_drive(self._channel, acceleration=acceleration)
         self._lock.release()
 
     # CONNECTION FUNCTIONS

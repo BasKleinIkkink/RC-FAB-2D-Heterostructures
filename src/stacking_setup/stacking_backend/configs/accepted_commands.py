@@ -55,7 +55,7 @@ ACCEPTED_COMMANDS = {
     #          'I' : [float, int],},
     'M811' : {'ACCEPTED_AXES': ACCEPTED_AXES},
     'M812' : {'ACCEPTED_AXES': ACCEPTED_AXES},
-    'M813' : {'ACCEPTED_AXES': ACCEPTED_AXES},
+    # 'M813' : {'ACCEPTED_AXES': ACCEPTED_AXES},
     # 'M814' : {},
     # 'M815' : {},
     # 'M816' : {},

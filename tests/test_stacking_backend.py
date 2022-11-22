@@ -633,7 +633,6 @@ class TestMachineCommands(unittest.TestCase):
         self.assertEqual(msg, 1)
 
 
-
 class TestSettings(unittest.TestCase):
 
     # Test initiating the class
@@ -662,7 +661,7 @@ class TestSettings(unittest.TestCase):
     # Ask for existing key
     def test_get_existing_key(self):
         settings = Settings()
-        self.assertEqual(settings.get('PIA13.DEFAULT', 'absolute_movement_allowed'), True)
+        self.assertEqual(settings.get('PIA13.DEFAULT', 'steps_per_um'), 50)
 
     # Ask for non-existing key
     def test_get_non_existing_key(self):
@@ -673,7 +672,7 @@ class TestSettings(unittest.TestCase):
     # Ask for existing key with default
     def test_get_existing_key_with_default(self):
         settings = Settings()
-        self.assertEqual(settings.get('PRMTZ8/M.L', 'absolute_movement_allowed'), True)
+        self.assertEqual(settings.get('PRMTZ8/M.L', 'max_vel'), 25e3)
 
     # Change a value
     def test_set_existing_key(self):

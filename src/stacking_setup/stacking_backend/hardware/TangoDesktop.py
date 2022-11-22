@@ -114,8 +114,17 @@ class TangoDesktop(Base):
     @speed.setter
     @typechecked
     def speed(self, speed : Union[float, int]) -> None:
-        """Set the speed of the tango desktop."""
+        """
+        Set the speed of the tango desktop.
+        
+        Parameters
+        ----------
+        speed : float
+            The speed in um/s.
+        """
         # Calculate the needed revolutions per second
+        if speed > self._max_speed:
+            speed = self._max_speed
         self._lock.acquire()
         spindle_pitch = float(self._send_and_receive('?pitch z', expect_response=True, expect_confirmation=False))
         rev_per_s = round(speed / spindle_pitch, 3)
@@ -125,7 +134,14 @@ class TangoDesktop(Base):
     @property
     @typechecked
     def acceleration(self) -> float:
-        """Get the acceleration of the tango desktop."""
+        """
+        Get the acceleration of the tango desktop.
+        
+        Returns
+        -------
+        float
+            The acceleration in um/s^2.
+        """
         self._lock.acquire()
         acc = float(self._send_and_receive('?accel z', expect_response=True, expect_confirmation=False))
         self._lock.release()
@@ -137,10 +153,12 @@ class TangoDesktop(Base):
     def acceleration(self, acceleration : Union[float, int]) -> None:
         """Set the acceleration of the tango desktop."""
         # The acceleration is given in um/s^2
-        # The tango desktop needs the acceleration in um/s^2
+        # The tango desktop needs the acceleration in m/s^2
+        if acceleration > self._max_acceleration:
+            acceleration = self._max_acceleration
+        acceleration /= 10e6
         self._lock.acquire()
-        acc = round(acceleration, 3)
-        self._send_and_receive('!accel z {}'.format(acc), expect_confirmation=False, expect_response=False)
+        self._send_and_receive('!accel z {}'.format(acceleration), expect_confirmation=False, expect_response=False)
         self._lock.release()
 
     # CONNECTION FUNCTIONS

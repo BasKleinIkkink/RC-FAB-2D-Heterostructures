@@ -396,10 +396,19 @@ class MaskControlWidget(ControlWidget):
         self._connect_movement_scale()
 
         # Connect the disp to the slider
-        self.velocitySlider.valueChanged.connect(lambda : self.velDisp.setValue(self.velocitySlider.value()))
+        self.velocitySlider.valueChanged.connect(self._slider_changed())
         self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
 
         self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)
+
+    def _slider_changed(self):
+        """Update the velocity display when the slider is changed."""
+        self.velDisp.setValue(self.velocitySlider.value())
+
+        # Send the new velocity to the backend parts
+        value = self.velocitySlider.value()
+        self.q.put('M812 X{} Y{} Z{} L{}'.format(value, value, value, value))
+
 
     def _update_drive_step_scale(self):
         """Update the drive step scale."""
@@ -500,7 +509,7 @@ class BaseControlWidget(ControlWidget):
         self.lockMoveButton.clicked.connect(self._lock_movement)
 
         # Connect the disp to the slider
-        self.velocitySlider.valueChanged.connect(lambda : self.velDisp.setValue(self.velocitySlider.value()))
+        self.velocitySlider.valueChanged.connect(self._slider_changed())
         # Connect the spinbox to the slider
         self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
 
@@ -516,6 +525,14 @@ class BaseControlWidget(ControlWidget):
         self.driveUnit = new_scale.split(" ")[1]
 
         self.driveScale *= self.setting.known_units[self.driveUnit]
+
+    def _slider_changed(self):
+        """Update the velocity display when the slider is changed."""
+        self.velDisp.setValue(self.velocitySlider.value())
+
+        # Send the new velocity to the backend parts
+        value = self.velocitySlider.value()
+        self.q.put('M812 X{} Y{} Z{} L{}'.format(value, value, value, value))
 
     def _connect_movement_scale(self):
         """Connect the movement scale to the movement buttons."""

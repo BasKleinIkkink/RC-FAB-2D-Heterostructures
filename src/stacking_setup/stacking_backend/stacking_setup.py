@@ -967,7 +967,8 @@ class StackingSetupBackend:
         Parameters
         ----------
         command : dict
-            A dictionary with the axis id(s) and the speed and acceleration to set.
+            A dictionary with the axis id(s) and the speed and acceleration to set. If only 
+            specific settings should be changed leave the other settings out of the dict
         
         Returns
         -------

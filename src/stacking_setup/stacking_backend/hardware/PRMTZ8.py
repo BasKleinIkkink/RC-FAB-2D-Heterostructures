@@ -42,6 +42,9 @@ class PRMTZ8(Base):
         self._id = id
         self._controller = hardware_controller
         self.lock = tr.Lock()  # To ensure threadsafe serial communication
+        self._settings = settings
+        self._max_speed = self._settings.get(self._type+'.'+self._id, 'max_vel')
+        self._max_acceleration = self._settings.get(self._type+'.'+self._id, 'max_acc')
 
         # Check if the controller is connected.
         if not self._controller.is_connected():
@@ -137,8 +140,11 @@ class PRMTZ8(Base):
         speed: float
             The speed to set.
         """
+        speed /= 10e3
+        if speed > self._max_speed:
+            speed = self._max_speed
         self.lock.acquire()
-        self._controller.setup_drive(velocity=speed / 10e3)
+        self._controller.setup_drive(velocity=speed)
         self.lock.release()
 
     @property
@@ -155,7 +161,7 @@ class PRMTZ8(Base):
         self.lock.acquire()
         acceleration = self._controller.get_drive_parameters()[0]
         self.lock.release()
-        return acceleration
+        return acceleration * 10e3
 
     @acceleration.setter
     @typechecked
@@ -170,8 +176,11 @@ class PRMTZ8(Base):
         acceleration: float
             The acceleration to set.
         """
+        acceleration /= 10e3
+        if acceleration > self._max_acceleration:
+            acceleration = self._max_acceleration
         self.lock.acquire()
-        self._controller.setup_drive(acceleration=acceleration / 10e3)
+        self._controller.setup_drive(acceleration=acceleration)
         self.lock.release()
 
     # CONNECTION FUNCTIONS
