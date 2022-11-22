@@ -396,7 +396,7 @@ class MaskControlWidget(ControlWidget):
         self._connect_movement_scale()
 
         # Connect the disp to the slider
-        self.velocitySlider.valueChanged.connect(self._slider_changed())
+        self.velocitySlider.valueChanged.connect(self._slider_changed)
         self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
 
         self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)

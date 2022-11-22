@@ -32,8 +32,8 @@ class TemperatureWidget(QGroupBox):
         self.q = q
         # Define the main frame and grid in the docking widget
         self.mainVerticalLayout = QVBoxLayout(self)
-        #self.setMinimumSize(self.min_size)
-        #self.setMaximumSize(self.max_size)
+        self.setMinimumSize(self.min_size)
+        self.setMaximumSize(self.max_size)
 
         # Add the chart
         self.mainVerticalLayout.addWidget(self._create_chart())

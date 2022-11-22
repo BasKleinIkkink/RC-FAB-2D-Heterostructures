@@ -14,6 +14,7 @@ except ImportError:
 
 class PRMTZ8(Base):
     """Class to control communication with the PRMTZ8 piezocontroller."""
+    _type = 'PRMTZ8/M'
 
     @typechecked
     def __init__(self, hardware_controller : KDC101, settings : Settings,
@@ -38,7 +39,6 @@ class PRMTZ8(Base):
         HardwareNotConnectedError
             If the hardware controller is not connected.
         """
-        self._type = 'PRMTZ8'
         self._id = id
         self._controller = hardware_controller
         self.lock = tr.Lock()  # To ensure threadsafe serial communication
@@ -145,7 +145,9 @@ class PRMTZ8(Base):
             speed = self._max_speed
         self.lock.acquire()
         self._controller.setup_drive(velocity=speed)
+        self._controller.setup_jog(velocity=speed)
         self.lock.release()
+        print('Speed set to {}'.format(speed))
 
     @property
     @typechecked
@@ -181,7 +183,9 @@ class PRMTZ8(Base):
             acceleration = self._max_acceleration
         self.lock.acquire()
         self._controller.setup_drive(acceleration=acceleration)
+        self._controller.setup_jog(acceleration=acceleration)
         self.lock.release()
+        print('Changed acceleration to', acceleration)
 
     # CONNECTION FUNCTIONS
     def connect(self) -> None:
@@ -274,7 +278,6 @@ class PRMTZ8(Base):
         # Set the jogging parameters to the current driving parameters.
         self.lock.acquire()
         print('Starting jog')
-        # self._controller.setup_jog(acceleration=self.acceleration, velocity=self.speed)
         self._controller.start_jog(direction=direction, kind=kind)
         self.lock.release()
         return 0, None

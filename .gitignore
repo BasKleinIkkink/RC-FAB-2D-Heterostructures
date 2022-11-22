@@ -117,6 +117,7 @@ test_env/
 .controller_env/
 .sphinx_env/
 envs/
+.wsl_env/
 
 # Spyder project settings
 .spyderproject

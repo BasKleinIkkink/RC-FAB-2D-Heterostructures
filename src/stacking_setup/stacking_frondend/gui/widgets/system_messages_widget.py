@@ -21,6 +21,7 @@ FIXED_STRING = 2
 
 class SystemMessageWidget(QWidget):
     name = 'System Messages'
+    commands_to_ignore = ['M114', 'M154', 'M155']
 
     def __init__(self, settings, parent=None):
         """
@@ -168,49 +169,20 @@ class SystemMessageWidget(QWidget):
         message : dict
             The message to add.
         """
+        if message.command_id in self.commands_to_ignore:
+            return
         self.model.insertRow(0)
         self.model.setData(self.model.index(0, 0), str(message.timestamp))
         self.model.setData(self.model.index(0, 1), str(message.exit_code))
-        self.model.setData(self.model.index(0, 2), str(message.command))
-        self.model.setData(self.model.index(0, 3), str(message.msg))
+        self.model.setData(self.model.index(0, 2), str(message.command_id))
+        self.model.setData(self.model.index(0, 3), str(message.command))
+        self.model.setData(self.model.index(0, 4), str(message.msg))
 
     def _create_model(self):
-        model = QStandardItemModel(0, 4, self)
+        model = QStandardItemModel(0, 5, self)
         model.setHeaderData(0, Qt.Horizontal, "Time")
         model.setHeaderData(1, Qt.Horizontal, "Exit-code")
-        model.setHeaderData(2, Qt.Horizontal, "Command")
-        model.setHeaderData(3, Qt.Horizontal, "Message")
+        model.setHeaderData(2, Qt.Horizontal, "Id")
+        model.setHeaderData(3, Qt.Horizontal, "Command")
+        model.setHeaderData(4, Qt.Horizontal, "Message")
         return model
-
-
-def add_message(model, message):
-        """
-        Add a message to the model.
-        
-        Parameters
-        ----------
-        model : QAbstractItemModel
-            The model to add the message to.
-        message : dict
-            The message to add.
-        """
-        model.insertRow(0)
-        model.setData(model.index(0, 0), message.timestamp)
-        model.setData(model.index(0, 1), message.exit_code)
-        model.setData(model.index(0, 2), message.command)
-        model.setData(model.index(0, 3), message.msg)
-
-def create_test_message_set(parent):
-    model = QStandardItemModel(0, 4, parent)
-
-    model.setHeaderData(0, Qt.Horizontal, "Time")
-    model.setHeaderData(1, Qt.Horizontal, "Exit-code")
-    model.setHeaderData(2, Qt.Horizontal, "Command")
-    model.setHeaderData(3, Qt.Horizontal, "Message")
-
-    # Generate a list of test Messages
-    n = 20
-    for i in range(n):
-        message = Message(exit_code=randint(0, 1), command=str(randint(0, 100)), msg=str(randint(0, 100)), command_id=str(randint(0, 300)))
-        add_message(model, message)
-    return model
