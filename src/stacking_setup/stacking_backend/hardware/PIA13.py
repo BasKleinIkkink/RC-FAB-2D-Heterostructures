@@ -98,7 +98,8 @@ class PIA13(Base):
         if speed > self._max_speed:
             speed = self._max_speed
         self._lock.acquire()
-        self._hardware_controller.setup_drive(self._channel, velocity=speed)
+        self._hardware_controller.setup_drive(channel=self._channel, velocity=speed)
+        self._hardware_controller.setup_jog(channel=self._channel, velocity=speed)
         self._lock.release()
 
     @property
@@ -131,14 +132,15 @@ class PIA13(Base):
         if acceleration > self._max_acceleration:
             acceleration = self._max_acceleration
         self._lock.acquire()
-        self._hardware_controller.setup_drive(self._channel, acceleration=acceleration)
+        self._hardware_controller.setup_drive(channel=self._channel, acceleration=acceleration)
+        self._hardware_controller.setup_jog(channel=self._channel, acceleration=acceleration)
         self._lock.release()
 
     # CONNECTION FUNCTIONS
     def connect(self) -> None:
         """Connect the hardware."""
         self._lock.acquire()
-        if not self._hardware_controller.is_connected():
+        if not self._hardware_controller._connected:
             self._hardware_controller.connect()
         else:
             pass

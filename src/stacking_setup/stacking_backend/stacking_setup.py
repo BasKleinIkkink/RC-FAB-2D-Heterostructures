@@ -270,7 +270,7 @@ class StackingSetupBackend:
         # Define the connected components.
         _hardware = []
         if self._settings.get('KIM101.DEFAULT', 'enabled'):
-            self._piezo_controller = KIM101()
+            self._piezo_controller = KIM101(settings=self._settings)
 
             if self._settings.get('PIA13.X', 'enabled'):
                 _hardware.append(PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, settings=self._settings))
@@ -284,8 +284,11 @@ class StackingSetupBackend:
         if self._settings.get('KDC101.DEFAULT', 'enabled'):
             self._motor_controller = KDC101(settings=self._settings)
 
-            if self._settings.get('PRMTZ8/M.L', 'enabled') and self._settings.get('KDC101.DEFAULT', 'enabled'):
+            if self._settings.get('PRMTZ8/M.L', 'enabled') and self._settings.get('KDC101.K', 'enabled'):
                 _hardware.append(PRMTZ8(id='L', hardware_controller=self._motor_controller, settings=self._settings))
+
+        if self._settings.get('TANGODESKTOP.K', 'enabled'):
+            _hardware.append(TangoDesktop(id='K', settings=self._settings))
 
         return _hardware
 
