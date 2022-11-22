@@ -123,6 +123,7 @@ class RepeatedTimer:
     def stop(self) -> None:
         """Stop the timer."""
         self._timer.cancel()
+        self._timer.join()
         self._is_running = False
 
 
@@ -274,7 +275,7 @@ class StackingSetupBackend:
             #PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, settings=self._settings), 
             #PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, settings=self._settings), 
             #PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller, settings=self._settings),
-            # PRMTZ8(id='L', hardware_controller=self._motor_controller, settings=self._settings),
+            PRMTZ8(id='L', hardware_controller=self._motor_controller, settings=self._settings),
             TangoDesktop(id='K', settings=self._settings)
         ]
         return _hardware
@@ -377,15 +378,10 @@ class StackingSetupBackend:
                     else:
                         self._con_to_main.send(Message(exit_code=1, msg='Received None command', command=command, command_id=''))
 
-        if not self._emergency_stop_event.is_set():
-            # Put all the parts in a save position
-            self._disconnect_all_hardware()
-            self._logger.info('Stacking process stopped.')
-            self._con_to_main.disconnect()
-        else:
-            # Emergency stop all the parts
-            raise NotImplementedError('Not implemented')
-
+        self._disconnect_all_hardware()
+        self._logger.info('Stacking process stopped.')
+        self._con_to_main.disconnect()
+        
     @typechecked        
     def _execute_command(self, parsed_command : dict) -> None:
         """
@@ -505,7 +501,7 @@ class StackingSetupBackend:
 
         if not exit_code and len(parsed_command) != 0:
             # Send the error message to the main process
-            msg = Message(exit_code=1, msg='Not all commands were executed', command=parsed_command)
+            msg = Message(exit_code=1, msg='Not all commands were executed: {}'.format(parsed_command), command=parsed_command, command_id='None')
             self._con_to_main.send(msg)
         
     # MOVEMENT FUNCTIONS

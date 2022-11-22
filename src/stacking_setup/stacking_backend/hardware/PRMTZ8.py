@@ -20,6 +20,9 @@ class PRMTZ8(Base):
                 id : str='L') -> None:
         """
         Initialize the PRMTZ8.
+
+        .. important::
+            All distances, positions and speeds are in um and um(/s)
         
         Parameters
         ----------
@@ -53,7 +56,14 @@ class PRMTZ8(Base):
     @property
     @typechecked
     def device_info(self) -> dict:
-        """Get the device info."""
+        """
+        Get the device info.
+        
+        Returns
+        -------
+        dict
+            The device info.
+        """
         self.lock.acquire()
         info = {'id' : self._id,
                 'type': self._type,
@@ -65,34 +75,62 @@ class PRMTZ8(Base):
     @property
     @typechecked
     def position(self) -> Union[int, float]:
-        """Get the position of the hardware."""
+        """
+        Get the position of the hardware.
+        
+        All positions are given in udeg.
+
+        Returns
+        -------
+        position: int or float
+            The position of the hardware in udeg.
+        """
         self.lock.acquire()
         pos = self._controller.get_position()
         self.lock.release()
-        return pos
+        return pos * 10e3
 
     @property
     @typechecked
-    def steps_per_deg(self) -> Union[float, int]:
-        """Return the steps per degree."""
+    def steps_per_udeg(self) -> Union[float, int]:
+        """
+        Return the steps per mu degree.
+        
+        Returns
+        -------
+        steps_per_udeg: int or float
+            The steps per mu degree.
+        """
         self.lock.acquire()
         steps = self._controller.steps_per_deg
         self.lock.release()
-        return steps
+        return steps * 10e3
 
     @property
     @typechecked
     def speed(self) -> Union[float, int]:
+        """
+        Get the speed of the motor.
+        
+        The motor speed is given in udeg/s.
+        
+        Returns
+        -------
+        speed: int or float
+            The speed of the motor in udeg/s.
+        """
         self.lock.acquire()
         speed = self._controller.get_drive_parameters()[-1] 
         self.lock.release()
-        return speed
+        return speed * 10e3
 
     @speed.setter
     @typechecked
     def speed(self, speed : Union[float, int]) -> None:
         """
         Set the speed of the motor.
+
+        The motor speed is given in udeg/s.
         
         Parameters
         ----------
@@ -100,7 +138,7 @@ class PRMTZ8(Base):
             The speed to set.
         """
         self.lock.acquire()
-        self._controller.setup_drive(velocity=speed)
+        self._controller.setup_drive(velocity=speed / 10e3)
         self.lock.release()
 
     @property
@@ -124,6 +162,8 @@ class PRMTZ8(Base):
     def acceleration(self, acceleration : Union[float, int]) -> None:
         """
         Set the acceleration of the motor.
+
+        The acceleration is given in udeg/s^2.
         
         Parameters
         ----------
@@ -131,7 +171,7 @@ class PRMTZ8(Base):
             The acceleration to set.
         """
         self.lock.acquire()
-        self._controller.setup_drive(acceleration=acceleration)
+        self._controller.setup_drive(acceleration=acceleration / 10e3)
         self.lock.release()
 
     # CONNECTION FUNCTIONS
@@ -196,7 +236,7 @@ class PRMTZ8(Base):
         self.lock.acquire()
         pos = self._controller.get_position()
         self.lock.release()
-        return pos
+        return pos * 10e3
 
     def is_homed(self) -> None:
         """
@@ -232,7 +272,9 @@ class PRMTZ8(Base):
 
     def stop_jog(self) -> tuple:
         """Stop the continuous movement."""
+        self.lock.acquire()
         self._controller.stop_jog()
+        self.lock.release()
         return 0, None
 
     @typechecked
@@ -264,14 +306,14 @@ class PRMTZ8(Base):
             If True, the position will be scaled to the steps per degree.
         """
         self.lock.acquire()
-        self._controller.rotate_to(position=position, hold_until_done=hold_until_done, scale=scale)
+        self._controller.rotate_to(position=position / 10e3, hold_until_done=hold_until_done, scale=scale)
         self.lock.release()
 
     @typechecked
     def rotate_by(self, distance : Union[float, int], hold_until_done : bool=True, scale : bool=True) -> None:
         """Move the motor by a given distance."""
         self.lock.acquire()
-        self._controller.rotate_by(distance=distance, hold_until_done=hold_until_done, scale=scale)
+        self._controller.rotate_by(distance=distance / 10e3, hold_until_done=hold_until_done, scale=scale)
         self.lock.release()
 
     def stop(self) -> None:

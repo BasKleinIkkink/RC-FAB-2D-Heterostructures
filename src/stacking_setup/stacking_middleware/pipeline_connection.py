@@ -124,6 +124,28 @@ class PipeCom():
             return False
         
         return True
+
+    @classmethod
+    def in_waiting(cls, conn):
+        """
+        Check if there is a message waiting.
+        
+        Parameters
+        ----------
+        conn : multiprocessing.connection.Connection
+            The connection to check.
+
+        Returns
+        -------
+        bool
+            True if a message is waiting, False otherwise.
+
+        """
+        if cls.pipe_is_open(conn):
+            return conn.poll()
+        else:
+            cls.close_pipe(conn)
+            return False
         
 
 class PipelineConnection(BaseConnector):
@@ -179,7 +201,7 @@ class PipelineConnection(BaseConnector):
             True if a message is waiting, False otherwise.
 
         """
-        return self._connection.poll()
+        return PipeCom.in_waiting(self._connection)
 
     def receive(self):
         """
