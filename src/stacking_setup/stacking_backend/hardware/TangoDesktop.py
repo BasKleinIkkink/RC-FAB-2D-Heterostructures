@@ -79,7 +79,6 @@ class TangoDesktop(Base):
 
     # ATTRIBUTES
     @property
-    #@typechecked
     def steps_per_um(self) -> float:
         """Get the steps per um."""
         self._lock.acquire()
@@ -89,7 +88,6 @@ class TangoDesktop(Base):
         return round(steps_per_rev / spindle_pitch, 3)
 
     @property
-    #@typechecked
     def position(self) -> float:
         """Get the current position."""
         self._lock.acquire()
@@ -98,9 +96,15 @@ class TangoDesktop(Base):
         return pos
 
     @property
-    #@typechecked
     def speed(self) -> float:
-        """Get the current speed."""
+        """
+        Get the current speed.
+        
+        Returns
+        -------
+        float
+            The current speed in um/s.
+        """
         self._lock.acquire()
         spindle_pitch = float(self._send_and_receive('?pitch z', expect_response=True, expect_confirmation=False))
         rev_per_s = float(self._send_and_receive('?vel z', expect_response=True, expect_confirmation=False))
@@ -108,7 +112,7 @@ class TangoDesktop(Base):
         return round(rev_per_s / spindle_pitch, 3)
 
     @speed.setter
-    #@typechecked
+    @typechecked
     def speed(self, speed : Union[float, int]) -> None:
         """Set the speed of the tango desktop."""
         # Calculate the needed revolutions per second
@@ -119,23 +123,23 @@ class TangoDesktop(Base):
         self._lock.release()
 
     @property
-    #@typechecked
+    @typechecked
     def acceleration(self) -> float:
         """Get the acceleration of the tango desktop."""
         self._lock.acquire()
         acc = float(self._send_and_receive('?accel z', expect_response=True, expect_confirmation=False))
         self._lock.release()
-        acc *= 10e6
+        acc *= 10e3
         return acc
 
     @acceleration.setter
-    #@typechecked
+    @typechecked
     def acceleration(self, acceleration : Union[float, int]) -> None:
         """Set the acceleration of the tango desktop."""
-        # The acceleration is given in mm/s^2
+        # The acceleration is given in um/s^2
         # The tango desktop needs the acceleration in um/s^2
         self._lock.acquire()
-        acc = round(acceleration / 10e-6, 3)
+        acc = round(acceleration, 3)
         self._send_and_receive('!accel z {}'.format(acc), expect_confirmation=False, expect_response=False)
         self._lock.release()
 
@@ -155,7 +159,6 @@ class TangoDesktop(Base):
         state = True if self._ser.in_waiting > 0 else False
         return state
 
-    #@typechecked
     def _send_and_receive(self, command : str, expect_confirmation : bool=True, expect_response : bool=False) -> Union[None, str]:
         """
         Send a command to the tango desktop and receive the response.
@@ -229,7 +232,6 @@ class TangoDesktop(Base):
             if expect_response: return data_resp  
         return None
 
-    #@typechecked
     def connect(self) -> None:
         """Connect to the tango desktop."""
         self._lock.acquire()
@@ -257,7 +259,6 @@ class TangoDesktop(Base):
                 self._send_and_receive('!nosetlimit z 1', expect_response=False, expect_confirmation=False)
         self._lock.release()
 
-    #@typechecked
     def disconnect(self) -> None:
         """Disconnect from the tango desktop."""
         self._lock.acquire()
@@ -272,7 +273,6 @@ class TangoDesktop(Base):
         self._lock.release()
 
     # STATUS FUNCTIONS
-    #@typechecked
     def is_connected(self) -> bool:
         """Check if the tango desktop is connected."""
         self._lock.acquire()
@@ -280,10 +280,13 @@ class TangoDesktop(Base):
         self._lock.release()
         return state
 
-    #@typechecked
     def is_moving(self) -> bool:
         """
         Check the status of the axis.
+
+        .. warning::
+            This function is mostly used as a support function and does not capture the lock.
+            This means that the calling function should capture the lock.
         
         Possible return states:
         -----------------------
@@ -307,13 +310,11 @@ class TangoDesktop(Base):
         bool:
             True if the axis is moving, False if not.
         """
-        self._lock.acquire()
         resp = self._send_and_receive('sa z', expect_response=True, expect_confirmation=False)
         if resp in ['E', '-', 'T']: raise ValueError("The axis responded with: {}".format(resp))
         elif resp == 'M': state = True
         elif resp in ['@', 'J']: state = False
         else: raise KeyError('Unknown response: {}'.format(resp))
-        self._lock.release()
         return state
 
     # HOMING FUNCTIONS
@@ -328,7 +329,9 @@ class TangoDesktop(Base):
 
         """
         self._lock.acquire()
-        self._send_and_receive('!home z', expect_response=False, expect_confirmation=False)
+
+        # Could not find the homing function so move to zero position
+        self._send_and_receive('!moa z 0', expect_response=False, expect_confirmation=False)
         self._lock.release()
 
     # MOVEMENT FUNCTIONS

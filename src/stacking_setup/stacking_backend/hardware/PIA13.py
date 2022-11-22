@@ -37,8 +37,7 @@ class PIA13(Base):
         self._channel = channel
         self._hardware_controller = hardware_controller
         self._settings = settings
-        self._steps_calibrated = False  # Steps per nm were calibrated
-        self._steps_per_nm = 0  # Steps per nm
+        self._steps_per_um = self._settings.get(self._type+'.'+self._id, 'steps_per_um')
         self._lock = tr.Lock()  # Lock for the hardware
 
     # ATTRIBUTES
@@ -60,27 +59,6 @@ class PIA13(Base):
         # Return the steps per um
         self._lock.acquire()
         steps = self._steps_per_um
-        self._lock.release()
-        return steps
-
-    @steps_per_um.setter
-    @typechecked
-    def steps_per_um(self, steps_per_mm : Union[float, int]) -> Union[float, int]:
-        """
-        Set the steps per um.
-        
-        Parameters
-        ----------
-        steps_per_mm: float or int
-            The steps per um.
-        """
-        self._lock.acquire()
-        if not self._steps_calibrated:
-            raise NotCalibratedError('Steps per nm were not calibrated/set.')
-
-        # Set the jog settings on the hardware controller.
-        steps = self._hardware_controller.set_steps_per_nm(self._channel, 
-                                                        steps_per_mm)
         self._lock.release()
         return steps
 
@@ -174,7 +152,7 @@ class PIA13(Base):
         """
         Check if the hardware is connected.
         
-        .. important::
+        .. warning::
             This function is mostly used as a support function for other functions,
             and does not capture the lock. This means this function is not thread safe.
         """
@@ -185,7 +163,7 @@ class PIA13(Base):
         """
         Check if the hardware is moving.
         
-        .. important::
+        .. warning::
             This function is mostly used as a support function for other functions,
             and does not capture the lock. This means this function is not thread safe.
         """

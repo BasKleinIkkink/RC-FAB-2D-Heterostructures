@@ -138,7 +138,7 @@ class MainWindow(QMainWindow):
     def _start_event_handeler(self):
         """Start the event handeler."""
         # Strart the handler
-        self._connector.send('G91')  # Set absolute positioning
+        self._connector.send('G91')  # Set relative positioning
         self.event_handle_thread = threading.Thread(target=self._event_handeler, args=(self._q, self._shutdown_event))
         self.event_handle_thread.setDaemon(True)
         self.event_handle_thread.start()
