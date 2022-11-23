@@ -26,7 +26,6 @@ class MainWindow(QMainWindow):
         self._q = queue.Queue()
         self._shutdown_event = threading.Event()
         self._settings = Settings()
-        self._connect_backend()
         
         # Resize to the screen resolution
         # self.resize(self.window_size[0], self.window_size[1])
@@ -39,6 +38,8 @@ class MainWindow(QMainWindow):
         # Load and set the widgets
         self.load_widgets()  # Load the docks
         self.connect_actions()
+
+        self._connect_backend()
 
     def _connect_backend(self):
         # Handshake with the frondend

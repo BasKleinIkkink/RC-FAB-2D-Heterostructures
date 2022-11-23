@@ -226,7 +226,7 @@ class FocusWidget(QGroupBox):
         """
         
         # Connect the disp to the slider
-        self.velocitySlider.valueChanged.connect(self._slider_changed)
+        self.velocitySlider.sliderReleased.connect(self._slider_changed)
         self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
 
         # Connect the movment buttons

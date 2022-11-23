@@ -45,6 +45,7 @@ class PIA13(Base):
         self._channel = channel
         self._hardware_controller = hardware_controller
         self._settings = settings
+        self._em_event = em_event
         self._max_speed = self._settings.get(self._type+'.'+self._id, 'max_vel')
         self._max_acceleration = self._settings.get(self._type+'.'+self._id, 'max_acc')
         self._steps_per_um = self._settings.get(self._type+'.'+self._id, 'steps_per_um')

@@ -341,7 +341,7 @@ class PRMTZ8(Base):
 
     def emergency_stop(self) -> None:
         """Stop the motor."""
-        self.em_event.set()
+        self._em_event.set()
         self._controller._controller.stop(immediate=True, sync=False)
 
 

@@ -114,6 +114,8 @@ class TangoDesktop(Base):
     @property
     def speed(self) -> Union[float, int]:
         """Get the current speed in um/s."""
+        if self._em_event.is_set():
+            return None  # Do nothing to give other classes a chance to stop the emergency stop
         self._lock.acquire()
         rev_per_s = float(self._send_and_receive('?vel z', expect_response=True, expect_confirmation=False))
         self._lock.release()
@@ -129,6 +131,9 @@ class TangoDesktop(Base):
         speed : float
             The speed in um/s.
         """
+        if self._em_event.is_set():
+            return None  # Do nothing to give other classes a chance to stop the emergency stop
+
         # Calculate the needed revolutions per second
         if speed > self._max_speed:
             speed = self._max_speed
@@ -144,6 +149,9 @@ class TangoDesktop(Base):
     @property
     def acceleration(self) -> None:
         """Get the acceleration of the tango desktop (um/s^2)."""
+        if self._em_event.is_set():
+            return None  # Do nothing to give other classes a chance to stop the emergency stop
+
         # Tango expects the acceleration in m/s^2
         self._lock.acquire()
         acc = float(self._send_and_receive('?accel z', expect_response=True, expect_confirmation=False))
@@ -159,6 +167,9 @@ class TangoDesktop(Base):
             Because consistency was not a priority when writing the tango desktop
             command set the acceleration is set in m/s^2 instead of um/s^2.
         """
+        if self._em_event.is_set():
+            return None  # Do nothing to give other classes a chance to stop the emergency stop
+
         if acceleration > self._max_acceleration:
             acceleration = self._max_acceleration
         acceleration /= 10e3
@@ -180,6 +191,9 @@ class TangoDesktop(Base):
         bool
             True if a message is waiting, False otherwise.
         """
+        if self._em_event.is_set():
+            return None  # Do nothing to give other classes a chance to stop the emergency stop
+
         state = True if self._ser.in_waiting > 0 else False
         return state
 
@@ -292,6 +306,9 @@ class TangoDesktop(Base):
 
     def disconnect(self) -> None:
         """Disconnect from the tango desktop."""
+        if self._em_event.is_set():
+            return None  # Do nothing to give other classes a chance to stop the emergency stop
+
         self._lock.acquire()
         if self._ser is None:
             pass
@@ -306,6 +323,9 @@ class TangoDesktop(Base):
     # STATUS FUNCTIONS
     def is_connected(self) -> bool:
         """Check if the tango desktop is connected."""
+        if self._em_event.is_set():
+            return None  # Do nothing to give other classes a chance to stop the emergency stop
+
         self._lock.acquire()
         state = True if self._ser is not None else False
         self._lock.release()
@@ -341,6 +361,9 @@ class TangoDesktop(Base):
         bool:
             True if the axis is moving, False if not.
         """
+        if self._em_event.is_set():
+            return None  # Do nothing to give other classes a chance to stop the emergency stop
+
         resp = self._send_and_receive('sa z', expect_response=True, expect_confirmation=False)
         if resp in ['E', '-', 'T']: raise ValueError("The axis responded with: {}".format(resp))
         elif resp == 'M': state = True
