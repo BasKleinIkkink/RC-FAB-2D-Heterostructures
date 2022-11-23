@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 import sys
-from PySide6.QtCore import (QRegularExpression,
+from PySide6.QtCore import (QRegularExpression, QSize,
                             QSortFilterProxyModel, Qt, Slot)
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QGridLayout,
@@ -22,6 +22,7 @@ FIXED_STRING = 2
 class SystemMessageWidget(QWidget):
     name = 'System Messages'
     commands_to_ignore = ['M114', 'M154', 'M155']
+    min_size = QSize(700, 1000)
 
     def __init__(self, settings, parent=None):
         """
@@ -38,6 +39,7 @@ class SystemMessageWidget(QWidget):
         self.settings = settings
         self.setup_widget()
         self.set_source_model(self._create_model())
+        self.setMinimumSize(self.min_size)
 
     def setup_widget(self):
         """Setup the widget."""

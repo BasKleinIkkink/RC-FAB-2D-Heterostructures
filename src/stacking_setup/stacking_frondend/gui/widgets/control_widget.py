@@ -406,7 +406,7 @@ class MaskControlWidget(ControlWidget):
         self.velDisp.setValue(self.velocitySlider.value())
 
         # Send the new velocity to the backend parts
-        value = self.velocitySlider.value()
+        value = self.velocitySlider.value() * self.setting.known_units[self.moveUnit.split('/')[0]]
         self.q.put('M812 X{} Y{} Z{} L{}'.format(value, value, value, value))
 
 

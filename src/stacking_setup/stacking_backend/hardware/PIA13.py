@@ -94,16 +94,16 @@ class PIA13(Base):
             The speed to set the hardware to.
         """
         # First convert to steps/s
-        speed *= self._steps_per_um
         if speed > self._max_speed:
             speed = self._max_speed
+        speed *= self._steps_per_um
         self._lock.acquire()
         self._hardware_controller.setup_drive(channel=self._channel, velocity=speed)
         self._hardware_controller.setup_jog(channel=self._channel, velocity=speed)
         self._lock.release()
 
         # Also change the acceleration
-        self.acceleration = speed * 2
+        self.acceleration = speed * 4 / self._steps_per_um
 
     @property
     def acceleration(self) -> float:
@@ -131,9 +131,9 @@ class PIA13(Base):
             The acceleration to set the hardware to. 
         """
         # First convert to steps/s^2
-        acceleration *= self._steps_per_um
         if acceleration > self._max_acceleration:
             acceleration = self._max_acceleration
+        acceleration *= self._steps_per_um
         self._lock.acquire()
         self._hardware_controller.setup_drive(channel=self._channel, acceleration=acceleration)
         self._hardware_controller.setup_jog(channel=self._channel, acceleration=acceleration)

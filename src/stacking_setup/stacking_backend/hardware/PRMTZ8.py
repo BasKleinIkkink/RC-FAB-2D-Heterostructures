@@ -115,12 +115,12 @@ class PRMTZ8(Base):
         """
         Get the speed of the motor.
         
-        The motor speed is given in udeg/s.
+        The motor speed is given in mdeg/s.
         
         Returns
         -------
         speed: int or float
-            The speed of the motor in udeg/s.
+            The speed of the motor in mdeg/s.
         """
         self.lock.acquire()
         speed = self._controller.get_drive_parameters()[-1] 
@@ -133,22 +133,22 @@ class PRMTZ8(Base):
         """
         Set the speed of the motor.
 
-        The motor speed is given in udeg/s.
+        The motor speed is given in mdeg/s.
         
         Parameters
         ----------
         speed: float
             The speed to set.
         """
-        speed /= 10e3
         if speed > self._max_speed:
             speed = self._max_speed
+        speed /= 10e3
         self.lock.acquire()
         self._controller.setup_drive(velocity=speed)
         self._controller.setup_jog(velocity=speed)
         self.lock.release()
         
-        self.acceleration = speed * 4
+        self.acceleration = speed * 4 * 10e3
 
     @property
     @typechecked
@@ -172,21 +172,20 @@ class PRMTZ8(Base):
         """
         Set the acceleration of the motor.
 
-        The acceleration is given in udeg/s^2.
+        The acceleration is given in mdeg/s^2.
         
         Parameters
         ----------
         acceleration: float
             The acceleration to set.
         """
-        acceleration /= 10e3
         if acceleration > self._max_acceleration:
             acceleration = self._max_acceleration
+        acceleration /= 10e3
         self.lock.acquire()
         self._controller.setup_drive(acceleration=acceleration)
         self._controller.setup_jog(acceleration=acceleration)
         self.lock.release()
-        print('Changed acceleration to', acceleration)
 
     # CONNECTION FUNCTIONS
     def connect(self) -> None:
@@ -278,7 +277,6 @@ class PRMTZ8(Base):
         """
         # Set the jogging parameters to the current driving parameters.
         self.lock.acquire()
-        print('Starting jog')
         self._controller.start_jog(direction=direction, kind=kind)
         self.lock.release()
         return 0, None

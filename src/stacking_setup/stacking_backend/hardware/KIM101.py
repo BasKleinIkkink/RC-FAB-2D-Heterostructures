@@ -83,7 +83,7 @@ class KIM101():
         """
         self._lock.acquire()
         if self._connected:
-            state = self._controller._connected
+            state = True
         else:
             state = False
         self._lock.release()
@@ -166,8 +166,12 @@ class KIM101():
         acceleration : float, int, None
             The acceleration of the piezo in steps/s^2. If None, the acceleration is not changed.
         """
+        if velocity is not None:
+            velocity = int(round(velocity, 0))
+        if acceleration is not None:
+            acceleration = int(round(acceleration, 0))
         self._lock.acquire()
-        self._controller.setup_jog(velocity=velocity, acceleration=acceleration, channel=channel)
+        self._controller.setup_jog(velocity=velocity, acceleration=velocity, channel=channel)
         self._lock.release()
 
     @typechecked
@@ -204,6 +208,10 @@ class KIM101():
         acceleration : float, int, None
             The acceleration of the piezo in steps/s^2. If None, the acceleration is not changed.
         """
+        if velocity is not None:
+            velocity = int(round(velocity, 0))
+        if acceleration is not None:
+            acceleration = int(round(acceleration, 0))
         self._lock.acquire()
         self._controller.setup_drive(max_voltage=max_voltage, velocity=velocity, acceleration=acceleration, channel=channel)
         self._lock.release()

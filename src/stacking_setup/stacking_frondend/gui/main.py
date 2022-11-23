@@ -45,8 +45,8 @@ class MainWindow(QMainWindow):
         time.sleep(1)
         self._connector.handshake()
         self._start_event_handeler()
-        #self._q.put('M154 S{}'.format(self._settings.pos_auto_update_interval))
-        #self._q.put('M155 S{}'.format(self._settings.temp_auto_update_interval))
+        self._q.put('M154 S{}'.format(self._settings.pos_auto_update_interval))
+        self._q.put('M155 S{}'.format(self._settings.temp_auto_update_interval))
 
     def closeEvent(self, event):
         """Close the main window."""

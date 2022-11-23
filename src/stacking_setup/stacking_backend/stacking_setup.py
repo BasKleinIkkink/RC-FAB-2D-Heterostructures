@@ -279,7 +279,7 @@ class StackingSetupBackend:
                 _hardware.append(PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, settings=self._settings))
 
             if self._settings.get('PIA13.Z', 'enabled'):
-                _hardware.append(PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller, settings=self._settings))
+                _hardware.append(PIA13(id='Z', channel=4, hardware_controller=self._piezo_controller, settings=self._settings))
         
         if self._settings.get('KDC101.DEFAULT', 'enabled'):
             self._motor_controller = KDC101(settings=self._settings)
@@ -389,6 +389,8 @@ class StackingSetupBackend:
                         self._execute_command(parsed_command) # Execute the command
                     else:
                         self._con_to_main.send(Message(exit_code=1, msg='Received None command', command=command, command_id=''))
+            else:
+                time.sleep(0.01)
 
         self._disconnect_all_hardware()
         self._logger.info('Stacking process stopped.')
@@ -862,13 +864,16 @@ class StackingSetupBackend:
             try:
                 interval = self._auto_position_timer.interval
             except AttributeError:
-                return 1, 'Auto position update interval set.'
+                return 1, 'No, uto position update interval set.'
 
             return 0, interval
         elif interval['S'] == 0:
-            # Disable the keep alive timer
-            self._auto_position_timer.stop()
-            return 0, None
+            try:
+                # Disable the keep alive timer
+                self._auto_position_timer.stop()
+                return 0, None
+            except AttributeError:
+                return 1, 'No auto position update interval set.'
         else:
             self._auto_position_timer = RepeatedTimer(interval=interval['S'], 
                                                 function=self._auto_position_report)
@@ -915,13 +920,16 @@ class StackingSetupBackend:
             try:
                 interval = self._auto_temperature_timer.interval
             except AttributeError:
-                return 1, 'Auto temperature update interval set.'
+                return 1, 'No auto temperature update interval set.'
 
             return 0, interval
         elif interval['S'] == 0:
-            # Disable the keep alive timer
-            self._auto_temperature_timer.stop()
-            return 0, None
+            try:
+                # Disable the keep alive timer
+                self._auto_temperature_timer.stop()
+                return 0, None
+            except AttributeError:
+                return 1, 'No auto temperature update interval set.'
         else:
             self._auto_temperature_timer = RepeatedTimer(interval=interval['S'], 
                                                 function=self._auto_temperature_report)
