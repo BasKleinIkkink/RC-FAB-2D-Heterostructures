@@ -59,6 +59,8 @@ class TangoDesktop(Base):
         self._baud_rate = settings.get(self._type+'.DEFAULT', 'baud_rate')
         self._timeout = settings.get(self._type+'.DEFAULT', 'timeout')
         self._serial_nr = settings.get(self._type+'.DEFAULT', 'serial_nr')
+        self._max_speed = settings.get(self._type+'.'+self._id, 'max_vel')
+        self._max_acceleration = settings.get(self._type+'.'+self._id, 'max_acc')
 
         if self._controller is None:
             # Controller is not initiated, check if the port can be captured
@@ -83,9 +85,8 @@ class TangoDesktop(Base):
         """Get the steps per um."""
         self._lock.acquire()
         steps_per_rev = float(self._send_and_receive('?motorsteps z', expect_response=True, expect_confirmation=False))
-        spindle_pitch = float(self._send_and_receive('?pitch z', expect_response=True, expect_confirmation=False))
         self._lock.release()
-        return round(steps_per_rev / spindle_pitch, 3)
+        return round(steps_per_rev / self._spindle_pitch, 3)
 
     @property
     def position(self) -> float:
@@ -93,6 +94,7 @@ class TangoDesktop(Base):
         self._lock.acquire()
         pos = float(self._send_and_receive('?pos z', expect_response=True, expect_confirmation=False))
         self._lock.release()
+        print(pos)
         return pos
 
     @property
@@ -106,42 +108,66 @@ class TangoDesktop(Base):
             The current speed in um/s.
         """
         self._lock.acquire()
-        spindle_pitch = float(self._send_and_receive('?pitch z', expect_response=True, expect_confirmation=False))
         rev_per_s = float(self._send_and_receive('?vel z', expect_response=True, expect_confirmation=False))
         self._lock.release()
-        return round(rev_per_s / spindle_pitch, 3)
+        return round(rev_per_s / self._spindle_pitch, 3)
 
     @speed.setter
     @typechecked
     def speed(self, speed : Union[float, int]) -> None:
-        """Set the speed of the tango desktop."""
+        """
+        Set the speed of the tango desktop.
+        
+        Parameters
+        ----------
+        speed : float
+            The speed in um/s.
+        """
         # Calculate the needed revolutions per second
+        if speed > self._max_speed:
+            speed = self._max_speed
         self._lock.acquire()
-        spindle_pitch = float(self._send_and_receive('?pitch z', expect_response=True, expect_confirmation=False))
-        rev_per_s = round(speed / spindle_pitch, 3)
+        rev_per_s = round(speed / self._spindle_pitch, 3)
         self._send_and_receive('!vel z {}'.format(rev_per_s), expect_confirmation=False, expect_response=False)
         self._lock.release()
+
+        print("Speed set to {} um/s".format(speed))
+        self.acceleration = speed * 2
 
     @property
     @typechecked
     def acceleration(self) -> float:
-        """Get the acceleration of the tango desktop."""
+        """
+        Get the acceleration of the tango desktop.
+        
+        Returns
+        -------
+        float
+            The acceleration in um/s^2.
+        """
+        # Tango expects the acceleration in m/s^2
         self._lock.acquire()
         acc = float(self._send_and_receive('?accel z', expect_response=True, expect_confirmation=False))
         self._lock.release()
-        acc *= 10e3
         return acc
 
     @acceleration.setter
     @typechecked
     def acceleration(self, acceleration : Union[float, int]) -> None:
-        """Set the acceleration of the tango desktop."""
-        # The acceleration is given in um/s^2
-        # The tango desktop needs the acceleration in um/s^2
+        """
+        Set the acceleration of the tango desktop.
+        
+        .. note::
+            Because consistency was not a priority when writing the tango desktop
+            command set the acceleration is set in m/s^2 instead of um/s^2.
+        """
+        if acceleration > self._max_acceleration:
+            acceleration = self._max_acceleration
+        acceleration /= 10e3
         self._lock.acquire()
-        acc = round(acceleration, 3)
-        self._send_and_receive('!accel z {}'.format(acc), expect_confirmation=False, expect_response=False)
+        self._send_and_receive('!accel z {}'.format(acceleration), expect_confirmation=False, expect_response=False)
         self._lock.release()
+        print("Acceleration set to {} um/s^2".format(acceleration))
 
     # CONNECTION FUNCTIONS
     def _message_waiting(self) -> bool:
@@ -257,6 +283,8 @@ class TangoDesktop(Base):
             resp = self._send_and_receive('?nosetlimit z', expect_response=True, expect_confirmation=False)
             if resp != '1':
                 self._send_and_receive('!nosetlimit z 1', expect_response=False, expect_confirmation=False)
+
+            self._spindle_pitch = float(self._send_and_receive('?pitch z', expect_response=True, expect_confirmation=False))
         self._lock.release()
 
     def disconnect(self) -> None:
@@ -374,7 +402,7 @@ class TangoDesktop(Base):
         """Stop the tango desktop."""
         self._lock.acquire()
         # Stop all moves
-        self._send_and_receive('!a', expect_response=False, expect_confirmation=False)
+        self._send_and_receive('!stopaccel', expect_response=False, expect_confirmation=False)
         # Stop all other commands
         self._send_and_receive('!stop', expect_response=False, expect_confirmation=False)
         self._lock.release()

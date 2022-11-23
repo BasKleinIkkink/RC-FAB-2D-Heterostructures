@@ -14,6 +14,7 @@ except ImportError:
 
 class PRMTZ8(Base):
     """Class to control communication with the PRMTZ8 piezocontroller."""
+    _type = 'PRMTZ8/M'
 
     @typechecked
     def __init__(self, hardware_controller : KDC101, settings : Settings,
@@ -38,10 +39,12 @@ class PRMTZ8(Base):
         HardwareNotConnectedError
             If the hardware controller is not connected.
         """
-        self._type = 'PRMTZ8'
         self._id = id
         self._controller = hardware_controller
         self.lock = tr.Lock()  # To ensure threadsafe serial communication
+        self._settings = settings
+        self._max_speed = self._settings.get(self._type+'.'+self._id, 'max_vel')
+        self._max_acceleration = self._settings.get(self._type+'.'+self._id, 'max_acc')
 
         # Check if the controller is connected.
         if not self._controller.is_connected():
@@ -112,12 +115,12 @@ class PRMTZ8(Base):
         """
         Get the speed of the motor.
         
-        The motor speed is given in udeg/s.
+        The motor speed is given in mdeg/s.
         
         Returns
         -------
         speed: int or float
-            The speed of the motor in udeg/s.
+            The speed of the motor in mdeg/s.
         """
         self.lock.acquire()
         speed = self._controller.get_drive_parameters()[-1] 
@@ -130,16 +133,22 @@ class PRMTZ8(Base):
         """
         Set the speed of the motor.
 
-        The motor speed is given in udeg/s.
+        The motor speed is given in mdeg/s.
         
         Parameters
         ----------
         speed: float
             The speed to set.
         """
+        if speed > self._max_speed:
+            speed = self._max_speed
+        speed /= 10e3
         self.lock.acquire()
-        self._controller.setup_drive(velocity=speed / 10e3)
+        self._controller.setup_drive(velocity=speed)
+        self._controller.setup_jog(velocity=speed)
         self.lock.release()
+        
+        self.acceleration = speed * 4 * 10e3
 
     @property
     @typechecked
@@ -155,7 +164,7 @@ class PRMTZ8(Base):
         self.lock.acquire()
         acceleration = self._controller.get_drive_parameters()[0]
         self.lock.release()
-        return acceleration
+        return acceleration * 10e3
 
     @acceleration.setter
     @typechecked
@@ -163,15 +172,19 @@ class PRMTZ8(Base):
         """
         Set the acceleration of the motor.
 
-        The acceleration is given in udeg/s^2.
+        The acceleration is given in mdeg/s^2.
         
         Parameters
         ----------
         acceleration: float
             The acceleration to set.
         """
+        if acceleration > self._max_acceleration:
+            acceleration = self._max_acceleration
+        acceleration /= 10e3
         self.lock.acquire()
-        self._controller.setup_drive(acceleration=acceleration / 10e3)
+        self._controller.setup_drive(acceleration=acceleration)
+        self._controller.setup_jog(acceleration=acceleration)
         self.lock.release()
 
     # CONNECTION FUNCTIONS
@@ -264,8 +277,6 @@ class PRMTZ8(Base):
         """
         # Set the jogging parameters to the current driving parameters.
         self.lock.acquire()
-        print('Starting jog')
-        # self._controller.setup_jog(acceleration=self.acceleration, velocity=self.speed)
         self._controller.start_jog(direction=direction, kind=kind)
         self.lock.release()
         return 0, None

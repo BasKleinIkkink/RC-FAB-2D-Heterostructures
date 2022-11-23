@@ -267,17 +267,29 @@ class StackingSetupBackend:
         hardware : list
             A list of the hardware controllers.
         """
-        self._piezo_controller = KIM101(settings=self._settings)
-        self._motor_controller = KDC101(settings=self._settings)
-
         # Define the connected components.
-        _hardware = [
-            #PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, settings=self._settings), 
-            #PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, settings=self._settings), 
-            #PIA13(id='Z', channel=3, hardware_controller=self._piezo_controller, settings=self._settings),
-            PRMTZ8(id='L', hardware_controller=self._motor_controller, settings=self._settings),
-            TangoDesktop(id='K', settings=self._settings)
-        ]
+        _hardware = []
+        if self._settings.get('KIM101.DEFAULT', 'enabled'):
+            self._piezo_controller = KIM101(settings=self._settings)
+
+            if self._settings.get('PIA13.X', 'enabled'):
+                _hardware.append(PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, settings=self._settings))
+
+            if self._settings.get('PIA13.Y', 'enabled'):
+                _hardware.append(PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, settings=self._settings))
+
+            if self._settings.get('PIA13.Z', 'enabled'):
+                _hardware.append(PIA13(id='Z', channel=4, hardware_controller=self._piezo_controller, settings=self._settings))
+        
+        if self._settings.get('KDC101.DEFAULT', 'enabled'):
+            self._motor_controller = KDC101(settings=self._settings)
+
+            if self._settings.get('PRMTZ8/M.L', 'enabled') and self._settings.get('KDC101.K', 'enabled'):
+                _hardware.append(PRMTZ8(id='L', hardware_controller=self._motor_controller, settings=self._settings))
+
+        if self._settings.get('TANGODESKTOP.K', 'enabled'):
+            _hardware.append(TangoDesktop(id='K', settings=self._settings))
+
         return _hardware
 
     def _connect_all_hardware(self) -> None:
@@ -377,6 +389,8 @@ class StackingSetupBackend:
                         self._execute_command(parsed_command) # Execute the command
                     else:
                         self._con_to_main.send(Message(exit_code=1, msg='Received None command', command=command, command_id=''))
+            else:
+                time.sleep(0.01)
 
         self._disconnect_all_hardware()
         self._logger.info('Stacking process stopped.')
@@ -603,7 +617,7 @@ class StackingSetupBackend:
 
     def G28(self) -> tuple:
         """
-        Home all axes.
+        Home all axes that need homing.
         
         Returns
         -------
@@ -776,7 +790,7 @@ class StackingSetupBackend:
     def _keep_host_alive(self) -> None:
         """Send a keep alive message to the host. (support function for M113)"""
         if self._con_to_main.is_connected:
-            self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!', command='M113'))
+            self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!', command_id='M113'))
         else:
             self._keep_host_alive_timer.stop()
 
@@ -850,13 +864,16 @@ class StackingSetupBackend:
             try:
                 interval = self._auto_position_timer.interval
             except AttributeError:
-                return 1, 'Auto position update interval set.'
+                return 1, 'No, uto position update interval set.'
 
             return 0, interval
         elif interval['S'] == 0:
-            # Disable the keep alive timer
-            self._auto_position_timer.stop()
-            return 0, None
+            try:
+                # Disable the keep alive timer
+                self._auto_position_timer.stop()
+                return 0, None
+            except AttributeError:
+                return 1, 'No auto position update interval set.'
         else:
             self._auto_position_timer = RepeatedTimer(interval=interval['S'], 
                                                 function=self._auto_position_report)
@@ -903,13 +920,16 @@ class StackingSetupBackend:
             try:
                 interval = self._auto_temperature_timer.interval
             except AttributeError:
-                return 1, 'Auto temperature update interval set.'
+                return 1, 'No auto temperature update interval set.'
 
             return 0, interval
         elif interval['S'] == 0:
-            # Disable the keep alive timer
-            self._auto_temperature_timer.stop()
-            return 0, None
+            try:
+                # Disable the keep alive timer
+                self._auto_temperature_timer.stop()
+                return 0, None
+            except AttributeError:
+                return 1, 'No auto temperature update interval set.'
         else:
             self._auto_temperature_timer = RepeatedTimer(interval=interval['S'], 
                                                 function=self._auto_temperature_report)
@@ -967,7 +987,8 @@ class StackingSetupBackend:
         Parameters
         ----------
         command : dict
-            A dictionary with the axis id(s) and the speed and acceleration to set.
+            A dictionary with the axis id(s) and the speed and acceleration to set. If only 
+            specific settings should be changed leave the other settings out of the dict
         
         Returns
         -------
@@ -977,10 +998,11 @@ class StackingSetupBackend:
             A message with the result of the command.
         """
         for axis in self._hardware:
-            if axis.id == axis:
+            if axis.id in command.keys():
                 try:
                     axis.speed = command[axis.id]
                 except KeyError:
+                    print('No speed given for axis {}'.format(axis.id))
                     pass
 
         return 0, None
@@ -988,6 +1010,9 @@ class StackingSetupBackend:
     def M813(self, command : dict) -> tuple:
         """
         Custom function to set the acceleration of the given axes.
+
+        .. attention::
+            This function is currently not supported by the backend.
 
         Parameters
         ----------

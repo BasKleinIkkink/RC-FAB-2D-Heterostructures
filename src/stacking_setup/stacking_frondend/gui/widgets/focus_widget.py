@@ -226,7 +226,7 @@ class FocusWidget(QGroupBox):
         """
         
         # Connect the disp to the slider
-        self.velocitySlider.valueChanged.connect(lambda : self.velDisp.setValue(self.velocitySlider.value()))
+        self.velocitySlider.valueChanged.connect(self._slider_changed)
         self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
 
         # Connect the movment buttons
@@ -239,11 +239,6 @@ class FocusWidget(QGroupBox):
         self.downButton.released.connect(
             lambda : self.q.put('M811 K0') if self.jogButton.isChecked() else None)
         self.lockButton.clicked.connect(self._toggle_lock_movement)
-        self._connect_movement_scale()
-
-    def _connect_movement_scale(self):
-        """Connect the movement scale"""
-        # Connect a change the move preset combo box to the movement scale
         self.movePresetCombo.currentIndexChanged.connect(self._change_movement_scale)
 
     def _change_movement_scale(self):
@@ -257,6 +252,14 @@ class FocusWidget(QGroupBox):
         self.velDispLabel.setText(self.moveUnit)
         self.velocitySlider.setMaximum(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
+
+    def _slider_changed(self):
+        """Update the velocity display when the slider is changed."""
+        self.velDisp.setValue(self.velocitySlider.value())
+
+        # Send the new velocity to the backend parts
+        value = self.velocitySlider.value() * self.settings.known_units[self.moveUnit.split('/')[0]]
+        self.q.put('M812 K{}'.format(value, value, value, value))
 
     def _toggle_lock_movement(self):
         """Toggle the lock movement button"""

@@ -33,6 +33,8 @@ class KIM101():
         """
         self._settings = settings
         self._serial_nr = self._settings.get(self._type+'.DEFAULT', 'serial_nr')
+        self._serial_nr = '97101742'
+        self._connected = False
         self._lock = tr.Lock()
         if self._serial_nr == 'None':
             raise HardwareNotConnectedError('It could not be determined if the device is connected because of missing serial nr in config.')
@@ -54,6 +56,7 @@ class KIM101():
         """Connect the KIM101."""
         self._lock.acquire()
         self._controller = KinesisPiezoMotor(self._serial_nr)
+        self._connected = True
         self._lock.release()
 
     def disconnect(self) -> None:
@@ -80,7 +83,7 @@ class KIM101():
         """
         self._lock.acquire()
         if self._connected:
-            state = self._controller.is_connected()
+            state = True
         else:
             state = False
         self._lock.release()
@@ -102,9 +105,7 @@ class KIM101():
             True if the piezo is moving, False otherwise.
 
         """
-        self._lock.acquire()
         state = self._controller.is_moving(channel=channel)
-        self._lock.release()
         return state
 
     @typechecked
@@ -149,13 +150,11 @@ class KIM101():
             True if the piezo is not moving anymore, False otherwise.
 
         """
-        self._lock.acquire()
         self._controller.wait_move(channel=channel)
-        self._lock.release()
 
     # JOG AND DRIVE PARAMETERS
     @typechecked
-    def setup_jog(self, velocity : Union[float, int, None]=None, 
+    def setup_jog(self, channel : int, velocity : Union[float, int, None]=None, 
                   acceleration : Union[float, int, None]=None) -> None:
         """
         Set the jog paramters of the piezo.
@@ -163,12 +162,16 @@ class KIM101():
         Parameters
         ----------
         velocity : float, int, None
-            The velocity of the piezo in um/s. If None, the velocity is not changed.
+            The velocity of the piezo in steps/s. If None, the velocity is not changed.
         acceleration : float, int, None
-            The acceleration of the piezo in um/s^2. If None, the acceleration is not changed.
+            The acceleration of the piezo in steps/s^2. If None, the acceleration is not changed.
         """
+        if velocity is not None:
+            velocity = int(round(velocity, 0))
+        if acceleration is not None:
+            acceleration = int(round(acceleration, 0))
         self._lock.acquire()
-        self._controller.setup_jog(velocity=velocity, acceleration=acceleration)
+        self._controller.setup_jog(velocity=velocity, acceleration=velocity, channel=channel)
         self._lock.release()
 
     @typechecked
@@ -188,7 +191,7 @@ class KIM101():
         return {'step_size': params[1], 'vel': params[3], 'acc': params[4]}
 
     @typechecked
-    def setup_drive(self, max_voltage : Union[float, int, None]=None, 
+    def setup_drive(self, channel : int, max_voltage : Union[float, int, None]=None, 
                     velocity : Union[float, int, None]=None, 
                     acceleration : Union[float, int, None]=None) -> None:
         """
@@ -201,12 +204,16 @@ class KIM101():
         max_voltage : float, int, None
             The maximum voltage of the piezo in V. If None, the max voltage is not changed.
         velocity : float, int, None
-            The velocity of the piezo in um/s. If None, the velocity is not changed.
+            The velocity of the piezo in steps/s. If None, the velocity is not changed.
         acceleration : float, int, None
-            The acceleration of the piezo in um/s^2. If None, the acceleration is not changed.
+            The acceleration of the piezo in steps/s^2. If None, the acceleration is not changed.
         """
+        if velocity is not None:
+            velocity = int(round(velocity, 0))
+        if acceleration is not None:
+            acceleration = int(round(acceleration, 0))
         self._lock.acquire()
-        self._controller.setup_drive(max_voltage=max_voltage, velocity=velocity, acceleration=acceleration,)
+        self._controller.setup_drive(max_voltage=max_voltage, velocity=velocity, acceleration=acceleration, channel=channel)
         self._lock.release()
     
     @typechecked
@@ -285,7 +292,7 @@ class KIM101():
             If True, wait until the movement is done.
         """
         self._lock.acquire()
-        self._controller.move_to(position=position, channel=channel)
+        self._controller.move_to(position=int(round(position, 0)), channel=channel)
         if wait_until_done:
             self._wait_move(channel=channel)
         self._lock.release()
@@ -308,7 +315,8 @@ class KIM101():
             If True, wait until the movement is done.
         """
         self._lock.acquire()
-        self._controller.move_by(distance=distance, channel=channel)
+        # Distance has to be given in steps
+        self._controller.move_by(distance=int(round(distance, 0)), channel=channel)
         if wait_until_done:
             self._wait_move(channel=channel)
         self._lock.release()
@@ -338,7 +346,7 @@ if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('..\configs\hardware_config.ini')
     # Connect to the controller.
-    controller = KIM101(config)
+    controller = KIM101()
     controller.connect()
 
     # Test drive functions.

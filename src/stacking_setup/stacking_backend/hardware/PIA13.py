@@ -37,6 +37,8 @@ class PIA13(Base):
         self._channel = channel
         self._hardware_controller = hardware_controller
         self._settings = settings
+        self._max_speed = self._settings.get(self._type+'.'+self._id, 'max_vel')
+        self._max_acceleration = self._settings.get(self._type+'.'+self._id, 'max_acc')
         self._steps_per_um = self._settings.get(self._type+'.'+self._id, 'steps_per_um')
         self._lock = tr.Lock()  # Lock for the hardware
 
@@ -83,18 +85,25 @@ class PIA13(Base):
     def speed(self, speed : Union[float, int]) -> None:
         """
         Set the speed of the hardware.
+
+        Speed is always in um/s.
         
         Parameters:
         -----------
         speed: float or int
             The speed to set the hardware to.
         """
+        # First convert to steps/s
+        if speed > self._max_speed:
+            speed = self._max_speed
+        speed *= self._steps_per_um
         self._lock.acquire()
-        if speed >= self._max_speed:
-            self._hardware_controller.setup_drive(self._channel, velocity=speed)
-        else:
-            self._hardware_controller.setup_drive(self._channel, velocity=self._max_speed)
+        self._hardware_controller.setup_drive(channel=self._channel, velocity=speed)
+        self._hardware_controller.setup_jog(channel=self._channel, velocity=speed)
         self._lock.release()
+
+        # Also change the acceleration
+        self.acceleration = speed * 4 / self._steps_per_um
 
     @property
     def acceleration(self) -> float:
@@ -121,18 +130,20 @@ class PIA13(Base):
         acceleration: float or int
             The acceleration to set the hardware to. 
         """
+        # First convert to steps/s^2
+        if acceleration > self._max_acceleration:
+            acceleration = self._max_acceleration
+        acceleration *= self._steps_per_um
         self._lock.acquire()
-        if acceleration >= self._max_acceleration:
-            self._hardware_controller.setup_drive(self._channel, acceleration=acceleration)
-        else:
-            self._hardware_controller.setup_drive(self._channel, acceleration=self._max_acceleration)
+        self._hardware_controller.setup_drive(channel=self._channel, acceleration=acceleration)
+        self._hardware_controller.setup_jog(channel=self._channel, acceleration=acceleration)
         self._lock.release()
 
     # CONNECTION FUNCTIONS
     def connect(self) -> None:
         """Connect the hardware."""
         self._lock.acquire()
-        if not self._hardware_controller.is_connected():
+        if not self._hardware_controller._connected:
             self._hardware_controller.connect()
         else:
             pass
@@ -214,6 +225,8 @@ class PIA13(Base):
         distance: float or int
             The distance to move the hardware.
         """
+        # Convert to steps
+        distance *= self._steps_per_um
         self._lock.acquire()
         self._hardware_controller.move_by(self._channel, distance)
         self._lock.release()
@@ -227,6 +240,8 @@ class PIA13(Base):
         position: float or int
             The position to move the hardware to.
         """
+        # Convert to steps
+        position *= self._steps_per_um
         self._lock.acquire()
         if not self._steps_calibrated:
             raise NotCalibratedError('Steps per nm were not calibrated/set.')

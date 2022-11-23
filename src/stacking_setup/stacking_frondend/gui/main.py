@@ -44,7 +44,6 @@ class MainWindow(QMainWindow):
         # Handshake with the frondend
         time.sleep(1)
         self._connector.handshake()
-
         self._start_event_handeler()
         self._q.put('M154 S{}'.format(self._settings.pos_auto_update_interval))
         self._q.put('M155 S{}'.format(self._settings.temp_auto_update_interval))
@@ -52,6 +51,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         """Close the main window."""
         self._stop_event_handeler()
+        # self._q.join()
         self._connector.send_sentinel()
         self.close()
 
@@ -60,8 +60,17 @@ class MainWindow(QMainWindow):
         # Add the toolbar
         self.toolBar = QToolBar(self)
         self.addToolBar(Qt.LeftToolBarArea, self.toolBar)
-        self.toolBar.addAction("Home all", lambda : self._q.put('G28'))
-        self.toolBar.addAction("Estop", lambda : self._q.put('M112'))
+        self.toolBar.addAction("Home all", self._home_all)
+        self.toolBar.addAction("Estop", self._trigger_estop)
+
+    def _home_all(self):
+        """Home all the axes."""
+        self._q.put('G28')
+    
+    def _trigger_estop(self):
+        """Trigger the emergency stop."""
+        self._q.put('M112')
+        print('Emergency stop triggered!!!')
 
     def set_menubar(self):
         """Add the menu bar and the options to it."""

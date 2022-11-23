@@ -97,9 +97,7 @@ class KDC101():
         bool
             True if the motor is moving, False otherwise.
         """
-        self._lock.acquire()
         state = self._controller.is_moving()
-        self._lock.release()
         return state
 
     @typechecked
@@ -142,9 +140,7 @@ class KDC101():
         bool
             True if the motor is homing, False otherwise.
         """
-        self._lock.acquire()
         state = self._controller.is_homing()
-        self._lock.release()
         return state
 
     # HOMING FUNCTIONS
