@@ -4,6 +4,7 @@ from typeguard import typechecked
 from ..configs.settings import Settings
 import time
 import threading as tr
+import multiprocessing as mp
 
 try:
     from .base import Base, HardwareNotConnectedError
@@ -48,11 +49,23 @@ class TangoDesktop(Base):
     _controller = None
     _ser = None
 
-    def __init__(self, id : str, settings : Settings) -> None:
-        """Initialize the tango desktop."""	
+    def __init__(self, id : str, settings : Settings, em_event : mp.Event) -> None:
+        """
+        Initialize the tango desktop.
+        
+        Parameters:
+        -----------
+        id: str
+            The id of the tango desktop.
+        settings: Settings
+            The settings of the tango desktop.
+        em_event: mp.Event
+            The emergency stop event.
+        """	
         # Check if the tango desktop is connected
         self._id = id
         self._lock = tr.Lock()
+        self._em_event = em_event
 
         # Get the settings
         self._port = settings.get(self._type+'.DEFAULT', 'port')
@@ -61,6 +74,7 @@ class TangoDesktop(Base):
         self._serial_nr = settings.get(self._type+'.DEFAULT', 'serial_nr')
         self._max_speed = settings.get(self._type+'.'+self._id, 'max_vel')
         self._max_acceleration = settings.get(self._type+'.'+self._id, 'max_acc')
+        self._current_speed = None  # Only used for jogging
 
         if self._controller is None:
             # Controller is not initiated, check if the port can be captured
@@ -81,7 +95,7 @@ class TangoDesktop(Base):
 
     # ATTRIBUTES
     @property
-    def steps_per_um(self) -> float:
+    def steps_per_um(self) -> Union[int, float]:
         """Get the steps per um."""
         self._lock.acquire()
         steps_per_rev = float(self._send_and_receive('?motorsteps z', expect_response=True, expect_confirmation=False))
@@ -89,8 +103,8 @@ class TangoDesktop(Base):
         return round(steps_per_rev / self._spindle_pitch, 3)
 
     @property
-    def position(self) -> float:
-        """Get the current position."""
+    def position(self) -> Union[float, int]:
+        """Get the current position in um from 0."""
         self._lock.acquire()
         pos = float(self._send_and_receive('?pos z', expect_response=True, expect_confirmation=False))
         self._lock.release()
@@ -98,26 +112,18 @@ class TangoDesktop(Base):
         return pos
 
     @property
-    def speed(self) -> float:
-        """
-        Get the current speed.
-        
-        Returns
-        -------
-        float
-            The current speed in um/s.
-        """
+    def speed(self) -> Union[float, int]:
+        """Get the current speed in um/s."""
         self._lock.acquire()
         rev_per_s = float(self._send_and_receive('?vel z', expect_response=True, expect_confirmation=False))
         self._lock.release()
         return round(rev_per_s / self._spindle_pitch, 3)
 
     @speed.setter
-    @typechecked
     def speed(self, speed : Union[float, int]) -> None:
         """
-        Set the speed of the tango desktop.
-        
+        Set the speed of the tango desktop (um/s).
+
         Parameters
         ----------
         speed : float
@@ -129,22 +135,15 @@ class TangoDesktop(Base):
         self._lock.acquire()
         rev_per_s = round(speed / self._spindle_pitch, 3)
         self._send_and_receive('!vel z {}'.format(rev_per_s), expect_confirmation=False, expect_response=False)
+        self._current_speed = speed  # Only used for jogging
         self._lock.release()
 
         print("Speed set to {} um/s".format(speed))
         self.acceleration = speed * 2
 
     @property
-    @typechecked
-    def acceleration(self) -> float:
-        """
-        Get the acceleration of the tango desktop.
-        
-        Returns
-        -------
-        float
-            The acceleration in um/s^2.
-        """
+    def acceleration(self) -> None:
+        """Get the acceleration of the tango desktop (um/s^2)."""
         # Tango expects the acceleration in m/s^2
         self._lock.acquire()
         acc = float(self._send_and_receive('?accel z', expect_response=True, expect_confirmation=False))
@@ -152,7 +151,6 @@ class TangoDesktop(Base):
         return acc
 
     @acceleration.setter
-    @typechecked
     def acceleration(self, acceleration : Union[float, int]) -> None:
         """
         Set the acceleration of the tango desktop.
@@ -167,7 +165,6 @@ class TangoDesktop(Base):
         self._lock.acquire()
         self._send_and_receive('!accel z {}'.format(acceleration), expect_confirmation=False, expect_response=False)
         self._lock.release()
-        print("Acceleration set to {} um/s^2".format(acceleration))
 
     # CONNECTION FUNCTIONS
     def _message_waiting(self) -> bool:
@@ -176,6 +173,7 @@ class TangoDesktop(Base):
         
         .. warning::
             This function is mostly used as a support function and does not capture the lock.
+            This means that this function should only be used when the lock is already captured.
 
         Returns
         -------
@@ -217,6 +215,8 @@ class TangoDesktop(Base):
         """
         if self._ser is None:
             raise HardwareNotConnectedError("The tango desktop is not connected.")
+        elif self._em_event.is_set():
+            return None  # Do nothing to give other classes a chance to stop the emergency stop
 
         # Check if the command has a carriage return
         if command[-2:] != '\r':
@@ -261,6 +261,9 @@ class TangoDesktop(Base):
     def connect(self) -> None:
         """Connect to the tango desktop."""
         self._lock.acquire()
+        if self._em_event.is_set():
+            self._lock.release()
+            return None
         if self._ser is None:
             # Connect the tango desktop
             self._ser = serial.Serial(self._port, self._baud_rate, timeout=self._timeout)
@@ -356,6 +359,8 @@ class TangoDesktop(Base):
             otherwise it will move to the first snapshot position in the snapshot array.
 
         """
+        if self._em_event.is_set():
+            return None
         self._lock.acquire()
 
         # Could not find the homing function so move to zero position
@@ -363,18 +368,18 @@ class TangoDesktop(Base):
         self._lock.release()
 
     # MOVEMENT FUNCTIONS
-    #@typechecked
     def start_jog(self, direction : Union[str, int]) -> None:
         """Start a continuous jog in the given direction."""
-        # Check if the direction is allowed
-        if not isinstance(direction, str):
-            direction = str(direction)
+        if self._em_event.is_set():
+            return None
         if direction not in ['+', '-']:
             raise ValueError("The direction {} is not allowed.".format(direction))
 
         self._lock.acquire()
-        rev_per_s = self._send_and_receive('?vel', expect_response=True, expect_confirmation=False).split(' ')[2]
-        rev_per_s = float(rev_per_s)
+        if self._current_speed is None:
+            self._current_speed = self.speed  # Should already be set but just to be sure
+
+        rev_per_s = self._current_speed * self._spindle_pitch
         self._send_and_receive('!speed z {}{}'.format(direction, rev_per_s), expect_response=False, expect_confirmation=False)
         self._lock.release()
 
@@ -387,6 +392,8 @@ class TangoDesktop(Base):
     #@typechecked
     def move_to(self, position : Union[float, int]) -> None:
         """Move the tango desktop to the given position."""
+        if self._em_event.is_set():
+            return None
         self._lock.acquire()
         self._send_and_receive('!moa z {}'.format(position), expect_response=False, expect_confirmation=False)
         self._lock.release()
@@ -394,18 +401,19 @@ class TangoDesktop(Base):
     #@typechecked
     def move_by(self, distance : Union[float, int]) -> None:
         """Move the tango desktop by the given distance."""
+        if self._em_event.is_set():
+            return None
         self._lock.acquire()
         self._send_and_receive('!mor z {}'.format(distance), expect_response=False, expect_confirmation=False)
         self._lock.release()
 
-    def stop(self) -> None:
+    def emergency_stop(self) -> None:
         """Stop the tango desktop."""
-        self._lock.acquire()
         # Stop all moves
         self._send_and_receive('!stopaccel', expect_response=False, expect_confirmation=False)
         # Stop all other commands
         self._send_and_receive('!stop', expect_response=False, expect_confirmation=False)
-        self._lock.release()
+        self._em_event.set()
 
 
 if __name__ == '__main__':

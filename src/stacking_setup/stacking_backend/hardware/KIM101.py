@@ -3,6 +3,7 @@ from typing import Union
 from typeguard import typechecked
 from ..configs.settings import Settings
 import threading as tr
+import multiprocessing as mp
 
 try:
     from .base import HardwareNotConnectedError
@@ -17,7 +18,7 @@ class KIM101():
     _type = 'KIM101'
 
     @typechecked
-    def __init__(self, settings : Settings) -> None:
+    def __init__(self, settings : Settings, em_event : mp.Event) -> None:
         """
         Initialize the KIM101.
         
@@ -25,6 +26,8 @@ class KIM101():
         ----------
         settings : Settings
             The settings to use.
+        em_event : multiprocessing.Event
+            The event to use for emergency stop.
 
         Raises
         ------
@@ -36,6 +39,7 @@ class KIM101():
         self._serial_nr = '97101742'
         self._connected = False
         self._lock = tr.Lock()
+        self._em_event = em_event
         if self._serial_nr == 'None':
             raise HardwareNotConnectedError('It could not be determined if the device is connected because of missing serial nr in config.')
 
@@ -63,24 +67,10 @@ class KIM101():
         """Disconnect the KIM101."""
         raise NotImplementedError()
 
-    def emergency_stop(self) -> None:
-        """Stop all the connected piezos and disconnect the controller."""
-        self._lock.acquire()
-        for i in range(4):
-            self._controller.stop(channel=i)
-        self._lock.release()
-
     # STATUS FUNCTIONS
     @typechecked
     def is_connected(self) -> bool:
-        """
-        Check if the KIM101 is connected.
-        
-        Returns
-        -------
-        bool
-            True if the KIM101 is connected.
-        """
+        """Check if the KIM101 is connected."""
         self._lock.acquire()
         if self._connected:
             state = True
@@ -112,11 +102,6 @@ class KIM101():
     def get_position(self, channel : int) -> Union[float, int]:
         """
         Get the position of the piezo.
-        
-        Return list of status strings, which can include ``"sw_fw_lim"`` (forward limit switch reached), ``"sw_bk_lim"`` (backward limit switch reached),
-        ``"moving_fw"`` (moving forward), ``"moving_bk"`` (moving backward), ``"jogging_fw"`` (jogging forward), ``"jogging_bk"`` (jogging backward),
-        ``"homing"`` (homing), ``"homed"`` (homing done), ``"tracking"``, ``"settled"``,
-        ``"motion_error"`` (excessive position error), ``"current_limit"`` (motor current limit exceeded), or ``"enabled"`` (motor is enabled).
         
         Parameters
         ----------
@@ -158,6 +143,8 @@ class KIM101():
                   acceleration : Union[float, int, None]=None) -> None:
         """
         Set the jog paramters of the piezo.
+
+        The jogging parameters are used for jogging in buildin mode.
         
         Parameters
         ----------
@@ -240,13 +227,7 @@ class KIM101():
         Start a jog.
         
         .. attention:: 
-            The jog has to be terminated by the stop method.
-
-        If ``kind=="continuous"``, simply start motion in the given direction at the standard jog speed
-        until either the motor is stopped explicitly, or the limit is reached.
-        If ``kind=="builtin"``, use the built-in jog command, whose parameters are specified by :meth:`get_jog_parameters`.
-        Note that ``kind=="continuous"`` is still implemented through the builtin jog, so it changes its parameters;
-        hence, afterwards the jog parameters need to be manually restored.
+            The jog has to be terminated by the :meth:`stop_jog method`.
         
         Parameters
         ----------
@@ -257,6 +238,8 @@ class KIM101():
         kind : str
             The kind of the jog. Can be ``"continuous"`` or ``"builtin"``.
         """
+        if self._em_event.is_set():
+            return None
         self._lock.acquire()
         self._controller.jog(direction=direction, kind=kind, channel=channel)
         self._lock.release()
@@ -291,6 +274,8 @@ class KIM101():
         wait_until_done : bool
             If True, wait until the movement is done.
         """
+        if self._em_event.is_set():
+            return None
         self._lock.acquire()
         self._controller.move_to(position=int(round(position, 0)), channel=channel)
         if wait_until_done:
@@ -314,6 +299,8 @@ class KIM101():
         wait_until_done : bool
             If True, wait until the movement is done.
         """
+        if self._em_event.is_set():
+            return None
         self._lock.acquire()
         # Distance has to be given in steps
         self._controller.move_by(distance=int(round(distance, 0)), channel=channel)
@@ -334,11 +321,15 @@ class KIM101():
         self._lock.acquire()
         if channel is None:
             for i in range(4):
-                self._controller.stop(channel=i)
+                self._controller.stop(channel=i, sync=False)
         else:
             self._controller.stop(channel=channel)
         self._lock.release()
 
+    def emergency_stop(self) -> None:
+        """Stop all connected piezos."""
+        self._em_event.set()
+        self._controller.stop(sync=False)
     
 if __name__ == '__main__':
     from time import sleep

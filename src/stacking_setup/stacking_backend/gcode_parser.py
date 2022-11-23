@@ -33,8 +33,8 @@ class GcodeParser():
     
     Gcode docs https://marlinfw.org/meta/gcode/
 
-    Used Gcode commands:
-    --------------------
+    Used Gcode commands
+    -------------------
     - G0 - G1 : Lineair movement
     - G28 : Home all axes
     - G90 : Set to absolute coordinates
@@ -72,13 +72,13 @@ class GcodeParser():
         """
         Parse the gcode command lines from the main process.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         line : str or bytes
             The gcode command line.
 
-        Raises:
-        -------
+        Raises
+        ------
         GcodeParsingError:
             If the line is not a string or bytes or is empty.
         GcodeAttributeError:
@@ -86,8 +86,8 @@ class GcodeParser():
         Exception:
             If an unknown parsing error occurs.
 
-        Returns:
-        --------
+        Returns
+        -------
         commands : dict
             The parsed gcode commands with the hardware id as the dict key.
 
@@ -137,13 +137,13 @@ class GcodeParser():
         Uses the definitions from the accepted_commands.py file in the configs folder
         to check if the entry is a valid command or attribute.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         entry : str
             The entry to check.
 
-        Returns:
-        --------
+        Returns
+        -------
         bool
             True if the entry is a valid command or attribute, otherwise False.
 
@@ -171,8 +171,8 @@ class GcodeParser():
         """
         Add an attribute to the command dict.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         cnt : int
             The index of the command in the content list.
         command_dict : dict
@@ -180,8 +180,8 @@ class GcodeParser():
         content : list
             The content of the command line split on ' '.
 
-        Raises:
-        -------
+        Raises
+        ------
         GcodeParsingError:
             If the attribute does not follow the set rules for parsing.
         GcodeAttributeError:
@@ -190,8 +190,8 @@ class GcodeParser():
         NotImplementedError:
             If the attribute is of a datatype that is not implemented.
 
-        Returns:
-        --------
+        Returns
+        -------
         command_dict : dict
             The command dict with the attribute added.
 
@@ -268,8 +268,8 @@ class GcodeParser():
         """
         Add a movement command to the command dict.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         cnt : int
             The index of the command in the content list.
         command_dict : dict
@@ -277,8 +277,8 @@ class GcodeParser():
         content : list
             The content of the command line.
 
-        Raises:
-        -------
+        Raises
+        ------
         GcodeParsingError:
             If the movement command is an invalid value.
         GcodeAttributeError:
@@ -286,8 +286,8 @@ class GcodeParser():
             movement follows a command that does not allow for movement
             commands.
 
-        Returns:
-        --------
+        Returns
+        -------
         command_dict : dict
             The command dict with the attribute added.
         
