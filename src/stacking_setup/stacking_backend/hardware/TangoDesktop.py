@@ -108,7 +108,6 @@ class TangoDesktop(Base):
         self._lock.acquire()
         pos = float(self._send_and_receive('?pos z', expect_response=True, expect_confirmation=False))
         self._lock.release()
-        print(pos)
         return pos
 
     @property

@@ -4,6 +4,7 @@ import errno
 import os
 from time import sleep
 from queue import Empty, Full
+import threading as tr
 
 
 class PipeCom():
@@ -173,9 +174,15 @@ class PipelineConnection(BaseConnector):
         self._connection = connection
         self._role = role
 
+    def __init_lock__(self):
+        self._lock = tr.Lock()
+
     @property
     def is_connected(self):
-        return PipeCom.pipe_is_open(self._connection)
+        self._lock.acquire()
+        state = PipeCom.pipe_is_open(self._connection)
+        self._lock.release()
+        return state
 
     def connect(self):
         # The pipe is connected on init and cannot reconnect
@@ -183,13 +190,19 @@ class PipelineConnection(BaseConnector):
 
     def send_sentinel(self):
         print("Sending sentinel")
+        self._lock.acquire()
         PipeCom.write_pipe(self._connection, self.SENTINEL)
+        self._lock.release()
 
     def disconnect(self):
+        self._lock.acquire()
         PipeCom.close_pipe(self._connection)
+        self._lock.release()
 
     def send(self, data):
+        self._lock.acquire()
         PipeCom.write_pipe(self._connection, data)
+        self._lock.release()
 
     def message_waiting(self):
         """
@@ -201,7 +214,10 @@ class PipelineConnection(BaseConnector):
             True if a message is waiting, False otherwise.
 
         """
-        return PipeCom.in_waiting(self._connection)
+        self._lock.acquire()
+        state = PipeCom.in_waiting(self._connection)
+        self._lock.release()
+        return state
 
     def receive(self):
         """
@@ -214,7 +230,10 @@ class PipelineConnection(BaseConnector):
 
         """
         # Check if a message is waiting
+        self._lock.acquire()
         if not self._connection.poll():
             return None
-        return PipeCom.read_pipe(self._connection)
+        state = PipeCom.read_pipe(self._connection)
+        self._lock.release()
+        return state
     

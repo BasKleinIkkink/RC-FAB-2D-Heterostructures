@@ -319,7 +319,10 @@ class StackingSetupBackend:
     def _disconnect_all_hardware(self) -> None:
         """Disconnect the hardware."""
         for axis in self._hardware:
-            axis.disconnect()
+            try:
+                axis.disconnect()
+            except NotImplementedError:
+                pass
     
     def _emergency_stop(self) -> None:
         """Emergency stop the hardware."""
@@ -379,6 +382,7 @@ class StackingSetupBackend:
         # This means that attributes that were changed in the main process are not changed in the new process.
         # To fix this the attributes are set again in the new process.
         self._con_to_main = con_to_main
+        self._con_to_main.__init_lock__()
         self._con_to_main.handshake()
         self._emergency_stop_event = emergency_stop_event
         self._shutdown = shutdown_event
@@ -904,8 +908,8 @@ class StackingSetupBackend:
 
     def _auto_position_report(self) -> None:
         """Send a position update to the host. (support function for M154)"""
-        exit_code, positions = self.M114()
         if self._con_to_main.is_connected:
+            exit_code, positions = self.M114()
             if exit_code == 0:
                 self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M154', command=''))
             else:
@@ -960,8 +964,8 @@ class StackingSetupBackend:
 
     def _auto_temperature_report(self) -> None:
         """Send a position update to the host. (support function for M154)"""
-        exit_code, positions = self.M105()
         if self._con_to_main.is_connected:
+            exit_code, positions = self.M105()
             if exit_code == 0:
                 self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M155', command=''))
             else:

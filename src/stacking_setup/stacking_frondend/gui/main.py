@@ -23,12 +23,12 @@ class MainWindow(QMainWindow):
         super().__init__()
         # Connect to the backend
         self._connector = connector
+        self._connector.__init_lock__()
         self._q = queue.Queue()
         self._shutdown_event = threading.Event()
         self._settings = Settings()
         
         # Resize to the screen resolution
-        # self.resize(self.window_size[0], self.window_size[1])
         self.setWindowTitle("Main Window")
 
         # Set the menu and toolbar

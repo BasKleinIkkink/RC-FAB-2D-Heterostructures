@@ -82,6 +82,7 @@ class ControlWidget(QGroupBox):
         # Set the units on the sliders
         self.velDispLabel.setText(self.moveUnit)
         self.velocitySlider.setMaximum(int(self.moveScale))
+        self.velocitySlider.setValue(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
 
     def add_drive_step_presets(self, presets=["1 um", "500 nm",]):
@@ -252,6 +253,7 @@ class MaskControlWidget(ControlWidget):
 
         # Get and set the preset vaues
         self.add_vel_presets(self.setting.mask_vel_presets)
+        self._slider_changed()
         self.add_drive_step_presets(self.setting.mask_drive_step_presets)
 
         # Add a divider
@@ -476,6 +478,7 @@ class BaseControlWidget(ControlWidget):
         """Initialize the base control widget."""
         super().__init__(settings, q, parent)
         self.add_vel_presets(self.setting.base_vel_presets)
+        self._slider_changed()
         self.add_drive_step_presets(self.setting.base_drive_step_presets)
 
     def connect_actions(self, menubar, toolbar):
