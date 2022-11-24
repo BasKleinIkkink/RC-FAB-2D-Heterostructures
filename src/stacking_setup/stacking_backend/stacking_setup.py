@@ -180,23 +180,25 @@ class StackingSetupBackend:
         ----------
         to_main : PipelineConnection, SerialConnection
             The pipe to the main process.
-        settings : Settings
-           The settings object.
+
+            .. note::
+                All middelware methods that inherit from the base middleware class
+                can be used as a as a middleware connection and is supported by the backend.
         """
         self._con_to_main = to_main
         self._emergency_stop_event = mp.Event()
         self._shutdown = mp.Event()
         self._settings = Settings()
-
-        # TODO: #10 get the data from the config file
         self._positioning = 'REL'  # Always initiate in relative positining mode
 
     def _set_logger(self) -> tr.Thread:
         """
         Set the logger.
         
-        Set the logger, this has to be done in a function because the class will be pickled and 
-        send to another process (logger can't be pickled).
+        .. note::
+            The logges has to be set in a seperate function, this has to be done in a 
+            function because the class will be pickled and send to another process 
+            (logger can't be pickled).
 
         Returns
         -------
@@ -221,10 +223,6 @@ class StackingSetupBackend:
             The command id.
         command : dict, None
             The command.
-        *args : list
-            The arguments to pass to the function.
-        **kwargs : dict
-            The keyword arguments to pass to the function.
 
         Returns
         -------
@@ -252,7 +250,19 @@ class StackingSetupBackend:
 
     # STARTING AND STOPPING
     def _init_emergency_breaker(self) -> EmergencyBreaker:
-        """Initiate the emergency breaker."""
+        """
+        Initiate the emergency breaker.
+        
+        .. note::
+            Just as the logging class the emergency breaker has to be initiated in a seperate function.
+            This has to be done in a function because the class will be pickled and send to another process
+            (emergency breaker can't be pickled).
+
+        Returns
+        -------
+        emergency_breaker : EmergencyBreaker
+            The emergency breaker.
+        """
         # return EmergencyBreaker(self._emergency_stop_event)
         pass
 
@@ -262,6 +272,11 @@ class StackingSetupBackend:
         
         Define the connected hardware controllers.
 
+        .. note::
+            Just as the logging class the hardware has to be initiated in a seperate function.
+            This has to be done in a function because the class will be pickled and send to another process
+            (hardware can't be pickled).
+
         Returns
         -------
         hardware : list
@@ -270,25 +285,29 @@ class StackingSetupBackend:
         # Define the connected components.
         _hardware = []
         if self._settings.get('KIM101.DEFAULT', 'enabled'):
-            self._piezo_controller = KIM101(settings=self._settings)
+            self._piezo_controller = KIM101(settings=self._settings, em_event=self._emergency_stop_event)
 
             if self._settings.get('PIA13.X', 'enabled'):
-                _hardware.append(PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, settings=self._settings))
+                _hardware.append(PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, 
+                                em_event=self._emergency_stop_event, settings=self._settings))
 
             if self._settings.get('PIA13.Y', 'enabled'):
-                _hardware.append(PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, settings=self._settings))
+                _hardware.append(PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, 
+                                em_event=self._emergency_stop_event, settings=self._settings))
 
             if self._settings.get('PIA13.Z', 'enabled'):
-                _hardware.append(PIA13(id='Z', channel=4, hardware_controller=self._piezo_controller, settings=self._settings))
+                _hardware.append(PIA13(id='Z', channel=4, hardware_controller=self._piezo_controller, 
+                                em_event=self._emergency_stop_event, settings=self._settings))
         
         if self._settings.get('KDC101.DEFAULT', 'enabled'):
-            self._motor_controller = KDC101(settings=self._settings)
+            self._motor_controller = KDC101(settings=self._settings, em_event=self._emergency_stop_event)
 
             if self._settings.get('PRMTZ8/M.L', 'enabled') and self._settings.get('KDC101.K', 'enabled'):
-                _hardware.append(PRMTZ8(id='L', hardware_controller=self._motor_controller, settings=self._settings))
+                _hardware.append(PRMTZ8(id='L', hardware_controller=self._motor_controller, 
+                                em_event=self._emergency_stop_event, settings=self._settings))
 
         if self._settings.get('TANGODESKTOP.K', 'enabled'):
-            _hardware.append(TangoDesktop(id='K', settings=self._settings))
+            _hardware.append(TangoDesktop(id='K', em_event=self._emergency_stop_event, settings=self._settings))
 
         return _hardware
 
@@ -300,13 +319,16 @@ class StackingSetupBackend:
     def _disconnect_all_hardware(self) -> None:
         """Disconnect the hardware."""
         for axis in self._hardware:
-            axis.disconnect()
+            try:
+                axis.disconnect()
+            except NotImplementedError:
+                pass
     
     def _emergency_stop(self) -> None:
         """Emergency stop the hardware."""
-        # Shuts down all connected hardware
         self._emergency_stop_event.set()
-        self._disconnect_all_hardware()
+        for part in self._hardware:
+            part.emergency_stop()
 
     # PROCESSES
     def setup_backend(self) -> None:
@@ -343,6 +365,8 @@ class StackingSetupBackend:
         This loop is responsible for the communication with the main process 
         and the parsing and execution of the commands.
 
+        This function should not be called directly but through the start_backend function.
+
         Parameters
         ----------
         emergency_stop_event : multiprocessing.Event
@@ -358,6 +382,7 @@ class StackingSetupBackend:
         # This means that attributes that were changed in the main process are not changed in the new process.
         # To fix this the attributes are set again in the new process.
         self._con_to_main = con_to_main
+        self._con_to_main.__init_lock__()
         self._con_to_main.handshake()
         self._emergency_stop_event = emergency_stop_event
         self._shutdown = shutdown_event
@@ -675,8 +700,9 @@ class StackingSetupBackend:
         Set the steps per um for the given axis. If no factors are
         given, the current factors are returned.
 
-        IMPORTANT: This function should not be used as the value should 
-        be determinded during the calibration of the machine.
+        .. important:: 
+            This function should not be used as the value should 
+            be determinded during the calibration of the machine.
         
         Parameters
         ----------
@@ -882,8 +908,8 @@ class StackingSetupBackend:
 
     def _auto_position_report(self) -> None:
         """Send a position update to the host. (support function for M154)"""
-        exit_code, positions = self.M114()
         if self._con_to_main.is_connected:
+            exit_code, positions = self.M114()
             if exit_code == 0:
                 self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M154', command=''))
             else:
@@ -938,8 +964,8 @@ class StackingSetupBackend:
 
     def _auto_temperature_report(self) -> None:
         """Send a position update to the host. (support function for M154)"""
-        exit_code, positions = self.M105()
         if self._con_to_main.is_connected:
+            exit_code, positions = self.M105()
             if exit_code == 0:
                 self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M155', command=''))
             else:

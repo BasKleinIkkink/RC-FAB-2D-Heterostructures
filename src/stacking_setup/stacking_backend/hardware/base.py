@@ -215,3 +215,7 @@ class Base():
     def stop(self):
         """Unconditionally stop the hardware."""
         raise NotImplementedError()
+
+    def emergency_stop(self):
+        """Unconditionally stop the hardware."""
+        raise NotImplementedError()

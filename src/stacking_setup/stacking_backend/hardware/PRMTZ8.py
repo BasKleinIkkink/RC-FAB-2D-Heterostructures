@@ -3,6 +3,7 @@ from typing import Union
 from typeguard import typechecked
 from ..configs.settings import Settings
 import threading as tr
+import multiprocessing as mp
 try:
     from .KDC101 import KDC101
     from .base import Base, HardwareNotConnectedError
@@ -17,7 +18,7 @@ class PRMTZ8(Base):
     _type = 'PRMTZ8/M'
 
     @typechecked
-    def __init__(self, hardware_controller : KDC101, settings : Settings,
+    def __init__(self, hardware_controller : KDC101, settings : Settings, em_event : mp.Event,
                 id : str='L') -> None:
         """
         Initialize the PRMTZ8.
@@ -29,11 +30,13 @@ class PRMTZ8(Base):
         ----------
         hardware_controller: KDC101
             The hardware controller to use.
-        id: str
-            The id of the hardware.
         settings: Settings
             The settings object.
-
+        em_event: multiprocessing.Event
+            The event to use for emergency stop.
+        id: str
+            The id of the hardware.
+        
         Raises
         ------
         HardwareNotConnectedError
@@ -41,6 +44,7 @@ class PRMTZ8(Base):
         """
         self._id = id
         self._controller = hardware_controller
+        self._em_event = em_event
         self.lock = tr.Lock()  # To ensure threadsafe serial communication
         self._settings = settings
         self._max_speed = self._settings.get(self._type+'.'+self._id, 'max_vel')
@@ -57,7 +61,6 @@ class PRMTZ8(Base):
 
     # ATTRIBUTES
     @property
-    @typechecked
     def device_info(self) -> dict:
         """
         Get the device info.
@@ -76,7 +79,6 @@ class PRMTZ8(Base):
         return info
 
     @property
-    @typechecked
     def position(self) -> Union[int, float]:
         """
         Get the position of the hardware.
@@ -94,7 +96,6 @@ class PRMTZ8(Base):
         return pos * 10e3
 
     @property
-    @typechecked
     def steps_per_udeg(self) -> Union[float, int]:
         """
         Return the steps per mu degree.
@@ -110,7 +111,6 @@ class PRMTZ8(Base):
         return steps * 10e3
 
     @property
-    @typechecked
     def speed(self) -> Union[float, int]:
         """
         Get the speed of the motor.
@@ -128,7 +128,6 @@ class PRMTZ8(Base):
         return speed * 10e3
 
     @speed.setter
-    @typechecked
     def speed(self, speed : Union[float, int]) -> None:
         """
         Set the speed of the motor.
@@ -151,7 +150,6 @@ class PRMTZ8(Base):
         self.acceleration = speed * 4 * 10e3
 
     @property
-    @typechecked
     def acceleration(self) -> Union[float, int]:
         """
         Get the acceleration of the motor.
@@ -167,7 +165,6 @@ class PRMTZ8(Base):
         return acceleration * 10e3
 
     @acceleration.setter
-    @typechecked
     def acceleration(self, acceleration : Union[float, int]) -> None:
         """
         Set the acceleration of the motor.
@@ -190,6 +187,8 @@ class PRMTZ8(Base):
     # CONNECTION FUNCTIONS
     def connect(self) -> None:
         """Connect the PRMTZ8."""
+        if self._em_event.is_set():
+            return None
         self.lock.acquire()
         if not self._controller.is_connected():
             self._controller.connect()
@@ -275,7 +274,8 @@ class PRMTZ8(Base):
         kind: str
             The kind of movement to perform (continuous or buildin).
         """
-        # Set the jogging parameters to the current driving parameters.
+        if self._em_event.is_set():
+            return None
         self.lock.acquire()
         self._controller.start_jog(direction=direction, kind=kind)
         self.lock.release()
@@ -298,6 +298,8 @@ class PRMTZ8(Base):
         hold_until_done: bool
             If True, the function will wait until the motor is homed.
         """
+        if self._em_event.is_set():
+            return None
         self.lock.acquire()
         self._controller.home(hold_until_done=hold_until_done)
         self.lock.release()
@@ -316,6 +318,8 @@ class PRMTZ8(Base):
         scale: bool
             If True, the position will be scaled to the steps per degree.
         """
+        if self._em_event.is_set():
+            return None
         self.lock.acquire()
         self._controller.rotate_to(position=position / 10e3, hold_until_done=hold_until_done, scale=scale)
         self.lock.release()
@@ -323,6 +327,8 @@ class PRMTZ8(Base):
     @typechecked
     def rotate_by(self, distance : Union[float, int], hold_until_done : bool=True, scale : bool=True) -> None:
         """Move the motor by a given distance."""
+        if self._em_event.is_set():
+            return None
         self.lock.acquire()
         self._controller.rotate_by(distance=distance / 10e3, hold_until_done=hold_until_done, scale=scale)
         self.lock.release()
@@ -332,6 +338,11 @@ class PRMTZ8(Base):
         self.lock.acquire()
         self._controller.stop()
         self.lock.release()
+
+    def emergency_stop(self) -> None:
+        """Stop the motor."""
+        self._em_event.set()
+        self._controller._controller.stop(immediate=True, sync=False)
 
 
 if __name__ == '__main__':

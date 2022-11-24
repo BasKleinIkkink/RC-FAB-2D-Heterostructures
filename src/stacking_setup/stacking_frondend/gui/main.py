@@ -23,13 +23,12 @@ class MainWindow(QMainWindow):
         super().__init__()
         # Connect to the backend
         self._connector = connector
+        self._connector.__init_lock__()
         self._q = queue.Queue()
         self._shutdown_event = threading.Event()
         self._settings = Settings()
-        self._connect_backend()
         
         # Resize to the screen resolution
-        # self.resize(self.window_size[0], self.window_size[1])
         self.setWindowTitle("Main Window")
 
         # Set the menu and toolbar
@@ -39,6 +38,8 @@ class MainWindow(QMainWindow):
         # Load and set the widgets
         self.load_widgets()  # Load the docks
         self.connect_actions()
+
+        self._connect_backend()
 
     def _connect_backend(self):
         # Handshake with the frondend

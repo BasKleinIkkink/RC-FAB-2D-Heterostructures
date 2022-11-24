@@ -26,7 +26,6 @@ Library contents
 .. toctree::
    :maxdepth: 2
 
-   apidoc_generated/modules
    apidoc_generated/stacking_setup.stacking_frondend
    apidoc_generated/stacking_setup.stacking_middleware
    apidoc_generated/stacking_setup.stacking_backend

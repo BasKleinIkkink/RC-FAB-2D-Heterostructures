@@ -24,6 +24,8 @@ class TemperatureWidget(QGroupBox):
         ----------
         settings : Settings
             The settings object.
+        q : Queue
+            The queue object.
         parent : QMainWindow
             Parent window of the dock widget.
         """
@@ -223,8 +225,8 @@ class TemperatureWidget(QGroupBox):
             self._target_temp = 0
             self.step_size = 1
 
-            self._timer.timeout.connect(self.handleTimeout)
-            self._timer.setInterval(1000)
+            #self._timer.timeout.connect(self.handleTimeout)
+            #self._timer.setInterval(1000)
 
             green = QPen(Qt.green)
             green.setWidth(3)

@@ -4,6 +4,7 @@ from typeguard import typechecked
 from configparser import ConfigParser
 from ..configs.settings import Settings
 import threading as tr
+import multiprocessing as mp
 
 try:
     from .base import HardwareNotConnectedError
@@ -18,7 +19,7 @@ class KDC101():
     _controller = None
 
     @typechecked
-    def __init__(self, settings : Settings) -> None:
+    def __init__(self, settings : Settings, em_event : mp.Event) -> None:
         """
         Initialize the KCD101.
         
@@ -26,6 +27,8 @@ class KDC101():
         ----------
         settings : Settings
             The settings to use.
+        em_event : mp.Event
+            The emergency event.
 
         Raises
         ------
@@ -35,6 +38,7 @@ class KDC101():
         self._lock = tr.Lock()  # To ensure threadsafe serial communication
         self._settings=settings
         self._serial_nr = self._settings.get(self._type+'.DEFAULT', 'serial_nr')
+        self._em_event = em_event
         if self._serial_nr == 'None':
             raise HardwareNotConnectedError('It could not be determined if the device is connected because of missing serial nr in config.')
 
@@ -67,9 +71,8 @@ class KDC101():
 
     def emergency_stop(self) -> None:
         """Stop all the connected motors and disconnect the controller."""
-        self._lock.acquire()
-        self._controller.stop()
-        self._lock.release()
+        self._em_event.set()
+        self.disconnect()
 
     # STATUS FUNCTIONS
     @typechecked
@@ -87,10 +90,13 @@ class KDC101():
         self._lock.release()
         return state
 
-    @typechecked
     def is_moving(self) -> bool:
         """
         Check if the motor is moving.
+
+        .. important::
+            This function is mostly used as a support function for other functions,
+            and does not capture the lock. This means this function alone is not thread safe.
         
         Returns
         -------
@@ -100,7 +106,6 @@ class KDC101():
         state = self._controller.is_moving()
         return state
 
-    @typechecked
     def get_position(self) -> Union[int, float]:
         """
         Get the position of the motor.
@@ -115,7 +120,6 @@ class KDC101():
         self._lock.release()
         return pos
 
-    @typechecked
     def is_homed(self) -> bool:
         """
         Check if the motor is homed.
@@ -130,10 +134,13 @@ class KDC101():
         self._lock.release()
         return state
 
-    @typechecked
     def is_homing(self) -> bool:
         """
         Check if the motor is homing.
+
+        .. important::
+            This function is mostly used as a support function for other functions,
+            and does not capture the lock. This means this function alone is not thread safe.
         
         Returns
         -------
@@ -144,8 +151,7 @@ class KDC101():
         return state
 
     # HOMING FUNCTIONS
-    @typechecked
-    def home(self, hold_until_done : bool = True) -> None:
+    def home(self, hold_until_done : bool = False) -> None:
         """
         Home the motor.
         
@@ -154,13 +160,14 @@ class KDC101():
         hold_until_done : bool
             If True, the function will wait until the motor is homed.
         """
+        if self._em_event.is_set():
+            return None
         self._lock.acquire()
         self._controller.home()
         if hold_until_done:
             self._controller.wait_for_home()
         self._lock.release()
 
-    @typechecked
     def get_homing_parameters(self) -> dict:
         """
         Get the homing parameters.
@@ -220,8 +227,6 @@ class KDC101():
     def setup_drive(self, velocity : Union[float, int]=None, acceleration : Union[float, int]=None, scale : bool =True) -> None:
         """
         Set the drive parameters of the rotation plate.
-        
-        The drive parameters are used for detemining the movement behavoir when moving by relative or absolute positioning.
 
         Parameters
         ----------
@@ -240,9 +245,6 @@ class KDC101():
     def get_jog_parameters(self, scale : bool=True) -> dict:
         """
         Get the jog parameters.
-
-        The controller can jog in continues and step mode. In this application only step
-        mode is used for safety reasons.
 
         Parameters
         ----------
@@ -263,8 +265,6 @@ class KDC101():
     def setup_jog(self, velocity : Union[float, int, None]=None, acceleration: Union[float, int, None]=None, scale: bool=True) -> None:
         """
         Set the jog parameters of the rotation plate.
-        
-        The jog parameters are used for detemining the movement behavoir when moving by relative or absolute positioning.
 
         Parameters
         ----------
@@ -286,13 +286,7 @@ class KDC101():
         Start a jog movement.
 
         .. attention:: 
-            The jog has to be terminated by the stop method.
-
-        If ``kind=="continuous"``, simply start motion in the given direction at the standard jog speed
-        until either the motor is stopped explicitly, or the limit is reached.
-        If ``kind=="builtin"``, use the built-in jog command, whose parameters are specified by :meth:`get_jog_parameters`.
-        Note that ``kind=="continuous"`` is still implemented through the builtin jog, so it changes its parameters;
-        hence, afterwards the jog parameters need to be manually restored.
+            The jog has to be terminated by the :func:`stop_jog` method.
 
         Parameters
         ----------
@@ -329,6 +323,8 @@ class KDC101():
         hold_until_done : bool
             If True, the function will wait until the movement is done.
         """
+        if self._em_event.is_set():
+            return None
         self._lock.acquire()
         self._controller.move_to(position=position, scale=scale)
         if hold_until_done:
@@ -346,13 +342,11 @@ class KDC101():
             The channel of the motor to move.
         distance : float
             The distance to move.
-        velocity : float
-            The velocity to move with.
-        acceleration : float
-            The acceleration to move with.
         hold_until_done : bool
             If True, the function will wait until the movement is done.
         """
+        if self._em_event.is_set():
+            return None
         self._lock.acquire()
         self._controller.move_by(distance=distance, scale=scale)
         if hold_until_done:
@@ -360,17 +354,22 @@ class KDC101():
         self._lock.release()
 
     def stop(self) -> None:
+        """Stop the motor."""
+        self._lock.acquire()
+        self._controller.stop()
+        self._lock.release()
+
+    def emergency_stop(self) -> None:
         """
-        Stop the motor.
+        Emergency stop the motor.
 
         Parameters
         ----------
         channel : int
             The channel of the motor to stop.
         """
-        self._lock.acquire()
         self._controller.stop(immediate=True)
-        self._lock.release()
+        self._em_event.set()
 
 
 if __name__ == '__main__':

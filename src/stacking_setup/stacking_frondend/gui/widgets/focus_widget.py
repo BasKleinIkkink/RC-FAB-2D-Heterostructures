@@ -87,7 +87,9 @@ class FocusWidget(QGroupBox):
         # Set the units on the sliders
         self.velDispLabel.setText(self.moveUnit)
         self.velocitySlider.setMaximum(int(self.moveScale))
+        self.velocitySlider.setValue(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
+        self._slider_changed()
 
     def add_drive_step_presets(self, presets=["1 um", "10 um", "100 um"]):
         """
@@ -106,6 +108,8 @@ class FocusWidget(QGroupBox):
         new_scale = self.driveStepCombo.currentText()
         self.driveScale = float(new_scale.split(" ")[0])
         self.driveUnit = new_scale.split(" ")[1]
+        self.driveScale *= self.settings.known_units[self.driveUnit]
+        print(self.driveScale)
 
     def _create_move_mode_buttons(self):
         """Create the move mode buttons"""
@@ -226,7 +230,7 @@ class FocusWidget(QGroupBox):
         """
         
         # Connect the disp to the slider
-        self.velocitySlider.valueChanged.connect(self._slider_changed)
+        self.velocitySlider.sliderReleased.connect(self._slider_changed)
         self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
 
         # Connect the movment buttons
@@ -240,6 +244,7 @@ class FocusWidget(QGroupBox):
             lambda : self.q.put('M811 K0') if self.jogButton.isChecked() else None)
         self.lockButton.clicked.connect(self._toggle_lock_movement)
         self.movePresetCombo.currentIndexChanged.connect(self._change_movement_scale)
+        self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)
 
     def _change_movement_scale(self):
         """Change the movement scale"""
@@ -272,4 +277,14 @@ class FocusWidget(QGroupBox):
         """Update the position labels."""
         if 'K' in dict:
             self.zPosDisplay.display(dict['K'])
+
+    def _update_drive_step_scale(self):
+        # Get the current selected
+        new_scale = self.driveStepCombo.currentText()
+        self.driveScale = float(new_scale.split(" ")[0])
+        self.driveUnit = new_scale.split(" ")[1]
+        self.driveScale *= self.settings.known_units[self.driveUnit]
+        print(self.driveScale)
+
+        
        

@@ -2,6 +2,7 @@ from typing import Union
 from typeguard import typechecked
 from ..configs.settings import Settings
 import threading as tr
+import multiprocessing as mp
 
 try:
     from .base import Base, NotCalibratedError
@@ -14,7 +15,7 @@ except ImportError:
 class PIA13(Base):
     """Class to control a PIA13 Thorlabs piezo actuator."""
 
-    def __init__(self, id : str, channel : int, hardware_controller : KIM101,
+    def __init__(self, id : str, channel : int, hardware_controller : KIM101, em_event : mp.Event,
                 settings : Settings) -> None:
         """
         Initialize the PIA13.
@@ -29,14 +30,22 @@ class PIA13(Base):
             The id of the actuator.
         hardware_controller: KIM101
             The hardware controller to use.
+        em_event: multiprocessing.Event
+            The event to use for emergency stop.
         settings: Settings
             The settings object.
+
+        Raises
+        ------
+        HardwareNotConnectedError
+            If the hardware is not connected.
         """
         self._id = id
         self._type = 'PIA13'
         self._channel = channel
         self._hardware_controller = hardware_controller
         self._settings = settings
+        self._em_event = em_event
         self._max_speed = self._settings.get(self._type+'.'+self._id, 'max_vel')
         self._max_acceleration = self._settings.get(self._type+'.'+self._id, 'max_acc')
         self._steps_per_um = self._settings.get(self._type+'.'+self._id, 'steps_per_um')
@@ -65,7 +74,6 @@ class PIA13(Base):
         return steps
 
     @property
-    @typechecked
     def position(self) -> Union[float, int]:
         """Get the position of the hardware."""
         self._lock.acquire()
@@ -74,7 +82,7 @@ class PIA13(Base):
         return pos
 
     @property
-    def speed(self) -> None:
+    def speed(self) -> Union[float, int]:
         """Get the speed of the hardware."""
         self._lock.acquire()
         drive = self._hardware_controller.get_drive_parameters(self._channel)
@@ -108,7 +116,7 @@ class PIA13(Base):
     @property
     def acceleration(self) -> float:
         """
-        Get the acceleration of the hardware.
+        Get the acceleration of the hardware in um/s^2.
         
         Returns
         -------
@@ -249,11 +257,9 @@ class PIA13(Base):
         self._hardware_controller.move_to(self._channel, position)
         self._lock.release()
 
-    def stop(self):
+    def emergency_stop(self) -> None:
         """Stop the hardware."""
-        self._lock.acquire()
-        self._hardware_controller.stop(self._channel)
-        self._lock.release()
+        self._em_event.set()
 
 
 if __name__ == '__main__':
