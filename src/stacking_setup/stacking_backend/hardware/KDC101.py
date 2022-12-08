@@ -19,7 +19,7 @@ class KDC101():
     _controller = None
 
     @typechecked
-    def __init__(self, settings : Settings, em_event : mp.Event) -> None:
+    def __init__(self, settings : Settings, em_event : mp.Event) -> ...:
         """
         Initialize the KCD101.
         
@@ -55,7 +55,7 @@ class KDC101():
             raise HardwareNotConnectedError('The external controller is not connected.')
 
     # CONNECTION FUNCTIONS
-    def connect(self) -> None:
+    def connect(self) -> ...:
         """Connect the KCD101."""
         # Device model PRM1-Z8 is used bcause the PRMTZ8/M is not officially supported by pylablib.
         self._lock.acquire()
@@ -63,13 +63,13 @@ class KDC101():
         self._connected = True
         self._lock.release()
 
-    def disconnect(self) -> None:
+    def disconnect(self) -> ...:
         """Disconnect the KCD101."""
         self._lock.acquire()
         self._controller.stop()
         self._lock.release()
 
-    def emergency_stop(self) -> None:
+    def emergency_stop(self) -> ...:
         """Stop all the connected motors and disconnect the controller."""
         self._em_event.set()
         self.disconnect()
@@ -77,14 +77,7 @@ class KDC101():
     # STATUS FUNCTIONS
     @typechecked
     def is_connected(self) -> bool:
-        """
-        Check if the KCD101 is connected.
-        
-        Returns
-        -------
-        bool
-            True if the KCD101 is connected, False otherwise.
-        """
+        """Check if the KCD101 is connected."""
         self._lock.acquire()
         state = self._connected
         self._lock.release()
@@ -151,7 +144,7 @@ class KDC101():
         return state
 
     # HOMING FUNCTIONS
-    def home(self, hold_until_done : bool = False) -> None:
+    def home(self, hold_until_done : bool = False) -> ...:
         """
         Home the motor.
         
@@ -182,9 +175,9 @@ class KDC101():
         self._lock.release()
         return {'vel': params[2], 'dir': params[0]}
 
-
     @typechecked
-    def setup_homing(self, velocity : Union[float, int, None]=None, acceleration : Union[float, int, None]=None) -> None:
+    def setup_homing(self, velocity : Union[float, int, None]=None, 
+            acceleration : Union[float, int, None]=None) -> ...:
         """
         Set the homing parameters.
 
@@ -224,7 +217,8 @@ class KDC101():
         return {'vel': params[2], 'acc': params[1]}
         
     @typechecked
-    def setup_drive(self, velocity : Union[float, int]=None, acceleration : Union[float, int]=None, scale : bool =True) -> None:
+    def setup_drive(self, velocity : Union[float, int]=None, 
+            acceleration : Union[float, int]=None, scale : bool =True) -> ...:
         """
         Set the drive parameters of the rotation plate.
 
@@ -262,7 +256,8 @@ class KDC101():
         return {'step_size': params[1], 'vel': params[2], 'acc': params[3]}
 
     @typechecked
-    def setup_jog(self, velocity : Union[float, int, None]=None, acceleration: Union[float, int, None]=None, scale: bool=True) -> None:
+    def setup_jog(self, velocity : Union[float, int, None]=None, 
+            acceleration: Union[float, int, None]=None, scale: bool=True) -> ...:
         """
         Set the jog parameters of the rotation plate.
 
@@ -281,7 +276,7 @@ class KDC101():
 
     # MOVEMENT FUNCTIONS
     @typechecked
-    def start_jog(self, direction : Union[str, int, bool], kind : str='continuous') -> None:
+    def start_jog(self, direction : Union[str, int, bool], kind : str='continuous') -> ...:
         """
         Start a jog movement.
 
@@ -299,14 +294,15 @@ class KDC101():
         self._controller.jog(direction=direction, kind=kind)
         self._lock.release()
 
-    def stop_jog(self) -> None:
+    def stop_jog(self) -> ...:
         """Stop the jog movement."""
         self._lock.acquire()
         self._controller.stop()
         self._lock.release()
 
     @typechecked
-    def rotate_to(self, position : Union[float, int], hold_until_done : bool=True, scale : bool=True) -> None:
+    def rotate_to(self, position : Union[float, int], 
+            hold_until_done : bool=True, scale : bool=True) -> ...:
         """
         Move the motor to the given position.
 
@@ -332,7 +328,8 @@ class KDC101():
         self._lock.release()
 
     @typechecked
-    def rotate_by(self, distance : Union[float, int], hold_until_done : bool=True, scale : bool=True) -> None:
+    def rotate_by(self, distance : Union[float, int], 
+            hold_until_done : bool=True, scale : bool=True) -> ...:
         """
         Move the motor by the given distance.
 
@@ -353,13 +350,13 @@ class KDC101():
             self._controller.wait_move()
         self._lock.release()
 
-    def stop(self) -> None:
+    def stop(self) -> ...:
         """Stop the motor."""
         self._lock.acquire()
         self._controller.stop()
         self._lock.release()
 
-    def emergency_stop(self) -> None:
+    def emergency_stop(self) -> ...:
         """
         Emergency stop the motor.
 

@@ -18,7 +18,7 @@ class KIM101():
     _type = 'KIM101'
 
     @typechecked
-    def __init__(self, settings : Settings, em_event : mp.Event) -> None:
+    def __init__(self, settings : Settings, em_event : mp.Event) -> ...:
         """
         Initialize the KIM101.
         
@@ -56,14 +56,14 @@ class KIM101():
             raise HardwareNotConnectedError('The external controller is not connected.')
 
     # CONNECTION FUNCTIONS
-    def connect(self) -> None:
+    def connect(self) -> ...:
         """Connect the KIM101."""
         self._lock.acquire()
         self._controller = KinesisPiezoMotor(self._serial_nr)
         self._connected = True
         self._lock.release()
 
-    def disconnect(self) -> None:
+    def disconnect(self) -> ...:
         """Disconnect the KIM101."""
         raise NotImplementedError()
 
@@ -81,70 +81,34 @@ class KIM101():
 
     @typechecked
     def is_moving(self, channel : int) -> bool:
-        """
-        Check if the piezo is moving.
-        
-        Parameters
-        ----------
-        channel : int
-            The channel of the piezo to check.
-        
-        Returns
-        -------
-        bool
-            True if the piezo is moving, False otherwise.
-
-        """
+        """Check if the piezo on the given channel is moving."""
         state = self._controller.is_moving(channel=channel)
         return state
 
     @typechecked
     def get_position(self, channel : int) -> Union[float, int]:
-        """
-        Get the position of the piezo.
-        
-        Parameters
-        ----------
-        channel : int
-            The channel of the piezo to check.
-
-        Returns
-        -------
-        float, int
-            The position of the piezo.
-
-        """
+        """Get the position of the piezo on the given channel."""
         self._lock.acquire()
         pos = self._controller.get_position(channel=channel)
         self._lock.release()
         return pos
 
     @typechecked
-    def _wait_move(self, channel : int) -> None:
-        """
-        Wait until the piezo is not moving anymore.
-        
-        Parameters
-        ----------
-        channel : int
-            The channel of the piezo to check.
-
-        Returns
-        -------
-        bool
-            True if the piezo is not moving anymore, False otherwise.
-
-        """
+    def _wait_move(self, channel : int) -> ...:
+        """Wait until the piezo is on the given channel is not moving anymore."""
         self._controller.wait_move(channel=channel)
 
     # JOG AND DRIVE PARAMETERS
     @typechecked
     def setup_jog(self, channel : int, velocity : Union[float, int, None]=None, 
-                  acceleration : Union[float, int, None]=None) -> None:
+                  acceleration : Union[float, int, None]=None) -> ...:
         """
         Set the jog paramters of the piezo.
 
         The jogging parameters are used for jogging in buildin mode.
+
+        .. note::
+            This mode is not used in the current implementation.
         
         Parameters
         ----------
@@ -169,7 +133,7 @@ class KIM101():
         Returns
         -------
         dict
-            The jog parameters of the piezo. Velpocity (vel) and acceleration (acc) 
+            The jog parameters of the piezo. Velocity (vel) and acceleration (acc) 
             are in um/s and um/s^2.
         """
         self._lock.acquire()
@@ -180,11 +144,15 @@ class KIM101():
     @typechecked
     def setup_drive(self, channel : int, max_voltage : Union[float, int, None]=None, 
                     velocity : Union[float, int, None]=None, 
-                    acceleration : Union[float, int, None]=None) -> None:
+                    acceleration : Union[float, int, None]=None) -> ...:
         """
         Set the drive parameters of the piezo.
         
-        The drive parameters are used for detemining the movement behavoir when moving by relative or absolute positioning.
+        The drive parameters are used for detemining the movement behavoir 
+        when moving by relative or absolute positioning.
+
+        .. note::
+            This mode is used for driving and jogging in the current implementation.
         
         Parameters
         ----------
@@ -208,7 +176,8 @@ class KIM101():
         """
         Get the drive parameters of the piezo.
         
-        The drive parameters are used for detemining the movement behaviour when moving by relative or absolute positioning.
+        The drive parameters are used for detemining the movement behaviour 
+        when moving by relative or absolute positioning.
         
         Returns
         -------
@@ -222,19 +191,24 @@ class KIM101():
 
     # MOVEMENT FUNCTIONS
     @typechecked
-    def start_jog(self, channel : int, direction : Union[str, int, bool], kind : str='continuous') -> None:
+    def start_jog(self, channel : int, direction : Union[str, int, bool], kind : str='continuous') -> ...:
         """
         Start a jog.
         
-        .. attention:: 
-            The jog has to be terminated by the :meth:`stop_jog method`.
+        .. Warning:: 
+            The jog has to be terminated by the :meth:`stop_jog method`. If not called
+            the piezo can damage itself.
+
+        .. attention::
+            If the buildin jog mode is used the the internal drive parameters on the
+            controller will be changed. This can lead to unexpected behaviour.
         
         Parameters
         ----------
         channel : int
             The channel of the piezo to move.
         direction : str, int, bool
-            The direction of the jog. Can be ``"forward"``, ``"backward"``, ``1``, ``-1``, ``True``, or ``False``.
+            The direction of the jog. Can + or -.
         kind : str
             The kind of the jog. Can be ``"continuous"`` or ``"builtin"``.
         """
@@ -244,7 +218,7 @@ class KIM101():
         self._controller.jog(direction=direction, kind=kind, channel=channel)
         self._lock.release()
 
-    def stop_jog(self, channel : Union[None, int]=None) -> None:
+    def stop_jog(self, channel : Union[None, int]=None) -> ...:
         """
         Stop the jog movement.
         
@@ -259,7 +233,7 @@ class KIM101():
 
     @typechecked
     def move_to(self, channel : int, position : Union[float, int], 
-                wait_until_done : bool=True) -> None:
+                wait_until_done : bool=True) -> ...:
         """
         Move one of the connected piezos.
         
@@ -284,7 +258,7 @@ class KIM101():
 
     @typechecked
     def move_by(self, channel : int, distance : Union[float, int], 
-                wait_until_done : bool=True) -> None:
+                wait_until_done : bool=True) -> ...:
         """
         Move one of the connected piezos.
         
@@ -309,9 +283,9 @@ class KIM101():
         self._lock.release()
 
     @typechecked
-    def stop(self, channel : Union[int, None]=None) -> None:
+    def stop(self, channel : Union[int, None]=None) -> ...:
         """
-        Stop one of the connected piezos.
+        Stop one or all the piezos.
         
         Parameters
         ----------
@@ -326,7 +300,7 @@ class KIM101():
             self._controller.stop(channel=channel)
         self._lock.release()
 
-    def emergency_stop(self) -> None:
+    def emergency_stop(self) -> ...:
         """Stop all connected piezos."""
         self._em_event.set()
         self._controller.stop(sync=False)

@@ -16,7 +16,7 @@ class PIA13(Base):
     """Class to control a PIA13 Thorlabs piezo actuator."""
 
     def __init__(self, id : str, channel : int, hardware_controller : KIM101, em_event : mp.Event,
-                settings : Settings) -> None:
+                settings : Settings) -> ...:
         """
         Initialize the PIA13.
         
@@ -26,8 +26,6 @@ class PIA13(Base):
             The id of the hardware.
         channel: int
             The channel of the hardware.
-        actuator_id: int
-            The id of the actuator.
         hardware_controller: KIM101
             The hardware controller to use.
         em_event: multiprocessing.Event
@@ -65,7 +63,7 @@ class PIA13(Base):
         return info
 
     @property
-    def steps_per_um(self) -> None:
+    def steps_per_um(self) -> ...:
         """Get the steps per um."""
         # Return the steps per um
         self._lock.acquire()
@@ -90,7 +88,7 @@ class PIA13(Base):
         return drive[3]
 
     @speed.setter
-    def speed(self, speed : Union[float, int]) -> None:
+    def speed(self, speed : Union[float, int]) -> ...:
         """
         Set the speed of the hardware.
 
@@ -129,7 +127,7 @@ class PIA13(Base):
         return drive[4]
 
     @acceleration.setter
-    def acceleration(self, acceleration : Union[float, int]) -> None:
+    def acceleration(self, acceleration : Union[float, int]) -> ...:
         """
         Set the acceleration of the hardware.
         
@@ -148,7 +146,7 @@ class PIA13(Base):
         self._lock.release()
 
     # CONNECTION FUNCTIONS
-    def connect(self) -> None:
+    def connect(self) -> ...:
         """Connect the hardware."""
         self._lock.acquire()
         if not self._hardware_controller._connected:
@@ -157,7 +155,7 @@ class PIA13(Base):
             pass
         self._lock.release()
 
-    def disconnect(self) -> None:
+    def disconnect(self) -> ...:
         """Disconnect the hardware."""
         self._lock.acquire()
         if self._hardware_controller.is_connected():
@@ -205,7 +203,7 @@ class PIA13(Base):
         return status
 
     # MOVEMENT FUNCTIONS
-    def start_jog(self, direction : str) -> None:
+    def start_jog(self, direction : str) -> ...:
         """
         Start a jog.
 
@@ -218,13 +216,13 @@ class PIA13(Base):
         self._hardware_controller.start_jog(self._channel, direction)
         self._lock.release()
 
-    def stop_jog(self) -> None:
+    def stop_jog(self) -> ...:
         """Stop the jog."""
         self._lock.acquire()
         self._hardware_controller.stop_jog(self._channel)
         self._lock.release()
         
-    def move_by(self, distance : Union[float, int]) -> None:
+    def move_by(self, distance : Union[float, int]) -> ...:
         """
         Move the hardware by a certain distance.
 
@@ -239,7 +237,7 @@ class PIA13(Base):
         self._hardware_controller.move_by(self._channel, distance)
         self._lock.release()
 
-    def move_to(self, position : Union[float, int]) -> None:
+    def move_to(self, position : Union[float, int]) -> ...:
         """
         Move the hardware to a certain position.
 
@@ -257,7 +255,7 @@ class PIA13(Base):
         self._hardware_controller.move_to(self._channel, position)
         self._lock.release()
 
-    def emergency_stop(self) -> None:
+    def emergency_stop(self) -> ...:
         """Stop the hardware."""
         self._em_event.set()
 
