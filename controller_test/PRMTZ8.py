@@ -1,12 +1,12 @@
 from time import sleep
 from typing import Union
 from typeguard import typechecked
-from ..configs.settings import Settings
+from ..src.stacking_setup.stacking_backend.configs.settings import Settings
 import threading as tr
 import multiprocessing as mp
 try:
-    from .KDC101 import KDC101
-    from .base import Base, HardwareNotConnectedError
+    from ..src.stacking_setup.stacking_backend.hardware.KDC101 import KDC101
+    from ..src.stacking_setup.stacking_backend.hardware.base import Base, HardwareNotConnectedError
 except ImportError:
     from KDC101 import KDC101
     from base import Base, HardwareNotConnectedError

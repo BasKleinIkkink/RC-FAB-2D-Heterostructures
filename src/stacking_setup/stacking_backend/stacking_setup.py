@@ -13,7 +13,8 @@ from ..stacking_middleware.message import Message
 from .hardware.KDC101 import KDC101
 from .hardware.KIM101 import KIM101
 from .hardware.PIA13 import PIA13
-from .hardware.PRMTZ8 import PRMTZ8
+from .hardware.sample_bed import SampleBed
+from .hardware.main_xy_controller import MainXYController
 from .hardware.TangoDesktop import TangoDesktop
 from .hardware.emergency_breaker import EmergencyBreaker
 from ..stacking_middleware.pipeline_connection import PipelineConnection
@@ -84,7 +85,6 @@ class RepeatedTimer:
         """
         return self._is_running
 
-    
     @property
     def next_call(self) -> Union[int, float]:
         """
@@ -301,11 +301,12 @@ class StackingSetupBackend:
                                 em_event=self._emergency_stop_event, settings=settings))
         
         # Initiate the sample holder
-        if self._settings.get('KDC101.DEFAULT', 'enabled'):
+        if self._settings.get('KDC101.DEFAULT', 'enabled') and settings.get('MAINXYCONTROLLER.DEFAULT', 'enabled'):
             self._motor_controller = KDC101(settings=settings, em_event=self._emergency_stop_event)
+            self._base_controller = MainXYController(settings=settings, em_event=self._emergency_stop_event)
 
-            if self._settings.get('PRMTZ8/M.L', 'enabled') and settings.get('KDC101.K', 'enabled'):
-                _hardware.append(PRMTZ8(id='L', hardware_controller=self._motor_controller, 
+            if self._settings.get('SAMPLEHOLDER.L', 'enabled'):
+                _hardware.append(SampleBed(id='L', hardware_controller=self._motor_controller, 
                                 em_event=self._emergency_stop_event, settings=settings))
 
         # Initiate the focus stage

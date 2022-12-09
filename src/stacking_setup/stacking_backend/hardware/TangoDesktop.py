@@ -49,7 +49,7 @@ class TangoDesktop(Base):
     _controller = None
     _ser = None
 
-    def __init__(self, id : str, settings : Settings, em_event : mp.Event) -> None:
+    def __init__(self, id : str, settings : Settings, em_event : mp.Event) -> ...:
         """
         Initialize the tango desktop.
         
@@ -121,7 +121,7 @@ class TangoDesktop(Base):
         return round(rev_per_s / self._spindle_pitch, 3)
 
     @speed.setter
-    def speed(self, speed : Union[float, int]) -> None:
+    def speed(self, speed : Union[float, int]) -> ...:
         """
         Set the speed of the tango desktop (um/s).
 
@@ -146,7 +146,7 @@ class TangoDesktop(Base):
         self.acceleration = speed * 2
 
     @property
-    def acceleration(self) -> None:
+    def acceleration(self) -> Union[float, int]:
         """Get the acceleration of the tango desktop (um/s^2)."""
         if self._em_event.is_set():
             return None  # Do nothing to give other classes a chance to stop the emergency stop
@@ -158,7 +158,7 @@ class TangoDesktop(Base):
         return acc
 
     @acceleration.setter
-    def acceleration(self, acceleration : Union[float, int]) -> None:
+    def acceleration(self, acceleration : Union[float, int]) -> ...:
         """
         Set the acceleration of the tango desktop.
         
@@ -167,7 +167,7 @@ class TangoDesktop(Base):
             command set the acceleration is set in m/s^2 instead of um/s^2.
         """
         if self._em_event.is_set():
-            return None  # Do nothing to give other classes a chance to stop the emergency stop
+            return None  # Do nothing to give other classes a chance to stop
 
         if acceleration > self._max_acceleration:
             acceleration = self._max_acceleration
@@ -190,17 +190,15 @@ class TangoDesktop(Base):
         bool
             True if a message is waiting, False otherwise.
         """
-        if self._em_event.is_set():
-            return None  # Do nothing to give other classes a chance to stop the emergency stop
-
         state = True if self._ser.in_waiting > 0 else False
         return state
 
-    def _send_and_receive(self, command : str, expect_confirmation : bool=True, expect_response : bool=False) -> Union[None, str]:
+    def _send_and_receive(self, command : str, expect_confirmation : bool=True, 
+            expect_response : bool=False) -> Union[None, str]:
         """
         Send a command to the tango desktop and receive the response.
 
-        .. important::
+        .. warning::
             Most functions acquire a lock before sending a command to the tango desktop, this is to prevent
             multiple threads from sending commands at the same time. This function is an exception to this rule,
             it is the responsibility of the calling function to acquire the lock before calling this function.
@@ -214,17 +212,17 @@ class TangoDesktop(Base):
         expect_response: bool
             If the command should expect a response.
 
+        Returns:
+        --------
+        response: str or None
+            The response of the tango desktop.
+
         Raises:
         -------
         HardwareNotConnectedError: 
             If the tango desktop is not connected.
         ValueError:
             If the command caused an error
-
-        Returns:
-        --------
-        response: str or None
-            The response of the tango desktop.
         """
         if self._ser is None:
             raise HardwareNotConnectedError("The tango desktop is not connected.")
@@ -247,8 +245,8 @@ class TangoDesktop(Base):
                 time.sleep(0.01)
 
                 if expect_confirmation and not expect_response:
-                    if self._message_waiting(): resp = self._ser.readline().decode().strip()  # Read the command confirmation
-
+                    if self._message_waiting(): 
+                        resp = self._ser.readline().decode().strip()
                     if resp == '@': 
                         continue
                     if resp == 'OK...': 
@@ -257,7 +255,6 @@ class TangoDesktop(Base):
                         raise ValueError("The command {} was not accepted by the tango desktop and gave response: {}.".format(command, resp))
                 elif expect_response:
                     if self._message_waiting():
-
                         data_resp = self._ser.readline().decode().strip()
                     if data_resp == '@': 
                         continue
@@ -271,7 +268,7 @@ class TangoDesktop(Base):
             if expect_response: return data_resp  
         return None
 
-    def connect(self) -> None:
+    def connect(self) -> ...:
         """Connect to the tango desktop."""
         self._lock.acquire()
         if self._em_event.is_set():
@@ -303,7 +300,7 @@ class TangoDesktop(Base):
             self._spindle_pitch = float(self._send_and_receive('?pitch z', expect_response=True, expect_confirmation=False))
         self._lock.release()
 
-    def disconnect(self) -> None:
+    def disconnect(self) -> ...:
         """Disconnect from the tango desktop."""
         if self._em_event.is_set():
             return None  # Do nothing to give other classes a chance to stop the emergency stop
@@ -350,15 +347,15 @@ class TangoDesktop(Base):
         T: Timeout occured
         -: Axis is not enabled or available in the hardware
 
-        Raises:
-        -------
-        ValueError: 
-            If the axis responds with E, T or -.
-
         Returns:
         --------
         bool:
             True if the axis is moving, False if not.
+
+        Raises:
+        -------
+        ValueError: 
+            If the axis responds with E, T or -.
         """
         if self._em_event.is_set():
             return None  # Do nothing to give other classes a chance to stop the emergency stop
@@ -371,7 +368,7 @@ class TangoDesktop(Base):
         return state
 
     # HOMING FUNCTIONS
-    def home(self):
+    def home(self) -> ...:
         """
         Home the tango desktop.
         
@@ -390,7 +387,7 @@ class TangoDesktop(Base):
         self._lock.release()
 
     # MOVEMENT FUNCTIONS
-    def start_jog(self, direction : Union[str, int]) -> None:
+    def start_jog(self, direction : Union[str, int]) -> ...:
         """Start a continuous jog in the given direction."""
         if self._em_event.is_set():
             return None
@@ -411,8 +408,7 @@ class TangoDesktop(Base):
         self._send_and_receive('!speed z 0', expect_response=False, expect_confirmation=False)
         self._lock.release()
 
-    #@typechecked
-    def move_to(self, position : Union[float, int]) -> None:
+    def move_to(self, position : Union[float, int]) -> ...:
         """Move the tango desktop to the given position."""
         if self._em_event.is_set():
             return None
@@ -420,8 +416,7 @@ class TangoDesktop(Base):
         self._send_and_receive('!moa z {}'.format(position), expect_response=False, expect_confirmation=False)
         self._lock.release()
 
-    #@typechecked
-    def move_by(self, distance : Union[float, int]) -> None:
+    def move_by(self, distance : Union[float, int]) -> ...:
         """Move the tango desktop by the given distance."""
         if self._em_event.is_set():
             return None
@@ -429,12 +424,13 @@ class TangoDesktop(Base):
         self._send_and_receive('!mor z {}'.format(distance), expect_response=False, expect_confirmation=False)
         self._lock.release()
 
-    def emergency_stop(self) -> None:
+    def emergency_stop(self) -> ...:
         """Stop the tango desktop."""
         # Stop all moves
         self._send_and_receive('!stopaccel', expect_response=False, expect_confirmation=False)
         # Stop all other commands
         self._send_and_receive('!stop', expect_response=False, expect_confirmation=False)
+        self._ser.close()
         self._em_event.set()
 
 

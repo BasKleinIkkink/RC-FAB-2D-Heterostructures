@@ -10,10 +10,6 @@ import multiprocessing as mp
 class MainXYController:
     """
     This is the main class responsible for communication with the eld controller.
-    
-    This class is the support class for the following hardware classes
-    - :class:`SampleStage`
-    - :class:`EmergencyBreaker`
 
     .. attention::
         The controler uses steps as the unit of measurement. This means all values from

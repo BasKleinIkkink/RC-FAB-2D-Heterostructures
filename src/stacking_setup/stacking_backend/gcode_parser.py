@@ -13,9 +13,6 @@ class GcodeAttributeError(Exception):
     def __init__(self, msg):
         self._msg = msg
 
-    def __str__(self):
-        return self._msg
-
 
 class GcodeParsingError(Exception):
     """Exception raised when there is an issue parsing a gcode command."""
@@ -23,35 +20,31 @@ class GcodeParsingError(Exception):
     def __init__(self, msg):
         self._msg = msg
 
-    def __str__(self):
-        return self._msg
-
 
 class GcodeParser():
     """
     Class to manage the parsing of gcode lines from the main code.
     
-    Gcode docs https://marlinfw.org/meta/gcode/
+    Heavily inspired by marlin gcode https://marlinfw.org/meta/gcode/
 
     Used Gcode commands
     -------------------
-    - G0 - G1 : Lineair movement
+    - G0 : Lineair movement
+    - G1 : Rotational movement
+    - G2 : Jogging movement (velocity control)
     - G28 : Home all axes
     - G90 : Set to absolute coordinates
     - G91 : Set to relative coordinates
 
     - X, Y, Z : Move the mask holder
     - I, J, K : Move the base plate
-    - L : Move the sample holder
+    - L : Move or control the sample holder
 
     - M0 : Unconditional stop
     - M105 : Report current temperature
-    - M111 : Debug level
     - M112 : Emergency stop
     - M113 : Keep host alive
     - M114 : Report current position
-    - M120 : Enable endstops
-    - M121 : Disable endstops
     - M140 : Set bed temperature
     - M154 : Position auto report
     - M155 : Temperature auto report
