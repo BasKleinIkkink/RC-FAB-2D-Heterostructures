@@ -116,7 +116,6 @@ class PipeCom():
         -------
         bool
             True if the pipe is open, False otherwise.
-
         """
         # Essentialy checks if a message is waiting.
         try:
@@ -140,7 +139,6 @@ class PipeCom():
         -------
         bool
             True if a message is waiting, False otherwise.
-
         """
         if cls.pipe_is_open(conn):
             return conn.poll()
@@ -154,7 +152,7 @@ class PipelineConnection(BaseConnector):
     Connection method using a multiprocessing pipe.
     
     This connection method is most suited for when the frond and backend are running
-    on the same machine. It is not suited for communication over a network.
+    on the same machine.
     """
     _connection_method = "PIPELINE"
 
@@ -173,6 +171,11 @@ class PipelineConnection(BaseConnector):
         """
         self._connection = connection
         self._role = role
+        if role == 'FRONDEND':
+            self._lock = tr.Lock()
+        else:
+            # The lock cannot be pickled, so it is created on the backend
+            pass
 
     def __init_lock__(self):
         self._lock = tr.Lock()

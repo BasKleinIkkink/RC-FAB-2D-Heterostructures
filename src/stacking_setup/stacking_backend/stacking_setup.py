@@ -4,35 +4,21 @@ import traceback
 import functools
 import sys
 import time
+import logging
 from typeguard import typechecked
 from typing import Union
-import configparser
-
-try:
-    from .gcode_parser import GcodeParser, GcodeAttributeError, GcodeParsingError
-    from .hardware.base import NotSupportedError
-    from ..stacking_middleware.message import Message
-    from .hardware.KDC101 import KDC101
-    from .hardware.KIM101 import KIM101
-    from .hardware.PIA13 import PIA13
-    from .hardware.PRMTZ8 import PRMTZ8
-    from .hardware.TangoDesktop import TangoDesktop
-    from .hardware.emergency_breaker import EmergencyBreaker
-    from ..stacking_middleware.pipeline_connection import PipelineConnection
-    from ..stacking_middleware.serial_connection import SerialConnection
-    from .configs.settings import Settings
-except ImportError:
-    from gcode_parser import GcodeParser, GcodeAttributeError, GcodeParsingError
-    from hardware.base import NotSupportedError
-    from stacking_middleware.message import Message
-    from hardware.KDC101 import KDC101
-    from hardware.KIM101 import KIM101
-    from hardware.PIA13 import PIA13
-    from hardware.PRMTZ8 import PRMTZ8
-    from hardware.emergency_breaker import EmergencyBreaker
-    from stacking_middleware.pipeline_connection import PipelineConnection
-    from stacking_middleware.serial_connection import SerialConnection
-    from configs.settings import Settings
+from .gcode_parser import GcodeParser, GcodeAttributeError, GcodeParsingError
+from .hardware.base import NotSupportedError
+from ..stacking_middleware.message import Message
+from .hardware.KDC101 import KDC101
+from .hardware.KIM101 import KIM101
+from .hardware.PIA13 import PIA13
+from .hardware.PRMTZ8 import PRMTZ8
+from .hardware.TangoDesktop import TangoDesktop
+from .hardware.emergency_breaker import EmergencyBreaker
+from ..stacking_middleware.pipeline_connection import PipelineConnection
+from ..stacking_middleware.serial_connection import SerialConnection
+from .configs.settings import Settings
     
 
 class RepeatedTimer:
@@ -43,7 +29,8 @@ class RepeatedTimer:
     it every time the function is called.
     """
 
-    def __init__(self, interval : Union[int, float], function : callable, *args, **kwargs) -> None:
+    def __init__(self, interval : Union[int, float], function : callable, 
+            *args, **kwargs) -> ...:
         """
         Initiate the timer.
         
@@ -53,6 +40,12 @@ class RepeatedTimer:
             The interval in seconds.
         function : callable
             The function to repeat.
+
+            .. note::
+                Because the timer is reset and a new thread is started
+                every time the function is called, the user should make
+                sure that the function is thread safe and exits cleanly.
+
         args
             The arguments for the function.
         kwargs
@@ -104,13 +97,13 @@ class RepeatedTimer:
         """
         return self._next_call
 
-    def _run(self) -> None:
+    def _run(self) -> ...:
         """Run the function."""
         self._is_running = False
         self.start()
         self._function(*self._args, **self._kwargs)
 
-    def start(self) -> None:
+    def start(self) -> ...:
         """Wait for the next run."""
         if not self.is_running:
             self._next_call += self._interval
@@ -119,8 +112,7 @@ class RepeatedTimer:
             self._timer.start()
             self._is_running = True
 
-    
-    def stop(self) -> None:
+    def stop(self) -> ...:
         """Stop the timer."""
         self._timer.cancel()
         self._timer.join()
@@ -130,6 +122,9 @@ class RepeatedTimer:
 def catch_remote_exceptions(wrapped_function : callable) -> callable:
     """
     Catch and propagate the remote exeptions.
+
+    The function is a wrapper around the function to catch the remote exceptions.
+    This is usefull for the multiprocessing module, because the exceptions can't be pickled.
 
     https://stackoverflow.com/questions/6126007/python-getting-a-traceback
 
@@ -147,7 +142,6 @@ def catch_remote_exceptions(wrapped_function : callable) -> callable:
     -------
     function
         The wrapped function.
-
     """
 
     @functools.wraps(wrapped_function)
@@ -164,13 +158,14 @@ def catch_remote_exceptions(wrapped_function : callable) -> callable:
 
 class StackingSetupBackend:
     """
-    The hardware controller
+    The main backend class for the stacking setup.
 
-    Is connected to the main process with a connector. The connector expects data in the form of strings
-    or bytes containing the gcode command lines. For the supported commands see the accepted_commands.py file.
+    The class is the main backend class for the stacking setup. It handles the
+    communication from the user (frondend) to the hardware. The class is a
+    multiprocessing class, so it can be used in a seperate process.
     """
     _emergency_breaker = None
-    _hardware = None
+    _hardware = None 
 
     def __init__(self, to_main : Union[PipelineConnection, SerialConnection]) -> None:
         """
@@ -183,29 +178,28 @@ class StackingSetupBackend:
 
             .. note::
                 All middelware methods that inherit from the base middleware class
-                can be used as a as a middleware connection and is supported by the backend.
+                can be used as a as a middleware connection.
         """
         self._con_to_main = to_main
         self._emergency_stop_event = mp.Event()
         self._shutdown = mp.Event()
         self._settings = Settings()
-        self._positioning = 'REL'  # Always initiate in relative positining mode
+        self._positioning = 'REL'  # Always initiate in relative positioning mode
 
     def _set_logger(self) -> tr.Thread:
         """
         Set the logger.
         
         .. note::
-            The logges has to be set in a seperate function, this has to be done in a 
-            function because the class will be pickled and send to another process 
-            (logger can't be pickled).
+            The logger has to be set in a seperate function, this has to be done
+            because the class will otherwise be pickled when starting the process.
+            The logger can't be pickled.
 
         Returns
         -------
         logger : tr.Thread
             The logger thread.
         """
-        import logging  # Import the logger here because it can't be pickled
         logging.basicConfig(level=logging.DEBUG, filename='log.log', 
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
         return logging.getLogger(__name__)
@@ -214,6 +208,9 @@ class StackingSetupBackend:
     def _echo(self, func : callable, command_id : str, command : Union[dict, None]=None) -> tuple:
         """
         Echo the command response (error code and msg) to the main process.
+
+        The function passes the command response (error code and msg) to the main
+        process.
 
         Parameters
         ----------
@@ -229,18 +226,18 @@ class StackingSetupBackend:
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
-            A message with the result of the command.
+            A message with the result of the command or an error message
         """
         # Wrap the function
-        @functools.wraps(func)
-        def new_function(*args, **kwargs):
-            return func(*args, **kwargs)
+        #@functools.wraps(func)
+        #def new_function(*args, **kwargs):
+        #    return func(*args, **kwargs)
 
         # Send the exit code and msg over the pipe to main
         if command is not None:
-            exit_code, msg = new_function(command)
+            exit_code, msg = func(command)
         else:
-            exit_code, msg = new_function()
+            exit_code, msg = func()
 
         self._con_to_main.send(Message(exit_code=exit_code, command_id=command_id, 
                 msg=str(msg), command=command))
@@ -254,9 +251,8 @@ class StackingSetupBackend:
         Initiate the emergency breaker.
         
         .. note::
-            Just as the logging class the emergency breaker has to be initiated in a seperate function.
-            This has to be done in a function because the class will be pickled and send to another process
-            (emergency breaker can't be pickled).
+            Just as the logging class the emergency breaker has to be initiated in a seperate function
+            because it contains code that cannot be pickled.
 
         Returns
         -------
@@ -266,57 +262,67 @@ class StackingSetupBackend:
         # return EmergencyBreaker(self._emergency_stop_event)
         pass
 
-    def _init_all_hardware(self) -> list:
+    def _init_all_hardware(self, settings : Settings) -> list:
         """
         Initiate the hardware.
         
         Define the connected hardware controllers.
 
         .. note::
-            Just as the logging class the hardware has to be initiated in a seperate function.
-            This has to be done in a function because the class will be pickled and send to another process
-            (hardware can't be pickled).
+            Just as the emergency_breaker class the emergency breaker has to be initiated in 
+            a seperate function because it contains code that cannot be pickled.
+
+        Parameters
+        ----------
+        settings : Settings
+            The  settings.
 
         Returns
         -------
         hardware : list
             A list of the hardware controllers.
         """
-        # Define the connected components.
         _hardware = []
+
+        # Initiate the piezos
         if self._settings.get('KIM101.DEFAULT', 'enabled'):
-            self._piezo_controller = KIM101(settings=self._settings, em_event=self._emergency_stop_event)
+            self._piezo_controller = KIM101(settings=settings, em_event=self._emergency_stop_event)
 
             if self._settings.get('PIA13.X', 'enabled'):
                 _hardware.append(PIA13(id='X', channel=1, hardware_controller=self._piezo_controller, 
-                                em_event=self._emergency_stop_event, settings=self._settings))
+                                em_event=self._emergency_stop_event, settings=settings))
 
             if self._settings.get('PIA13.Y', 'enabled'):
                 _hardware.append(PIA13(id='Y', channel=2, hardware_controller=self._piezo_controller, 
-                                em_event=self._emergency_stop_event, settings=self._settings))
+                                em_event=self._emergency_stop_event, settings=settings))
 
             if self._settings.get('PIA13.Z', 'enabled'):
                 _hardware.append(PIA13(id='Z', channel=4, hardware_controller=self._piezo_controller, 
-                                em_event=self._emergency_stop_event, settings=self._settings))
+                                em_event=self._emergency_stop_event, settings=settings))
         
+        # Initiate the sample holder
         if self._settings.get('KDC101.DEFAULT', 'enabled'):
-            self._motor_controller = KDC101(settings=self._settings, em_event=self._emergency_stop_event)
+            self._motor_controller = KDC101(settings=settings, em_event=self._emergency_stop_event)
 
-            if self._settings.get('PRMTZ8/M.L', 'enabled') and self._settings.get('KDC101.K', 'enabled'):
+            if self._settings.get('PRMTZ8/M.L', 'enabled') and settings.get('KDC101.K', 'enabled'):
                 _hardware.append(PRMTZ8(id='L', hardware_controller=self._motor_controller, 
-                                em_event=self._emergency_stop_event, settings=self._settings))
+                                em_event=self._emergency_stop_event, settings=settings))
 
+        # Initiate the focus stage
         if self._settings.get('TANGODESKTOP.K', 'enabled'):
-            _hardware.append(TangoDesktop(id='K', em_event=self._emergency_stop_event, settings=self._settings))
+            _hardware.append(TangoDesktop(id='K', em_event=self._emergency_stop_event, 
+                                        settings=settings))
+
+        # Initiate the base stages
 
         return _hardware
 
-    def _connect_all_hardware(self) -> None:
+    def _connect_all_hardware(self) -> ...:
         """Connect all the hardware in the _hardware list."""
         for axis in self._hardware:
             axis.connect()
 
-    def _disconnect_all_hardware(self) -> None:
+    def _disconnect_all_hardware(self) -> ...:
         """Disconnect the hardware."""
         for axis in self._hardware:
             try:
@@ -324,18 +330,18 @@ class StackingSetupBackend:
             except NotImplementedError:
                 pass
     
-    def _emergency_stop(self) -> None:
+    def _emergency_stop(self) -> ...:
         """Emergency stop the hardware."""
         self._emergency_stop_event.set()
         for part in self._hardware:
             part.emergency_stop()
 
     # PROCESSES
-    def setup_backend(self) -> None:
+    def setup_backend(self, settings : Settings) -> ...:
         """
         Setup the backend components.
         
-        Create the hardware objects and connect them to the main process. 
+        Create the hardware objects and connect them to the process. 
         
         .. note::
             The hardware has to be connected in a seperate function so the object 
@@ -344,28 +350,31 @@ class StackingSetupBackend:
         """
         self._logger = self._set_logger()
         self._emergency_breaker = self._init_emergency_breaker()
-        self._hardware = self._init_all_hardware()
+        self._hardware = self._init_all_hardware(settings)
         self._connect_all_hardware()
         self._logger.info('Stacking setup initiated with connected hardware: {}'.format(self._hardware))
 
-    def start_backend(self) -> None:
-        """Start the hardware controller process."""
+    def start_backend(self) -> ...:
+        """
+        Start the hardware controller process.
+        
+        Create a new process and start the controller loop in it.
+        """
         self._controller_process = mp.Process(target=self._controller_loop, args=(self._emergency_stop_event,
                                                                         self._shutdown, self._con_to_main, self._settings,))    
         self._controller_process.set_deamon=True
         self._controller_process.start()
 
     @catch_remote_exceptions
-    @typechecked
     def _controller_loop(self, emergency_stop_event : mp.Event, shutdown_event : mp.Event, 
-                        con_to_main : Union[PipelineConnection, SerialConnection], settings : Settings) -> None:
+                        con_to_main : Union[PipelineConnection, SerialConnection], 
+                        settings : Settings) -> ...:
         """
         The main loop of the hardware controller process.
 
         This loop is responsible for the communication with the main process 
-        and the parsing and execution of the commands.
-
-        This function should not be called directly but through the start_backend function.
+        and the parsing and execution of the commands. This function should 
+        not be called directly but through the :func:`start_backend` function.
 
         Parameters
         ----------
@@ -378,21 +387,17 @@ class StackingSetupBackend:
         settings : Settings
             The settings object.
         """
-        # When starting a process the class is pickled and a new instance is created in the new process.
-        # This means that attributes that were changed in the main process are not changed in the new process.
-        # To fix this the attributes are set again in the new process.
         self._con_to_main = con_to_main
         self._con_to_main.__init_lock__()
         self._con_to_main.handshake()
         self._emergency_stop_event = emergency_stop_event
         self._shutdown = shutdown_event
-        self.setup_backend()
+        self.setup_backend(settings)
 
-        # Start the execution loop
         while not emergency_stop_event.is_set() or not shutdown_event.is_set():
             # Check if a new command is available
             if self._con_to_main.message_waiting():
-                commands = self._con_to_main.receive() # Read the command
+                commands = self._con_to_main.receive()
 
                 # Check if the SENTINEL command is in commands
                 if isinstance(commands, (list, tuple,)):
@@ -403,17 +408,19 @@ class StackingSetupBackend:
                     # Power off the insturment and close the connection
                     break
 
+                # Parse and execute the commands
                 for command in commands:
-                    # Excecute all the commands
                     if command is not None:
                         try:
-                            parsed_command = GcodeParser.parse_gcode_line(command)  # Parse the command
+                            parsed_command = GcodeParser.parse_gcode_line(command) 
                         except (GcodeAttributeError, GcodeParsingError) as e:
-                            self._con_to_main.send(Message(exit_code=1, msg=str(e), command=command, command_id=''))
+                            self._con_to_main.send(Message(exit_code=1, msg=str(e), 
+                                        command=command, command_id=''))
                             continue
-                        self._execute_command(parsed_command) # Execute the command
+                        self._execute_command(parsed_command)
                     else:
-                        self._con_to_main.send(Message(exit_code=1, msg='Received None command', command=command, command_id=''))
+                        self._con_to_main.send(Message(exit_code=1, msg='Received None command', 
+                                            command=command, command_id=''))
             else:
                 time.sleep(0.01)
 
@@ -422,21 +429,17 @@ class StackingSetupBackend:
         self._con_to_main.disconnect()
         
     @typechecked        
-    def _execute_command(self, parsed_command : dict) -> None:
+    def _execute_command(self, parsed_command : dict) -> ...:
         """
         Execute the parsed command dict.
-
-        Parameters
-        ----------
-        parsed_command : dict
-            The parsed command dict.
         
-        Returns
-        -------
-        exit_code : int
-            0 if all the commands were executed successfully.
-        msg : str
-            The error message if any error occured.
+        The function will always the priority commands first and then the
+        machine commands (start with M), then the 'physical' commands (start with G). 
+        
+        .. attention::
+            The priority commands are M112 (emergency stop) and M999 (reset).
+            if one of these commands is in the parsed_command dict it will be
+            executed first and the rest of the commands will be ignored.
         """
         # Placeholder for the exit code
         exit_code = 0
@@ -446,20 +449,22 @@ class StackingSetupBackend:
             exit_code, msg = self._echo(func=self.M112, command_id='M112')
             # Remove the command from the dict
             del parsed_command['M112']
+            return
 
         if 'M999' in parsed_command.keys():
             exit_code, msg = self._echo_(func=self.M999, command_id='M999')
             # Remove the command from the dict
             del parsed_command['M999']
+            return
 
         # Excecute the machine commands (start with M)
         keys = list(parsed_command.keys())
         for command_id in keys:
             if exit_code:
-                # There was an error in the previous command
                 break
 
             if command_id[0] != 'M':
+                # The command is not a machine command so skip it
                 continue
             elif command_id == 'M105':
                 # Get the temperature
@@ -482,10 +487,6 @@ class StackingSetupBackend:
             elif command_id == 'M811':
                 # Use jogging
                 exit_code, msg = self._echo(func=self.M811, command_id='M811',
-                        command=parsed_command[command_id])
-            elif command_id == 'M812':
-                # Set driving parameters
-                exit_code, msg = self._echo(func=self.M812, command_id='M812',
                         command=parsed_command[command_id])
             else:
                 exit_code = 1
@@ -511,8 +512,12 @@ class StackingSetupBackend:
                 exit_code, msg = self._echo(func=self.G0, command_id='G0', 
                         command=parsed_command[command_id])
             elif command_id == 'G1':
-                # Make an arc to the given position
+                # Rotate the given axis
                 exit_code, msg = self._echo(func=self.G1, command_id='G1', 
+                        command=parsed_command[command_id])
+            elif command_id == 'G2':
+                # Jog the given axis
+                exit_code, msg = self._echo(func=self.G2, command_id='G2',
                         command=parsed_command[command_id])
             elif command_id == 'G28':
                 # Home all axes
@@ -537,17 +542,22 @@ class StackingSetupBackend:
             if key not in keys:
                 del parsed_command[key]
 
-
-        if not exit_code and len(parsed_command) != 0:
-            # Send the error message to the main process
-            msg = Message(exit_code=1, msg='Not all commands were executed: {}'.format(parsed_command), command=parsed_command, command_id='None')
-            self._con_to_main.send(msg)
+        if not exit_code or len(parsed_command) != 0:
+            message = Message(exit_code=1, msg='Not all commands were executed: {}'.format(parsed_command), 
+                            command=parsed_command, command_id='None')
+            self._con_to_main.send(message)
         
     # MOVEMENT FUNCTIONS
-    @typechecked
     def G0(self, movements : dict) -> tuple:
         """
         Move to the given axis in a lineair motion.
+
+        .. note::
+            For now this functions does not support simultaneous movement.
+            This is because some of the hardware does not support it
+            (hold_until_done == True). It could be chanced by figuring out
+            out wich axis can move simultaneously and wich can't (for example by class flag), 
+            then executing in a safe way, I did not have time to do this...
 
         Parameters
         ----------
@@ -559,31 +569,21 @@ class StackingSetupBackend:
         exit_code : int
             0 if the command was executed successfully.
         msg : str
-            The error message if any error occured.
+            The error message if any error occured, otherwise None.
         """
         axis_to_move = list(movements.keys())
         for axis in self._hardware:
             if axis.id in movements.keys():
-                # This axis should move
-                # Check if the move is relative or absolute
-                if self._positioning == 'REL':
-                    # Relative move
-                    try:
+                try:
+                    if self._positioning == 'REL':
+                        # Relative move
                         axis.move_by(movements[axis.id])
-                        axis_to_move.remove(axis.id)
-                    except NotSupportedError as e:
-                        # Relative linear movement not supported for this axis
-                        self._logger.critical(e)
-                elif self._positioning == 'ABS':
-                    # Absolute move
-                    try:
+                    elif self._positioning == 'ABS':
+                        # Absolute move
                         axis.move_to(movements[axis.id])
-                        axis_to_move.remove(axis.id)
-                    except NotSupportedError as e:
-                        # Absolute linear movement not supported for this axis
-                        self._logger.critical(e)
-                else:
-                    raise Exception('This point should never be reached.')
+                    axis_to_move.remove(axis.id)
+                except NotSupportedError:
+                    self._logger.debug('Linear movement not supported for axis {}'.format(axis.id))
         
         if len(axis_to_move) != 0:
             # There are still movements left
@@ -606,33 +606,21 @@ class StackingSetupBackend:
         exit_code : int
             0 if the command was executed successfully.
         msg : str
-            The error message if any error occured.
+            The error message if any error occured, otherwise None.
         """
         axis_to_move = list(movements.keys())
         for axis in self._hardware:
             if axis.id in movements.keys():
-                # This axis should move
-                # Check if the move is relative or absolute
-                if self._positioning == 'REL':
-                    # Relative move
-                    try:
+                try: 
+                    if self._positioning == 'REL':
+                        # Relative move
                         axis.rotate_by(movements[axis.id])
-                        axis_to_move.remove(axis.id)
-                    except NotSupportedError as e:
-                        # Relative linear movement not supported for this axis
-                        self._logger.critical(e)
-                        return 1, e
-                elif self._positioning == 'ABS':
-                    # Absolute move
-                    try:
+                    elif self._positioning == 'ABS':
+                        # Absolute move
                         axis.rotate_to(movements[axis.id])
-                        axis_to_move.remove(axis.id)
-                    except NotSupportedError as e:
-                        # Absolute linear movement not supported for this axis
-                        self._logger.critical(e)
-                        return 1, e.message
-                else:
-                    raise Exception('This point should never be reached.')
+                    axis_to_move.remove(axis.id)
+                except NotSupportedError:
+                    self._logger.debug('Rotation not supported for axis {}'.format(axis.id))
         
         if len(axis_to_move) != 0:
             # There are still movements left
@@ -643,19 +631,25 @@ class StackingSetupBackend:
     def G28(self) -> tuple:
         """
         Home all axes that need homing.
-        
+
+        If the axis does not need homing or does not support homing it will be skipped.
+
+        .. note::
+            Even though simultaneous homing is way more efficient for now 
+            there is no way to do this safely (see :func:`G0`)
+            
         Returns
         -------
         exit_code : int
             0 if the command was successful, 1 if not.
         msg : str
-            A message with the result of the command.
+            A message with the result of
         """
         for axis in self._hardware:
             try:
                 axis.home()
             except NotSupportedError:
-                pass
+                self._logger.debug('Homing not supported for axis {}'.format(axis.id))
 
         return 0, None
 
@@ -702,7 +696,8 @@ class StackingSetupBackend:
 
         .. important:: 
             This function should not be used as the value should 
-            be determinded during the calibration of the machine.
+            be determinded during the calibration of the machine and set in the
+            config file.
         
         Parameters
         ----------
@@ -725,7 +720,7 @@ class StackingSetupBackend:
                 try:
                     current[axis.id] = axis.steps_per_um
                 except NotSupportedError:
-                    pass
+                    self._logger.debug('Steps per um not supported for axis {}'.format(axis.id))
             return 0, current
 
         else:
@@ -746,9 +741,8 @@ class StackingSetupBackend:
         """
         Get the temperature report.
 
-        .. note::
-            The temperature report is returned in the following format:
-            {<axis_id> : {'current' : <current_temperature>, 'target' : <target_temperature>}}
+        The temperature report is returned in the following format:
+        {<axis_id> : {'current' : <current_temperature>, 'target' : <target_temperature>}}
         
         Returns
         -------
@@ -765,7 +759,7 @@ class StackingSetupBackend:
                              'target' : axis.target_temperature}
                 temperatures[axis.id] = part_temp
             except NotSupportedError:
-                pass
+                self._logger.debug('Temperature not supported for axis {}'.format(axis.id))
         
         return 0, temperatures
 
@@ -800,12 +794,19 @@ class StackingSetupBackend:
             try:
                 interval = self._keep_host_alive_timer.interval
             except AttributeError:
-                return 1, 'No keep alive interval set.'
+                msg = 'The keep alive timer interval was asked but no timer is set'
+                self._logger.debug(msg)
+                return 1, msg
 
-            return 0, interval
+            return 0, str(interval)
         elif interval['S'] == 0:
             # Disable the keep alive timer
-            self._keep_host_alive_timer.stop()
+            try:
+                self._keep_host_alive_timer.stop()
+            except AttributeError:
+                msg = 'Tried to stop the keep alive timer but no timer is set'
+                self._logger.debug(msg)
+                return 1, msg
             return 0, None
         else:
             self._keep_host_alive_timer = RepeatedTimer(interval=interval['S'], 
@@ -813,7 +814,7 @@ class StackingSetupBackend:
             self._keep_host_alive_timer.start()
             return 0, None
 
-    def _keep_host_alive(self) -> None:
+    def _keep_host_alive(self) -> ...:
         """Send a keep alive message to the host. (support function for M113)"""
         if self._con_to_main.is_connected:
             self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!', command_id='M113'))
@@ -824,9 +825,8 @@ class StackingSetupBackend:
         """
         Get the current positions.
 
-        .. note::
-            The positions are returned in the following format:
-            {<axis_id> : <position>, ...}
+        The positions are returned in the following format:
+        {<axis_id> : <position>, ...}
         
         Returns
         -------
@@ -840,20 +840,24 @@ class StackingSetupBackend:
             try:
                 positions[axis.id] = axis.position
             except NotSupportedError:
-                pass
+                self._logger.debug('Position not supported for axis {}'.format(axis.id))
 
         return 0, positions
 
     def M999(self) -> tuple:
         """
         Reset the machine.
+
+        .. warning::
+            This methos will reset the emergency flag and re-initialize all the hardware.
+            It is not recommended to use this method as the emergency flag signals something
+            is seriously wrong with the machine and should be fixed before continuing.
         
         Returns
         -------
         exit_code : int
             0 if the command was successful, 1 if not.
-        msg : str
-            A message with the result of the command.
+        msg : None
         """
         self._disconnect_all_hardware()  # Try to disconnect all the hardware.
         self._emergency_stop_event.clear()  # Reset the emergency stop flag.
@@ -861,18 +865,17 @@ class StackingSetupBackend:
         self._initiate_all_hardware()  # Reconnect all the hardware.
         return 0, None
 
-    def M154(self, interval):
+    def M154(self, interval) -> tuple:
         """
         Auto position report.
+
+        The data is returned in the msg variable in the following format:
+        {<axis_id> : <position>, ...}
 
         If the interval None is given the current settings will be returned if a 
         auto position update has been set. Otherwise the auto position timer will be
         set to the given amount of seconds. If 0 is given the timer is disabled.
 
-        .. note::
-            The data is returned in the msg variable in the following format:
-            {<axis_id> : <position>, ...}
-        
         Parameters
         ----------
         interval : dict
@@ -890,7 +893,9 @@ class StackingSetupBackend:
             try:
                 interval = self._auto_position_timer.interval
             except AttributeError:
-                return 1, 'No, uto position update interval set.'
+                msg = 'The auto position update interval was asked but no timer is set'
+                self._logger.debug(msg)
+                return 1, msg
 
             return 0, interval
         elif interval['S'] == 0:
@@ -899,25 +904,29 @@ class StackingSetupBackend:
                 self._auto_position_timer.stop()
                 return 0, None
             except AttributeError:
-                return 1, 'No auto position update interval set.'
+                msg = 'Tried to stop the auto position update timer but no timer was set'
+                self._logger.debug(msg)
+                return 1, msg
         else:
             self._auto_position_timer = RepeatedTimer(interval=interval['S'], 
                                                 function=self._auto_position_report)
             self._auto_position_timer.start()
             return 0, None
 
-    def _auto_position_report(self) -> None:
+    def _auto_position_report(self) -> ...:
         """Send a position update to the host. (support function for M154)"""
         if self._con_to_main.is_connected:
             exit_code, positions = self.M114()
             if exit_code == 0:
-                self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M154', command=''))
+                self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M154', 
+                                    command=''))
             else:
-                self._con_to_main.send(Message(exit_code=1, msg='Could not get positions.', command_id='M154', command=''))
+                self._con_to_main.send(Message(exit_code=1, msg='Could not get all positions, got {}'.format(positions), 
+                                    command_id='M154', command=''))
         else:
             self._auto_position_timer.stop()
 
-    def M155(self, interval):
+    def M155(self, interval) -> tuple:
         """
         Auto temperature report.
 
@@ -946,7 +955,9 @@ class StackingSetupBackend:
             try:
                 interval = self._auto_temperature_timer.interval
             except AttributeError:
-                return 1, 'No auto temperature update interval set.'
+                msg = 'The auto temperature update interval was asked but no timer is set'
+                self._logger.debug(msg)
+                return 1, msg
 
             return 0, interval
         elif interval['S'] == 0:
@@ -955,14 +966,16 @@ class StackingSetupBackend:
                 self._auto_temperature_timer.stop()
                 return 0, None
             except AttributeError:
-                return 1, 'No auto temperature update interval set.'
+                msg = 'Tried to stop the auto temperature update timer but no timer was set'
+                self._logger.debug(msg)
+                return 1, msg
         else:
             self._auto_temperature_timer = RepeatedTimer(interval=interval['S'], 
                                                 function=self._auto_temperature_report)
             self._auto_temperature_timer.start()
             return 0, None
 
-    def _auto_temperature_report(self) -> None:
+    def _auto_temperature_report(self) -> ...:
         """Send a position update to the host. (support function for M154)"""
         if self._con_to_main.is_connected:
             exit_code, positions = self.M105()
@@ -1005,7 +1018,6 @@ class StackingSetupBackend:
                         pass
         return 0, None
 
-    @typechecked
     def M812(self, command : dict) -> tuple:
         """
         Macro function to set the driving parameters for the stepper or actuator.
@@ -1028,35 +1040,7 @@ class StackingSetupBackend:
                 try:
                     axis.speed = command[axis.id]
                 except KeyError:
-                    print('No speed given for axis {}'.format(axis.id))
-                    pass
-
-        return 0, None
-
-    def M813(self, command : dict) -> tuple:
-        """
-        Custom function to set the acceleration of the given axes.
-
-        .. attention::
-            This function is currently not supported by the backend.
-
-        Parameters
-        ----------
-        command : dict
-            A dictionary with the axis id(s) and the acceleration to set
-        
-        Returns
-        -------
-        exit_code : int
-            0 if the command was successful, 1 if not.
-        msg : str
-            A message with the result of the command.
-        """
-        for axis in self._hardware:
-            if axis.id == axis:
-                try:
-                    axis.acceleration = command[axis.id]
-                except KeyError:
+                    self._logger.debug('No speed given for axis {}'.format(axis.id))
                     pass
 
         return 0, None

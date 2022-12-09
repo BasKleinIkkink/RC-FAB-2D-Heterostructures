@@ -12,7 +12,7 @@ except ImportError:
     from base import HardwareNotConnectedError
 
 
-class KDC101():
+class KDC101:
     """Class to control communication with the KCD101 motorcontroller."""
     _type = 'KDC101'
     _connected = False

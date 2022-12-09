@@ -11,7 +11,7 @@ except ImportError:
     from base import HardwareNotConnectedError
 
 
-class KIM101():
+class KIM101:
     """Class to control communication with the KIM101 piezocontroller."""
     _controller = None
     _connected = False

@@ -32,6 +32,7 @@ class TestPipeLineConnection(unittest.TestCase):
     def test_send_and_receive_a_message(self, connector_mock):
         parent_pipe = PipelineConnection(self.to_proc, 'FRONDEND', self.settings)
         child_pipe = PipelineConnection(self.from_proc, 'BACKEND', self.settings)
+        child_pipe.__init_lock__()
 
         parent_pipe.send('Hello World')
         self.assertEqual(child_pipe.receive(), ['Hello World'])
@@ -41,6 +42,7 @@ class TestPipeLineConnection(unittest.TestCase):
     def test_message_waiting(self, connector_mock):
         parent_pipe = PipelineConnection(self.to_proc, 'FRONDEND', self.settings)
         child_pipe = PipelineConnection(self.from_proc, 'BACKEND', self.settings)
+        child_pipe.__init_lock__()
 
         parent_pipe.send('Hello World')
         self.assertTrue(child_pipe.message_waiting())
@@ -56,6 +58,7 @@ class TestPipeLineConnection(unittest.TestCase):
     def test_is_connected(self, connector_mock):
         parent_pipe = PipelineConnection(self.to_proc, 'FRONDEND', self.settings)
         child_pipe = PipelineConnection(self.from_proc, 'BACKEND', self.settings)
+        child_pipe.__init_lock__()
 
         self.assertTrue(parent_pipe.is_connected)
         self.assertTrue(child_pipe.is_connected)

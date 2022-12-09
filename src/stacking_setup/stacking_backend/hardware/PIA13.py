@@ -32,11 +32,6 @@ class PIA13(Base):
             The event to use for emergency stop.
         settings: Settings
             The settings object.
-
-        Raises
-        ------
-        HardwareNotConnectedError
-            If the hardware is not connected.
         """
         self._id = id
         self._type = 'PIA13'
@@ -53,14 +48,11 @@ class PIA13(Base):
     @property
     def device_info(self) -> dict:
         """Get the device info."""
-        self._lock.acquire()
-        info = {'id': self._id,
+        return {'id': self._id,
                 'type': self._type,
                 'channel': self._channel,
-                'controller': self._hardware_controller
+                'controller': self._hardware_controller.type
                 }
-        self._lock.release()
-        return info
 
     @property
     def steps_per_um(self) -> ...:

@@ -12,6 +12,7 @@ if __name__ == '__main__':
 
     # Do some tests
     print('Is connected: {}'.format(controller.is_connected()))
+    #controller.home()
     #print('Moving')
     #controller.move_to('X', 5000)
     #print('X position {}'.format(controller.position(axis='x')))

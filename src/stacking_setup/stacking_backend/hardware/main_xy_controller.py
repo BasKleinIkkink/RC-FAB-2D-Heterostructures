@@ -1,4 +1,4 @@
-from .base import NotSupportedError, Base, HardwareNotConnectedError
+from .base import NotSupportedError, Base, HardwareNotConnectedError, HardwareError
 import serial
 from typing import Union, Tuple
 import time
@@ -7,7 +7,7 @@ from ..configs.settings import Settings
 import multiprocessing as mp
 
 
-class MainXYController(Base):
+class MainXYController:
     """
     This is the main class responsible for communication with the eld controller.
     
@@ -15,11 +15,13 @@ class MainXYController(Base):
     - :class:`SampleStage`
     - :class:`EmergencyBreaker`
 
-    .. note::
+    .. attention::
         The controler uses steps as the unit of measurement. This means all values from
-        the user should be converted from um to steps
+        the user should be converted from um to steps. This is not done in this class
+        and is the responsibility of the overlaying class
     """
     _type = 'MAINXYCONTROLLER'
+    _connected = False
 
     def __init__(self, settings : Settings, em_event : mp.Event) -> ...:
         """
@@ -37,11 +39,12 @@ class MainXYController(Base):
         self._port = settings.get(self._type+'.DEFAULT', 'port')
         self._baud_rate = settings.get(self._type+'.DEFAULT', 'baud_rate')
         self._timeout = settings.get(self._type+'.DEFAULT', 'timeout')
-        self._max_temperature = settings.get(self._type+'.DEFAULT', 'max_temperature')
         # self._serial_nr = settings.get(self._type+'.DEFAULT', 'serial_nr')
         self._temp_control_active = False
         self._lock = tr.Lock()
         self._homed = False
+        self._zeroed = False
+        self._vacuum_state = False
 
     # COMMUNICATION
     def _send_and_receive(self, command : str, expect_confirmation : bool=True, 
@@ -118,9 +121,19 @@ class MainXYController(Base):
             if not got_response:
                 # Waiting for response timed out
                 print("The command {} did not receive a response.".format(command))
-                raise HardwareNotConnectedError("The tango desktop did not respond to the command {}.".format(command))
+                raise HardwareError("The tango desktop did not respond to the command {}.".format(command))
 
-    # MOVEMENT PROFILE ATTRIBUTES
+    # MOVEMENT ATTRIBUTES
+    @property
+    def is_homed(self) -> bool:
+        """Check if the hardware is homed."""
+        return self._homed
+
+    @property
+    def is_zeroed(self) -> bool:
+        """Check if the hardware has performed the zero move."""
+        return self._zeroed
+
     @property
     def speed(self) -> int:
         """Get the speed of the controller."""
@@ -136,27 +149,6 @@ class MainXYController(Base):
         res = self._send_and_receive('l', expect_response=True)
         self._lock.release()
         return res[1]
-
-    def position(self, axis : Union[str, None]=None) -> Union[int, Tuple[int]]:
-        """
-        Get the position of the hardware.
-
-        Parameters
-        ----------
-        axis: str or None
-            The axis to get the position of. If None, the position of all axes will be returned.
-        """
-        self._lock.acquire()
-        res1 = self._send_and_receive('gpx', expect_response=True)[0]
-        res2 = self._send_and_receive('gpy', expect_response=True)[0]
-        self._lock.release()
-        
-        if axis.lower() == 'x':
-            return int(res1)
-        elif axis.lower() == 'y':
-            return int(res2)
-        else:
-            return int(res1), int(res2)
 
     # TEMPERATURE ATTRIBUTES
     @property
@@ -176,104 +168,195 @@ class MainXYController(Base):
         return float(res[3].decode()) / 10
 
     @target_temperature.setter
-    def target_temperature(self, temperature):
+    def target_temperature(self, temperature : Union[float, int]) -> ...:
         """Set the target temperature of the hardware."""
         if temperature > self._max_temperature:
             temperature = self._max_temperature
-        
-        self._lock.acquire()
-        self._send_and_receive('st{}'.format(temperature * 1000))
 
         if not self._temp_control_active:
             # Activate the temp control
             self._send_and_receive('fp1')
+        
+        self._lock.acquire()
+        self._send_and_receive('st{}'.format(temperature * 100))
         self._lock.release()
 
     # CONNECTION FUNCTIONS
-    def connect(self):
+    def connect(self, zero : bool=True) -> ...:
         """Connect the hardware."""
+        self._lock.acquire()
         self._ser = serial.Serial(self._port, self._baud_rate, timeout=self._timeout)
 
         # Read the welcome message
-        m1 = b'BaseStage Controller V0.1 starting...'
-        m2 = b'Initialization done, starting control tasks...'
+        m1 = b'BaseStage Controller V0.1 starting...\n\r'
+        m2 = b'Initialization done, starting control tasks...\n\r'
         msg_list = self._ser.readlines()
-        for i in range(len(msg_list)):
-            msg_list[i] = msg_list[i].strip()
-
         if not m1 in msg_list or not m2 in msg_list:
-            raise HardwareNotConnectedError("The base controller did not respond with the correct welcome message.")
+            raise HardwareError("The base controller did not respond with the correct welcome message.")
 
         # Enter run mode so the controller can be used
         self._send_and_receive('n', expect_confirmation=True)
+        self._connected = True
+        self._lock.release()
 
-    def disconnect(self):
+    def disconnect(self) -> ...:
         """Disconnect the hardware."""
         self._send_and_receive('p', expect_confirmation=True)
         self._ser.close()
 
-    # STATUS FUNCTIONS
     def is_connected(self) -> bool:
         """Check if the hardware is connected."""
-        self._lock.acquire()
-        resp = self._send_and_receive('gb', expect_response=True)
-        self._lock.release()
-        if resp is not None:
-            return True
-        else:
-            return False
+        return self._is_connected
 
-    def is_moving(self):
-        """Check if the hardware is moving."""
-        raise NotSupportedError()
-
-    def is_homed(self):
-        """Check if the hardware is homed."""
-        raise NotSupportedError()
-
-    def get_status(self):
-        """Give a status report."""
+    # STATUS FUNCTIONS
+    def is_heating(self) -> bool:
+        """Check if the hardware is heating."""
         raise NotImplementedError()
+        self._lock.acquire()
+        res = self._send_and_receive('ga', expect_response=True)
+        self._lock.release()
+
+    def is_cooling(self) -> bool:
+        """Check if the hardware is cooling."""
+        raise NotImplementedError()
+        self._lock.acquire()
+        res = self._send_and_receive('ga', expect_response=True)
+        self._lock.release()
+
+    def is_moving(self, axis : Union[str, None]=None) -> bool:
+        """Check if the hardware is moving."""
+        self._lock.acquire()
+        res = self._send_and_receive('gb')
+        self._lock.release()
+        return bool(res[14])
 
     # HOMING FUNCTIONS
-    def home(self):
-        """Home the hardware."""
-        raise NotSupportedError()
+    def zero(self) -> ...:
+        """
+        Zero the connected stepper motors.
+
+        .. note::
+            The axis will be homed seperately, first the x-axis and then the y-axis.
+            The stepper will move to home switch -> range_switxh -> home_switch.
+
+        Raises
+        ------
+        HardwareError
+            If the stepper motors do not succesfully zero.
+        """
+        self._lock.acquire()
+        self._send_and_receive('z', expect_confirmation=True)
+
+        # Wait for the homing to finish
+        x_homed = False
+        y_homed = False
+
+        etime = time.time() + 20  # Max 20 seconds to home
+        while not (x_homed and y_homed) and time.time() < etime:
+            if self._ser.in_waiting > 0:
+                data = self._ser.readlines()
+                for i in data:
+                    if i.strip()[:8] == b'ENDPOS X':
+                        x_homed = True
+                    if i.strip()[:8] == b'ENDPOS Y':
+                        y_homed = True
+        self._lock.release()
+
+        if not x_homed or not y_homed:
+            raise HardwareError("The base controller did not home within the time limit.")
+        self._homed = True
+        self._zeroed = True
+
+    def home(self) -> ...:
+        """
+        Home the connected stepper motors.
+        
+        .. note::
+            This method will move the x and y axis to the internal 0 position.
+        """
+        raise NotImplementedError()
 
     # MOVING FUNCTIONS
-    def start_jog(self, direction):
-        """Start a jog in a direction."""
-        raise NotSupportedError()
+    def get_position(self, axis : Union[str, None]=None) -> Union[int, Tuple[int]]:
+        """
+        Get the position of the hardware.
 
-    def stop_jog(self):
+        Parameters
+        ----------
+        axis: 'x', 'y' or None
+            The axis to get the position of. If None, the position of all axes will be returned.
+        """
+        self._lock.acquire()
+        res1 = self._send_and_receive('gpx', expect_response=True)[0]
+        res2 = self._send_and_receive('gpy', expect_response=True)[0]
+        self._lock.release()
+        
+        if axis.lower() == 'x':
+            return int(res1)
+        elif axis.lower() == 'y':
+            return int(res2)
+        else:
+            return int(res1), int(res2)
+
+    def start_jog(self, axis : str, direction : str, velocity : Union[float, int]) -> ...:
+        """
+        Start a jog in a direction.
+        
+        .. warning::
+            This function does not limit the speed of the jog. The calling
+            function should limit the speed of the jog.
+
+        Parameters
+        ----------
+        axis : str
+            The axis to jog.
+        direction : str
+            The direction to jog, this can be + or -.
+        
+        """
+        self._lock.acquire()
+        self._send_and_receive('j{}{}'.format(direction, velocity))
+        self._lock.release()
+
+    def stop_jog(self, ) -> ...:
         """Stop a jog."""
-        raise NotSupportedError()
+        self.stop()
 
-    def move_to(self, id, position):
+    def move_to(self, id : str, position : Union[float, int]) -> ...:
         """Move the hardware to a position."""
         self._lock.acquire()
         self._send_and_receive('sp{}{}'.format(id.lower(), position))
         self._lock.release()
 
-    def move_by(self, id, distance):
+    def move_by(self, id : str, distance : Union[float, int]) -> ...:
         """Move the hardware by a position."""
         pos = self.position(id)
         self._lock.acquire()
         self._send_and_receive('sp{}{}'.format(id.lower(), pos + distance))
         self._lock.release()
 
-    def rotate_to(self, rotation):
-        """Rotate the hardware to a position."""
-        raise NotSupportedError()
-
-    def rotate_by(self, rotation):
-        """Rotate the hardware by a position."""
-        raise NotSupportedError()
-
-    def stop(self):
+    def stop(self) -> ...:
         """Unconditionally stop the hardware."""
         raise NotImplementedError()
 
-    def emergency_stop(self):
-        """Unconditionally stop the hardware."""
+    def emergency_stop(self) -> ...:
+        """
+        Unconditionally stop the hardware.
+        
+        .. note::
+            This function intentionally does not capture the lock. This is
+            because the function should be able to run at all times
+        """
         self.send_and_receive('x')
+
+    def vacuum_on(self) -> ...:
+        """Turn the vacuum on."""
+        self._lock.acquire()
+        self._send_and_receive('sv1')
+        self._lock.release()
+
+    def vacuum_off(self) -> ...:
+        """Turn the vacuum off."""
+        self._lock.acquire()
+        self._send_and_receive('sv0')
+        self._lock.release()
