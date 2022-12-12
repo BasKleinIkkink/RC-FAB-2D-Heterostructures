@@ -5,6 +5,7 @@ import time
 import threading as tr
 from ..configs.settings import Settings
 import multiprocessing as mp
+from time import sleep
 
 
 class MainXYController:

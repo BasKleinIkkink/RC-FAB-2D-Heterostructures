@@ -36,14 +36,6 @@ stacking\_backend.hardware.PIA13 module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.hardware.PRMTZ8 module
---------------------------------------------------------
-
-.. automodule:: stacking_setup.stacking_backend.hardware.PRMTZ8
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 stacking\_backend.hardware.TangoDesktop module
 --------------------------------------------------------------
 
@@ -60,10 +52,18 @@ stacking\_backend.hardware.base module
    :undoc-members:
    :show-inheritance:
 
-stacking\_backend.hardware.emergency\_breaker module
---------------------------------------------------------------------
+stacking\_backend.hardware.base\_stepper module
+---------------------------------------------------------------
 
-.. automodule:: stacking_setup.stacking_backend.hardware.emergency_breaker
+.. automodule:: stacking_setup.stacking_backend.hardware.base_stepper
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+stacking\_backend.hardware.main\_xy\_controller module
+----------------------------------------------------------------------
+
+.. automodule:: stacking_setup.stacking_backend.hardware.main_xy_controller
    :members:
    :undoc-members:
    :show-inheritance:

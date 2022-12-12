@@ -1,4 +1,9 @@
-from pylablib.devices.Thorlabs.kinesis import KinesisMotor, list_kinesis_devices, TVelocityParams, TJogParams
+from pylablib.devices.Thorlabs.kinesis import (
+    KinesisMotor,
+    list_kinesis_devices,
+    TVelocityParams,
+    TJogParams,
+)
 from typing import Union
 from typeguard import typechecked
 from configparser import ConfigParser
@@ -14,15 +19,16 @@ except ImportError:
 
 class KDC101:
     """Class to control communication with the KCD101 motorcontroller."""
-    _type = 'KDC101'
+
+    _type = "KDC101"
     _connected = False
     _controller = None
 
     @typechecked
-    def __init__(self, settings : Settings, em_event : mp.Event) -> ...:
+    def __init__(self, settings: Settings, em_event: mp.Event) -> ...:
         """
         Initialize the KCD101.
-        
+
         Parameters
         ----------
         settings : Settings
@@ -36,11 +42,13 @@ class KDC101:
             If the KCD101 is not connected.
         """
         self._lock = tr.Lock()  # To ensure threadsafe serial communication
-        self._settings=settings
-        self._serial_nr = self._settings.get(self._type+'.DEFAULT', 'serial_nr')
+        self._settings = settings
+        self._serial_nr = self._settings.get(self._type + ".DEFAULT", "serial_nr")
         self._em_event = em_event
-        if self._serial_nr == 'None':
-            raise HardwareNotConnectedError('It could not be determined if the device is connected because of missing serial nr in config.')
+        if self._serial_nr == "None":
+            raise HardwareNotConnectedError(
+                "It could not be determined if the device is connected because of missing serial nr in config."
+            )
 
         # Check if the controller is connected.
         connected_devices = list_kinesis_devices()
@@ -51,8 +59,8 @@ class KDC101:
                 break
 
         if not device_found:
-            print('The connected devices: {}'.format(list_kinesis_devices()))
-            raise HardwareNotConnectedError('The external controller is not connected.')
+            print("The connected devices: {}".format(list_kinesis_devices()))
+            raise HardwareNotConnectedError("The external controller is not connected.")
 
     # CONNECTION FUNCTIONS
     def connect(self) -> ...:
@@ -90,7 +98,7 @@ class KDC101:
         .. important::
             This function is mostly used as a support function for other functions,
             and does not capture the lock. This means this function alone is not thread safe.
-        
+
         Returns
         -------
         bool
@@ -102,7 +110,7 @@ class KDC101:
     def get_position(self) -> Union[int, float]:
         """
         Get the position of the motor.
-        
+
         Returns
         -------
         int, float
@@ -116,7 +124,7 @@ class KDC101:
     def is_homed(self) -> bool:
         """
         Check if the motor is homed.
-        
+
         Returns
         -------
         bool
@@ -134,7 +142,7 @@ class KDC101:
         .. important::
             This function is mostly used as a support function for other functions,
             and does not capture the lock. This means this function alone is not thread safe.
-        
+
         Returns
         -------
         bool
@@ -144,10 +152,10 @@ class KDC101:
         return state
 
     # HOMING FUNCTIONS
-    def home(self, hold_until_done : bool = False) -> ...:
+    def home(self, hold_until_done: bool = False) -> ...:
         """
         Home the motor.
-        
+
         Parameters
         ----------
         hold_until_done : bool
@@ -164,7 +172,7 @@ class KDC101:
     def get_homing_parameters(self) -> dict:
         """
         Get the homing parameters.
-        
+
         Returns
         -------
         dict
@@ -173,11 +181,14 @@ class KDC101:
         self._lock.acquire()
         params = self._controller.get_homing_parameters()
         self._lock.release()
-        return {'vel': params[2], 'dir': params[0]}
+        return {"vel": params[2], "dir": params[0]}
 
     @typechecked
-    def setup_homing(self, velocity : Union[float, int, None]=None, 
-            acceleration : Union[float, int, None]=None) -> ...:
+    def setup_homing(
+        self,
+        velocity: Union[float, int, None] = None,
+        acceleration: Union[float, int, None] = None,
+    ) -> ...:
         """
         Set the homing parameters.
 
@@ -196,7 +207,7 @@ class KDC101:
 
     # JOG AND DRIVE PARAMETERS
     @typechecked
-    def get_drive_parameters(self, scale: bool=True) -> dict:
+    def get_drive_parameters(self, scale: bool = True) -> dict:
         """
         Get the drive parameters.
 
@@ -214,11 +225,15 @@ class KDC101:
         # Format the parameters to dict format.
         params = self._controller.get_velocity_params(scale=scale)
         self._lock.release()
-        return {'vel': params[2], 'acc': params[1]}
-        
+        return {"vel": params[2], "acc": params[1]}
+
     @typechecked
-    def setup_drive(self, velocity : Union[float, int]=None, 
-            acceleration : Union[float, int]=None, scale : bool =True) -> ...:
+    def setup_drive(
+        self,
+        velocity: Union[float, int] = None,
+        acceleration: Union[float, int] = None,
+        scale: bool = True,
+    ) -> ...:
         """
         Set the drive parameters of the rotation plate.
 
@@ -232,11 +247,13 @@ class KDC101:
             If True, the parameters will be scaled to the correct units.
         """
         self._lock.acquire()
-        self._controller.setup_velocity(max_velocity=velocity, acceleration=acceleration, scale=scale)
+        self._controller.setup_velocity(
+            max_velocity=velocity, acceleration=acceleration, scale=scale
+        )
         self._lock.release()
-    
+
     @typechecked
-    def get_jog_parameters(self, scale : bool=True) -> dict:
+    def get_jog_parameters(self, scale: bool = True) -> dict:
         """
         Get the jog parameters.
 
@@ -253,11 +270,15 @@ class KDC101:
         self._lock.acquire()
         params = self._controller.get_jog_params(scale=scale)
         self._lock.release()
-        return {'step_size': params[1], 'vel': params[2], 'acc': params[3]}
+        return {"step_size": params[1], "vel": params[2], "acc": params[3]}
 
     @typechecked
-    def setup_jog(self, velocity : Union[float, int, None]=None, 
-            acceleration: Union[float, int, None]=None, scale: bool=True) -> ...:
+    def setup_jog(
+        self,
+        velocity: Union[float, int, None] = None,
+        acceleration: Union[float, int, None] = None,
+        scale: bool = True,
+    ) -> ...:
         """
         Set the jog parameters of the rotation plate.
 
@@ -271,16 +292,20 @@ class KDC101:
             If True, the parameters will be scaled to the correct units.
         """
         self._lock.acquire()
-        self._controller.setup_jog(max_velocity=velocity, acceleration=acceleration, scale=scale)
+        self._controller.setup_jog(
+            max_velocity=velocity, acceleration=acceleration, scale=scale
+        )
         self._lock.release()
 
     # MOVEMENT FUNCTIONS
     @typechecked
-    def start_jog(self, direction : Union[str, int, bool], kind : str='continuous') -> ...:
+    def start_jog(
+        self, direction: Union[str, int, bool], kind: str = "continuous"
+    ) -> ...:
         """
         Start a jog movement.
 
-        .. attention:: 
+        .. attention::
             The jog has to be terminated by the :func:`stop_jog` method.
 
         Parameters
@@ -301,8 +326,12 @@ class KDC101:
         self._lock.release()
 
     @typechecked
-    def rotate_to(self, position : Union[float, int], 
-            hold_until_done : bool=True, scale : bool=True) -> ...:
+    def rotate_to(
+        self,
+        position: Union[float, int],
+        hold_until_done: bool = True,
+        scale: bool = True,
+    ) -> ...:
         """
         Move the motor to the given position.
 
@@ -328,8 +357,12 @@ class KDC101:
         self._lock.release()
 
     @typechecked
-    def rotate_by(self, distance : Union[float, int], 
-            hold_until_done : bool=True, scale : bool=True) -> ...:
+    def rotate_by(
+        self,
+        distance: Union[float, int],
+        hold_until_done: bool = True,
+        scale: bool = True,
+    ) -> ...:
         """
         Move the motor by the given distance.
 
@@ -369,41 +402,42 @@ class KDC101:
         self._em_event.set()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from time import sleep
     import configparser
+
     # Connect to the controller.
     config = configparser.ConfigParser()
-    config.read('..\configs\config.ini')
-    controller = KDC101(config, '27263640')
+    config.read("..\configs\config.ini")
+    controller = KDC101(config, "27263640")
     controller.connect()
 
     # Test drive functions.
     drive_params = controller.get_drive_parameters()
-    print('original drive settings: {}'.format(drive_params))
+    print("original drive settings: {}".format(drive_params))
     controller.setup_drive(velocity=20, acceleration=15)
-    print('new drive settings: {}'.format(controller.get_drive_parameters()))
+    print("new drive settings: {}".format(controller.get_drive_parameters()))
     controller.rotate_by(1000, scale=False)
     controller.rotate_to(25000, scale=False)
 
     # Reset the driving params
     controller.setup_drive(velocity=10, acceleration=10)
-    print('reset drive settings: {}'.format(controller.get_drive_parameters()))
+    print("reset drive settings: {}".format(controller.get_drive_parameters()))
 
     # Test jog functions.
     jog_params = controller.get_jog_parameters()
-    print('original jog settings: {}'.format(jog_params))
+    print("original jog settings: {}".format(jog_params))
     controller.setup_jog(velocity=20, acceleration=20)
-    print('new jog settings: {}'.format(controller.get_jog_parameters()))
-    controller.start_jog('+')
+    print("new jog settings: {}".format(controller.get_jog_parameters()))
+    controller.start_jog("+")
     sleep(3)
     controller.stop_jog()
-    controller.start_jog('-')
+    controller.start_jog("-")
     sleep(3)
     controller.stop_jog()
 
     # Reset the jog params
     controller.setup_jog(velocity=15, acceleration=15)
-    print('reset jog settings: {}'.format(controller.get_jog_parameters()))	
+    print("reset jog settings: {}".format(controller.get_jog_parameters()))
 
     controller.home()

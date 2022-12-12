@@ -16,7 +16,6 @@ from .hardware.PIA13 import PIA13
 from .hardware.sample_bed import SampleBed
 from .hardware.main_xy_controller import MainXYController
 from .hardware.TangoDesktop import TangoDesktop
-from .hardware.emergency_breaker import EmergencyBreaker
 from ..stacking_middleware.pipeline_connection import PipelineConnection
 from ..stacking_middleware.serial_connection import SerialConnection
 from .configs.settings import Settings
@@ -245,23 +244,6 @@ class StackingSetupBackend:
         # Return the exit code and msg
         return exit_code, msg
 
-    # STARTING AND STOPPING
-    def _init_emergency_breaker(self) -> EmergencyBreaker:
-        """
-        Initiate the emergency breaker.
-        
-        .. note::
-            Just as the logging class the emergency breaker has to be initiated in a seperate function
-            because it contains code that cannot be pickled.
-
-        Returns
-        -------
-        emergency_breaker : EmergencyBreaker
-            The emergency breaker.
-        """
-        # return EmergencyBreaker(self._emergency_stop_event)
-        pass
-
     def _init_all_hardware(self, settings : Settings) -> list:
         """
         Initiate the hardware.
@@ -306,7 +288,7 @@ class StackingSetupBackend:
             self._base_controller = MainXYController(settings=settings, em_event=self._emergency_stop_event)
 
             if self._settings.get('SAMPLEHOLDER.L', 'enabled'):
-                _hardware.append(SampleBed(id='L', hardware_controller=self._motor_controller, 
+                _hardware.append(SampleBed(id='J', hardware_controller=self._motor_controller, 
                                 em_event=self._emergency_stop_event, settings=settings))
 
         # Initiate the focus stage
