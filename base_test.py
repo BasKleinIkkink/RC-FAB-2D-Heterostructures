@@ -1,6 +1,5 @@
 from src.stacking_setup.stacking_backend.hardware.main_xy_controller import MainXYController
 from src.stacking_setup.stacking_backend.configs.settings import Settings
-import serial
 import multiprocessing as mp
 from time import sleep
 
@@ -11,7 +10,6 @@ if __name__ == '__main__':
     controller = MainXYController(settings, em_event)
     controller.connect()
 
-    """
     # Do some tests
     print('Is connected: {}'.format(controller.is_connected()))
     controller.home()
@@ -31,5 +29,4 @@ if __name__ == '__main__':
     controller.target_temperature = 20
 
     controller.disconnect()
-    """
     

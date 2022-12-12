@@ -36,7 +36,6 @@ class MainXYController:
         self._port = settings.get(self._type+'.DEFAULT', 'port')
         self._baud_rate = settings.get(self._type+'.DEFAULT', 'baud_rate')
         self._timeout = settings.get(self._type+'.DEFAULT', 'timeout')
-        # self._serial_nr = settings.get(self._type+'.DEFAULT', 'serial_nr')
         self._temp_control_active = False
         self._lock = tr.Lock()
         self._homed = False
@@ -182,18 +181,21 @@ class MainXYController:
     def connect(self, zero : bool=True) -> ...:
         """Connect the hardware."""
         self._lock.acquire()
+        # time.sleep(0.1)
         self._ser = serial.Serial(self._port, self._baud_rate, timeout=self._timeout)
+        m3 = b'Base Stage Controller10\r\n'
 
-        # Read the welcome message
-        m1 = b'BaseStage Controller V0.1 starting...\n\r'
-        m2 = b'Initialization done, starting control tasks...\n\r'
+        # Reset the input buffer
+        time.sleep(2)
+        self._ser.reset_input_buffer()
+        self._ser.write(b'gid\r\n')
         msg_list = self._ser.readlines()
-        if not m1 in msg_list or not m2 in msg_list:
-            raise HardwareError("The base controller did not respond with the correct welcome message.")
+        if not m3 in msg_list:
+            raise HardwareError("The base controller did not respond with the correct id. {}".format(msg_list))
 
         # Enter run mode so the controller can be used
         self._send_and_receive('n', expect_confirmation=True)
-        self._connected = True
+        self._is_connected = True
         self._lock.release()
 
     def disconnect(self) -> ...:
