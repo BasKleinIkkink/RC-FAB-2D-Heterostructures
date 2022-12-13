@@ -18,7 +18,7 @@ class MainXYController:
         and is the responsibility of the overlaying class
     """
     _type = 'MAINXYCONTROLLER'
-    _connected = False
+    _is_connected = False
 
     def __init__(self, settings : Settings, em_event : mp.Event) -> ...:
         """
@@ -119,6 +119,26 @@ class MainXYController:
                 print("The command {} did not receive a response.".format(command))
                 raise HardwareError("The tango desktop did not respond to the command {}.".format(command))
 
+    def check_error(self) -> ...:
+        """Check if the controller has an error."""
+        self._lock.acquire()
+        res = self._send_and_receive('e', expect_response=True)
+
+        # Check critical error codes
+        if res[0] != b'0':
+            self.emergency_stop()
+        elif res[1] != b'0':
+            raise HardwareError('The stepper drivers on the base control box are not powered or switched off.')
+        elif res[2] != b'0' or res[3] != b'0':
+            raise HardwareError('The heater respons timed out while the PID is active.')
+        elif res[4] != b'0':
+            raise HardwareError('The stepper response timed out while zero-ing.')
+
+        # Get the non critical error codes
+        res = self._send_and_receive('gb', expect_response=True)
+        if res[14] != b'0' or res[1] != b'0':
+            raise HardwareError('One or both of the stepper motors have stalled.')
+        
     # MOVEMENT ATTRIBUTES
     @property
     def is_homed(self) -> bool:
@@ -166,14 +186,11 @@ class MainXYController:
     @target_temperature.setter
     def target_temperature(self, temperature : Union[float, int]) -> ...:
         """Set the target temperature of the hardware."""
-        if temperature > self._max_temperature:
-            temperature = self._max_temperature
-
+        self._lock.acquire()
         if not self._temp_control_active:
             # Activate the temp control
             self._send_and_receive('fp1')
         
-        self._lock.acquire()
         self._send_and_receive('st{}'.format(temperature * 100))
         self._lock.release()
 
@@ -202,6 +219,7 @@ class MainXYController:
         """Disconnect the hardware."""
         self._send_and_receive('p', expect_confirmation=True)
         self._ser.close()
+        self._is_connected = False
 
     def is_connected(self) -> bool:
         """Check if the hardware is connected."""
@@ -222,12 +240,34 @@ class MainXYController:
         res = self._send_and_receive('ga', expect_response=True)
         self._lock.release()
 
-    def is_moving(self, axis : Union[str, None]=None) -> bool:
+    def is_moving(self, axis=Union[str, None]) -> bool:
         """Check if the hardware is moving."""
         self._lock.acquire()
-        res = self._send_and_receive('gb')
+        res = self._send_and_receive('gb', expect_response=True)
         self._lock.release()
-        return bool(res[14])
+        if axis is None:
+            if res[15] == b'1' or res[31] == b'1' or res[47] == b'1':
+                return True
+            else:
+                return False
+        if axis.lower() not in ['x', 'y', 'z']:
+            raise HardwareError('Unknown axis {}, could not determine if moving'.format(axis))
+        else:
+            if axis.lower() == 'x':
+                if res[15] == b'1':
+                    return True
+                else:
+                    return False
+            elif axis.lower() == 'y':
+                if res[31] == b'1':
+                    return True
+                else:
+                    return False
+            elif axis.lower() == 'z':
+                if res[47] == b'1':
+                    return True
+                else:
+                    return False
 
     # HOMING FUNCTIONS
     def zero(self) -> ...:
@@ -269,11 +309,29 @@ class MainXYController:
     def home(self) -> ...:
         """
         Home the connected stepper motors.
+
+        Will home the x and y axis (not zero) if the axis has been zeroed. If the servos
+        were not set to zeo first that will be done instead. Go to position 
+        is used instead of the build in home function to prevent the stepper from moving simultaneously.
         
         .. note::
             This method will move the x and y axis to the internal 0 position.
         """
-        raise NotImplementedError()
+        if not self._zeroed:
+            self.zero()
+        else:
+            self._lock.acquire()
+            self._send_and_receive('spx0')
+            self._lock.release()
+            while self.is_moving(axis='x'):
+                time.sleep(0.1)
+            self._lock.acquire()
+            self._send_and_receive('spy0')
+            self._lock.release()
+            while self.is_moving(axis='y'):
+                time.sleep(0.1)
+            
+            self._homed = True
 
     # MOVING FUNCTIONS
     def get_position(self, axis : Union[str, None]=None) -> Union[int, Tuple[int]]:
@@ -297,7 +355,7 @@ class MainXYController:
         else:
             return int(res1), int(res2)
 
-    def start_jog(self, axis : str, direction : str, velocity : Union[float, int]) -> ...:
+    def start_jog(self, axis : str, velocity : Union[float, int]) -> ...:
         """
         Start a jog in a direction.
         
@@ -314,10 +372,10 @@ class MainXYController:
         
         """
         self._lock.acquire()
-        self._send_and_receive('j{}{}'.format(direction, velocity))
+        self._send_and_receive('j{}'.format(velocity))
         self._lock.release()
 
-    def stop_jog(self, ) -> ...:
+    def stop_jog(self) -> ...:
         """Stop a jog."""
         self.stop()
 
@@ -329,7 +387,7 @@ class MainXYController:
 
     def move_by(self, id : str, distance : Union[float, int]) -> ...:
         """Move the hardware by a position."""
-        pos = self.position(id)
+        pos = self.get_position(id)
         self._lock.acquire()
         self._send_and_receive('sp{}{}'.format(id.lower(), pos + distance))
         self._lock.release()
@@ -351,11 +409,11 @@ class MainXYController:
     def vacuum_on(self) -> ...:
         """Turn the vacuum on."""
         self._lock.acquire()
-        self._send_and_receive('sv1')
+        self._send_and_receive('su1')
         self._lock.release()
 
     def vacuum_off(self) -> ...:
         """Turn the vacuum off."""
         self._lock.acquire()
-        self._send_and_receive('sv0')
+        self._send_and_receive('su0')
         self._lock.release()
