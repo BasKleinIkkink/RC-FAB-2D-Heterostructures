@@ -7,13 +7,12 @@ from queue import Empty, Full
 import threading as tr
 
 
-class PipeCom():
-
+class PipeCom:
     @staticmethod
     def close_pipe(conn):
         """
         Close the pipe connection.
-        
+
         Parameters
         ----------
         conn : multiprocessing.connection.Connection
@@ -30,7 +29,7 @@ class PipeCom():
     def read_pipe(cls, child_conn, feedback=False):
         """
         Read the data from the pipe.
-        
+
         Parameters
         ----------
         child_conn : multiprocessing.connection.Connection
@@ -51,7 +50,7 @@ class PipeCom():
         result = []
         try:
             # Check if there is a message ready
-            if child_conn.poll(): 
+            if child_conn.poll():
                 for msg in iter(child_conn.recv, EOM_CHAR):
                     result.append(msg)
             else:
@@ -80,21 +79,23 @@ class PipeCom():
     def write_pipe(conn, data):
         """
         Write the data to the pipe.
-        
+
         Parameters
         ----------
         conn : multiprocessing.connection.Connection
             The connection to write to.
         data : list, str or bytes
             The data to write to the pipe.
-        
+
         Returns
         -------
         None.
 
         """
         if isinstance(data, str) and isinstance(data, bytes):
-            raise TypeError('The data to write to the pipe must be a list, str or bytes.')
+            raise TypeError(
+                "The data to write to the pipe must be a list, str or bytes."
+            )
         elif isinstance(data, list):
             for item in data:
                 conn.send(item)
@@ -106,7 +107,7 @@ class PipeCom():
     def pipe_is_open(conn):
         """
         Check if the pipe is open.
-        
+
         Parameters
         ----------
         conn : multiprocessing.connection.Connection
@@ -122,14 +123,14 @@ class PipeCom():
             state = conn.poll()
         except (OSError, BrokenPipeError):
             return False
-        
+
         return True
 
     @classmethod
     def in_waiting(cls, conn):
         """
         Check if there is a message waiting.
-        
+
         Parameters
         ----------
         conn : multiprocessing.connection.Connection
@@ -145,15 +146,16 @@ class PipeCom():
         else:
             cls.close_pipe(conn)
             return False
-        
+
 
 class PipelineConnection(BaseConnector):
     """
     Connection method using a multiprocessing pipe.
-    
+
     This connection method is most suited for when the frond and backend are running
     on the same machine.
     """
+
     _connection_method = "PIPELINE"
 
     def __init__(self, connection, role, settings=None):
@@ -171,7 +173,7 @@ class PipelineConnection(BaseConnector):
         """
         self._connection = connection
         self._role = role
-        if role == 'FRONDEND':
+        if role == "FRONDEND":
             self._lock = tr.Lock()
         else:
             # The lock cannot be pickled, so it is created on the backend
@@ -239,4 +241,3 @@ class PipelineConnection(BaseConnector):
         state = PipeCom.read_pipe(self._connection)
         self._lock.release()
         return state
-    

@@ -1,6 +1,6 @@
 class NotSupportedError(Exception):
     """Exception raised when a method is not supported."""
-    
+
     def __init__(self, msg=None):
         """Initialize the exception."""
         self._msg = msg
@@ -11,7 +11,7 @@ class NotSupportedError(Exception):
 
 class HardwareNotConnectedError(Exception):
     """Exception raised when a hardware is not connected."""
-    
+
     def __init__(self, msg=None):
         """Initialize the exception."""
         self._msg = msg
@@ -26,7 +26,7 @@ class NotCalibratedError(Exception):
 
     F.e. trying to do an absolute move when the home point is unknown.
     """
-    
+
     def __init__(self, msg=None):
         """Initialize the exception."""
         self._msg = msg
@@ -46,26 +46,27 @@ class HardwareError(Exception):
         return self._msg
 
 
-class Base():
+class Base:
     """
     Base class for hardware.
-    
+
     This class contains all the functions the StackingSetupBackend class expects
-    connected hardware to have. Functions that are supported should be overridden 
-    in the derived class. 
-    
-    .. important:: 
-        Functions that should be supported by all hardware raise a ``NotImplementedError``, 
+    connected hardware to have. Functions that are supported should be overridden
+    in the derived class.
+
+    .. important::
+        Functions that should be supported by all hardware raise a ``NotImplementedError``,
         optional functions raise ``NotSupportedError``. The ``NotSupportedError`` is always caught
         by the ``StackingSetupBackend()`` class, so it is safe to raise it in functions that are
         not supported by all hardware.
 
     .. note:: Each function should return an exit code (0 for success, 1 for failure) and
-        and an error message, str, or None. 
+        and an error message, str, or None.
 
     """
+
     _id = None
-    _type = 'HARDWARE BASE CLASS'
+    _type = "HARDWARE BASE CLASS"
 
     # COMPONENT LIMITS
     _max_speed = None
@@ -93,6 +94,7 @@ class Base():
     If the connected component can move only one of the steps per ... should be supported.
     If the component cannot move none have to be supported.
     """
+
     @property
     def steps_per_um(self):
         """Get the steps per um of the hardware."""
@@ -123,7 +125,7 @@ class Base():
     def acceleration(self):
         """Get the acceleration of the hardware."""
         raise NotSupportedError()
-    
+
     @acceleration.setter
     def acceleration(self, acceleration):
         """Set the acceleration of the hardware."""

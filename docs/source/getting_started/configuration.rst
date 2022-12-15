@@ -2,7 +2,6 @@ Configuration
 =============
 
 .. _configuration:
-
 The project can be configured in two ways: local and remote. The main difference is if an
 external IO controller is used or not. These examples are the most basic ways to configure the 
 setup, but there are many more options available by creating a custom :ref:`Middleware` method (see 
@@ -59,6 +58,15 @@ Local config example
 
 Remote configuration
 --------------------
+
+.. attention::
+  Due to issues with the FTDI driver on Debian it is not possble to use all hardware 
+  functions on a Raspberry Pi. All hardware that depend on the PyLabLib library will
+  not work. This includes the Piezo actuators and rotation stage.
+
+.. note::
+  For some classes it is known that they do not work on a Raspberry Pi. For other
+  classes this was not tested but in theory it should work.
 
 In the remote configuration the processes are distributed over multiple systems. The
 remote configuration is recommended for when the system is used in a production

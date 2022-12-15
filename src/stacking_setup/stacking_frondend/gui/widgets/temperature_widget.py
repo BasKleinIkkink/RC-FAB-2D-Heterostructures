@@ -1,25 +1,33 @@
 import sys
 from PySide6.QtCore import *
 from PySide6.QtGui import *
-from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QFrame, QLabel,
-                                 QGroupBox, QComboBox, QCheckBox, QSpinBox,
-                                 QLCDNumber, QGridLayout)
-from PySide6.QtCharts import (QChart, QLineSeries, QValueAxis,
-                            QChart, QChartView)
+from PySide6.QtWidgets import (
+    QVBoxLayout,
+    QHBoxLayout,
+    QFrame,
+    QLabel,
+    QGroupBox,
+    QComboBox,
+    QCheckBox,
+    QSpinBox,
+    QLCDNumber,
+    QGridLayout,
+)
+from PySide6.QtCharts import QChart, QLineSeries, QValueAxis, QChart, QChartView
 from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QPen
 import random
 
 
 class TemperatureWidget(QGroupBox):
-    name = 'Temperature Dock'
+    name = "Temperature Dock"
     min_size = QSize(450, 450)
     max_size = QSize(500, 450)
 
     def __init__(self, settings, q, parent=None):
         """
         Initialize the control dock widget.
-        
+
         Parameters
         ----------
         settings : Settings
@@ -97,7 +105,7 @@ class TemperatureWidget(QGroupBox):
     def _create_temp_params(self):
         paramFrame = QFrame()
         gridLayout = QGridLayout(paramFrame)
-        
+
         # Add the presets and spinbox
         self.target_spin_box = QSpinBox()
         self.target_spin_box.setValue(0)
@@ -161,7 +169,7 @@ class TemperatureWidget(QGroupBox):
     def connect_actions(self, menubar, toolbar):
         """
         Connect the actions to the menubar and toolbar.
-        
+
         Parameters
         ----------
         menubar : QMenuBar
@@ -181,7 +189,7 @@ class TemperatureWidget(QGroupBox):
 
     def _change_target_indicator(self):
         """Change the target temperature of the indicator."""
-        print('Change target indicator')
+        print("Change target indicator")
         self.targetTempDisp.display(self.target_spin_box.value())
 
         # Aslo update the value in the graph
@@ -189,8 +197,8 @@ class TemperatureWidget(QGroupBox):
 
     def _change_spinbox_value(self):
         """Change the value of the spinbox depending on the selected preset."""
-        print('Lock spinbox value')
-        
+        print("Lock spinbox value")
+
         if self.tempPresetCombo.currentIndex() == 0:
             # Set the max value to 250
             self.target_spin_box.setDisabled(False)
@@ -204,13 +212,11 @@ class TemperatureWidget(QGroupBox):
 
     def update_temperatures(self, temps):
         """Update the current temperature of the indicator."""
-        if 'N' in temps:
-            self.currentTempDisp.display(temps['N']['current'])
-            self.targetTempDisp.display(temps['N']['target'])
-
+        if "N" in temps:
+            self.currentTempDisp.display(temps["N"]["current"])
+            self.targetTempDisp.display(temps["N"]["target"])
 
     class Chart(QChart):
-
         def __init__(self, parent=None):
             super().__init__(QChart.ChartTypeCartesian, parent, Qt.WindowFlags())
             self._timer = QTimer()
@@ -225,8 +231,8 @@ class TemperatureWidget(QGroupBox):
             self._target_temp = 0
             self.step_size = 1
 
-            #self._timer.timeout.connect(self.handleTimeout)
-            #self._timer.setInterval(1000)
+            # self._timer.timeout.connect(self.handleTimeout)
+            # self._timer.setInterval(1000)
 
             green = QPen(Qt.green)
             green.setWidth(3)
@@ -250,7 +256,7 @@ class TemperatureWidget(QGroupBox):
             self._axisX.setTickCount(10)
             self._axisX.setRange(0, 60)
             self._axisY.setRange(0, 50)
-            
+
             # Change the background to transparent
             brush = QBrush(Qt.transparent)
             self.setBackgroundBrush(brush)
@@ -285,7 +291,7 @@ class TemperatureWidget(QGroupBox):
                 self._axisY.setRange(0, self._target_temp)
 
             self.scroll(x, 0)
-            #if self._x == 100:
+            # if self._x == 100:
             #    self._timer.stop()
 
             # Always plot the target temp in red

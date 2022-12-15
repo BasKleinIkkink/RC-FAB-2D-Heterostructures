@@ -1,20 +1,31 @@
 import sys
 from PySide6.QtCore import Qt, QSize, QCoreApplication
-from PySide6.QtWidgets import (QComboBox, QGridLayout, QSpinBox, QLCDNumber,
-                               QGroupBox, QHBoxLayout, QVBoxLayout, QLabel,
-                               QFrame, QRadioButton, QSlider, QPushButton)
+from PySide6.QtWidgets import (
+    QComboBox,
+    QGridLayout,
+    QSpinBox,
+    QLCDNumber,
+    QGroupBox,
+    QHBoxLayout,
+    QVBoxLayout,
+    QLabel,
+    QFrame,
+    QRadioButton,
+    QSlider,
+    QPushButton,
+)
 import qtawesome as qta
 
 
 class ControlWidget(QGroupBox):
-    name = 'ControlDock'
+    name = "ControlDock"
     min_size = QSize(430, 380)
     max_size = min_size
 
     def __init__(self, settings, q, parent=None):
         """
         Initialize the control dock widget.
-        
+
         Parameters
         ----------
         settings : Settings
@@ -31,7 +42,7 @@ class ControlWidget(QGroupBox):
         # Set some window attributes.
         self.setMinimumSize(self.min_size)
         self.setMaximumSize(self.max_size)
-        
+
         # Define the main frame and grid in the docking widget
         mainVerticalLayout = QVBoxLayout(self)
 
@@ -64,7 +75,7 @@ class ControlWidget(QGroupBox):
     def add_vel_presets(self, presets=["50 um/s", "500 um/s", "1000 um/s"]):
         """
         Add velocity presets to the velocity preset combo box
-        
+
         Parameters
         ----------
         presets : list
@@ -85,10 +96,16 @@ class ControlWidget(QGroupBox):
         self.velocitySlider.setValue(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
 
-    def add_drive_step_presets(self, presets=["1 um", "500 nm",]):
+    def add_drive_step_presets(
+        self,
+        presets=[
+            "1 um",
+            "500 nm",
+        ],
+    ):
         """
         Add drive step presets to the drive step combo box
-        
+
         Parameters
         ----------
         presets : list
@@ -111,32 +128,83 @@ class ControlWidget(QGroupBox):
         arrowFrame.setMinimumSize(QSize(220, 220))
         arrowFrame.setMaximumSize(QSize(220, 220))
         grid_layout = QGridLayout(arrowFrame)
-        
+
         # Create the layout and add the buttons
-        self.moveRight = QPushButton(qta.icon("fa.angle-right", options=[{'scale_factor': 2,}]), "")
+        self.moveRight = QPushButton(
+            qta.icon(
+                "fa.angle-right",
+                options=[
+                    {
+                        "scale_factor": 2,
+                    }
+                ],
+            ),
+            "",
+        )
         self.moveRight.setMinimumSize(self.setting.button_size)
         self.moveRight.setMaximumSize(self.setting.button_size)
-        self.moveRight.setStyleSheet(u"image: url(:/icons/arrows/arrow-right-solid.svg);")
-        
+        self.moveRight.setStyleSheet(
+            "image: url(:/icons/arrows/arrow-right-solid.svg);"
+        )
 
-        self.moveLeft = QPushButton(qta.icon("fa.angle-left", options=[{'scale_factor': 2,}]), "")
+        self.moveLeft = QPushButton(
+            qta.icon(
+                "fa.angle-left",
+                options=[
+                    {
+                        "scale_factor": 2,
+                    }
+                ],
+            ),
+            "",
+        )
         self.moveLeft.setMinimumSize(self.setting.button_size)
         self.moveLeft.setMaximumSize(self.setting.button_size)
-        
-        self.moveDown = QPushButton(qta.icon("fa.angle-down", options=[{'scale_factor': 2,}]), "")
+
+        self.moveDown = QPushButton(
+            qta.icon(
+                "fa.angle-down",
+                options=[
+                    {
+                        "scale_factor": 2,
+                    }
+                ],
+            ),
+            "",
+        )
         self.moveDown.setMinimumSize(self.setting.button_size)
         self.moveDown.setMaximumSize(self.setting.button_size)
 
-        self.moveUp = QPushButton(qta.icon("fa.angle-up", options=[{'scale_factor': 2,}]), "")
+        self.moveUp = QPushButton(
+            qta.icon(
+                "fa.angle-up",
+                options=[
+                    {
+                        "scale_factor": 2,
+                    }
+                ],
+            ),
+            "",
+        )
         self.moveUp.setMinimumSize(self.setting.button_size)
         self.moveUp.setMaximumSize(self.setting.button_size)
 
         # Add the move lock button
-        self.lockMoveButton = QPushButton(qta.icon("fa.lock", options=[{'scale_factor': 1.5,}]), "")
+        self.lockMoveButton = QPushButton(
+            qta.icon(
+                "fa.lock",
+                options=[
+                    {
+                        "scale_factor": 1.5,
+                    }
+                ],
+            ),
+            "",
+        )
         self.lockMoveButton.setMinimumSize(self.setting.button_size)
         self.lockMoveButton.setMaximumSize(self.setting.button_size)
         self.lockMoveButton.setCheckable(True)
-        
+
         grid_layout.addWidget(self.moveRight, 1, 2, 1, 1)
         grid_layout.addWidget(self.moveLeft, 1, 0, 1, 1)
         grid_layout.addWidget(self.moveDown, 2, 1, 1, 1)
@@ -156,12 +224,16 @@ class ControlWidget(QGroupBox):
 
         self.jogModeButton = QRadioButton(moveModeFrame)
         self.jogModeButton.setChecked(False)
-        self.jogModeButton.setText(QCoreApplication.translate("MainWindow", u"Jog", None))
+        self.jogModeButton.setText(
+            QCoreApplication.translate("MainWindow", "Jog", None)
+        )
         verticalLayout_3.addWidget(self.jogModeButton)
 
         self.driveModeButton = QRadioButton(moveModeFrame)
         self.driveModeButton.setChecked(True)
-        self.driveModeButton.setText(QCoreApplication.translate("MainWindow", u"Drive", None))
+        self.driveModeButton.setText(
+            QCoreApplication.translate("MainWindow", "Drive", None)
+        )
         verticalLayout_3.addWidget(self.driveModeButton)
 
         return moveModeFrame
@@ -174,11 +246,11 @@ class ControlWidget(QGroupBox):
 
         # Add the position labels
         self.xPosLabel = QLabel(positionDisplayFrame)
-        self.xPosLabel.setText(QCoreApplication.translate("MainWindow", u"X:", None))
+        self.xPosLabel.setText(QCoreApplication.translate("MainWindow", "X:", None))
         gridLayout.addWidget(self.xPosLabel, 0, 0, 1, 1)
 
         self.yPosLabel = QLabel(positionDisplayFrame)
-        self.yPosLabel.setText(QCoreApplication.translate("MainWindow", u"Y:", None))
+        self.yPosLabel.setText(QCoreApplication.translate("MainWindow", "Y:", None))
         gridLayout.addWidget(self.yPosLabel, 1, 0, 1, 1)
 
         # Add the position displays
@@ -202,35 +274,45 @@ class ControlWidget(QGroupBox):
         ## Create the parameters frame and layout
         moveParamFrame = QFrame()
         moveParamGrid = QGridLayout(moveParamFrame)
-        
+
         # Create velocity presets
         self.movePresetLabel = QLabel(moveParamFrame)
-        self.movePresetLabel.setText(QCoreApplication.translate("MainWindow", u"Scale :", None))
+        self.movePresetLabel.setText(
+            QCoreApplication.translate("MainWindow", "Scale :", None)
+        )
         self.movePresetCombo = QComboBox(moveParamFrame)
 
         # Create the velocity slider
         self.velSliderLabel = QLabel(moveParamFrame)
-        self.velSliderLabel.setText(QCoreApplication.translate("MainWindow", u"Velocity :", None))
+        self.velSliderLabel.setText(
+            QCoreApplication.translate("MainWindow", "Velocity :", None)
+        )
         self.velocitySlider = QSlider(moveParamFrame)  # Add the slider
         self.velocitySlider.setOrientation(Qt.Horizontal)
 
         # Create the velocity value display
         self.velDispLabel = QLabel(moveParamFrame)
-        self.velDispLabel.setText(QCoreApplication.translate("MainWindow", u"um/s", None))
+        self.velDispLabel.setText(
+            QCoreApplication.translate("MainWindow", "um/s", None)
+        )
         self.velDisp = QSpinBox()
         self.velDisp.setFixedSize(self.setting.lcd_size)
         self.velDispLable = QLabel(moveParamFrame)
 
         # Drive step preset dropdown box
         self.driveStepLabel = QLabel(moveParamFrame)
-        self.driveStepLabel.setText(QCoreApplication.translate("MainWindow", u"Drive step :", None))
+        self.driveStepLabel.setText(
+            QCoreApplication.translate("MainWindow", "Drive step :", None)
+        )
         self.driveStepCombo = QComboBox(moveParamFrame)
 
         # Add everything to the layout
         moveParamGrid.addWidget(self.movePresetLabel, 0, 0, 1, 1)
         moveParamGrid.addWidget(self.movePresetCombo, 0, 1, 1, 3)
         moveParamGrid.addWidget(self.velSliderLabel, 1, 0, 1, 1)
-        moveParamGrid.addWidget(self.velocitySlider, 1, 1, 1, 2)  # Add the slider to the layout
+        moveParamGrid.addWidget(
+            self.velocitySlider, 1, 1, 1, 2
+        )  # Add the slider to the layout
         moveParamGrid.addWidget(self.velDispLabel, 1, 4, 1, 1)
         moveParamGrid.addWidget(self.velDisp, 1, 3, 1, 1)
         moveParamGrid.addWidget(self.driveStepLabel, 2, 0, 1, 1)
@@ -268,23 +350,63 @@ class MaskControlWidget(ControlWidget):
         """Add the extra buttons to the widget."""
 
         # Add the rotation buttons to the linear move frame
-        self.rotateLeft = QPushButton(qta.icon("fa.rotate-left", options=[{'scale_factor': 1.3,}]), "")
+        self.rotateLeft = QPushButton(
+            qta.icon(
+                "fa.rotate-left",
+                options=[
+                    {
+                        "scale_factor": 1.3,
+                    }
+                ],
+            ),
+            "",
+        )
         self.rotateLeft.setMinimumSize(self.setting.button_size)
         self.rotateLeft.setMaximumSize(self.setting.button_size)
 
-        self.rotateRight = QPushButton(qta.icon("fa.rotate-right", options=[{'scale_factor': 1.3,}]), "")
+        self.rotateRight = QPushButton(
+            qta.icon(
+                "fa.rotate-right",
+                options=[
+                    {
+                        "scale_factor": 1.3,
+                    }
+                ],
+            ),
+            "",
+        )
         self.rotateRight.setMinimumSize(self.setting.button_size)
         self.rotateRight.setMaximumSize(self.setting.button_size)
 
         # Add the move up and down buttons to the buttonframe
-        self.moveZUp = QPushButton(qta.icon("fa.angle-double-up", options=[{'scale_factor': 2,}]), "")
+        self.moveZUp = QPushButton(
+            qta.icon(
+                "fa.angle-double-up",
+                options=[
+                    {
+                        "scale_factor": 2,
+                    }
+                ],
+            ),
+            "",
+        )
         self.moveZUp.setMinimumSize(self.setting.button_size)
         self.moveZUp.setMaximumSize(self.setting.button_size)
 
-        self.moveZDown = QPushButton(qta.icon("fa.angle-double-down", options=[{'scale_factor': 2,}]), "")
+        self.moveZDown = QPushButton(
+            qta.icon(
+                "fa.angle-double-down",
+                options=[
+                    {
+                        "scale_factor": 2,
+                    }
+                ],
+            ),
+            "",
+        )
         self.moveZDown.setMinimumSize(self.setting.button_size)
         self.moveZDown.setMaximumSize(self.setting.button_size)
-        self.moveZDown.setStyleSheet(u"image: url(:/icons/arrows/arrow-down-solid.svg);")
+        self.moveZDown.setStyleSheet("image: url(:/icons/arrows/arrow-down-solid.svg);")
 
         # Add the new buttons to the button frame
         self.arrowGrid.addWidget(self.rotateLeft, 0, 0, 1, 1)
@@ -296,7 +418,7 @@ class MaskControlWidget(ControlWidget):
         """Add the extra positions to the widget."""
         # Add the rotation buttons to the linear move frame
         self.zPosLabel = QLabel()
-        self.zPosLabel.setText(QCoreApplication.translate("MainWindow", u"Z:", None))
+        self.zPosLabel.setText(QCoreApplication.translate("MainWindow", "Z:", None))
         self.positionDisplayGrid.addWidget(self.zPosLabel, 3, 0, 1, 1)
 
         # Add the position displays
@@ -307,7 +429,7 @@ class MaskControlWidget(ControlWidget):
         self.positionDisplayGrid.addWidget(self.zPosDisplay, 3, 1, 1, 1)
 
         self.rPosLabel = QLabel()
-        self.rPosLabel.setText(QCoreApplication.translate("MainWindow", u"R:", None))
+        self.rPosLabel.setText(QCoreApplication.translate("MainWindow", "R:", None))
         self.positionDisplayGrid.addWidget(self.rPosLabel, 4, 0, 1, 1)
 
         # Add the position displays
@@ -341,7 +463,7 @@ class MaskControlWidget(ControlWidget):
     def connect_actions(self, menubar, toolbar):
         """
         Connect the actions to the buttons.
-        
+
         Parameters
         ----------
         menubar : QMenuBar
@@ -351,44 +473,92 @@ class MaskControlWidget(ControlWidget):
         """
         # Connect the buttons to the actions
         self.moveLeft.pressed.connect(
-            lambda : self.q.put('M811 X1' if self.jogModeButton.isChecked() else self.q.put('G0 X{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 X1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 X{}".format(self.driveScale))
+            )
+        )
         self.moveLeft.released.connect(
-            lambda : self.q.put('M811 X0' if self.jogModeButton.isChecked() else None))
-            
+            lambda: self.q.put("M811 X0" if self.jogModeButton.isChecked() else None)
+        )
+
         self.moveRight.pressed.connect(
-            lambda : self.q.put('M811 X-1' if self.jogModeButton.isChecked() else self.q.put('G0 X-{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 X-1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 X-{}".format(self.driveScale))
+            )
+        )
         self.moveRight.released.connect(
-            lambda : self.q.put('M811 X0') if self.jogModeButton.isChecked() else None)
+            lambda: self.q.put("M811 X0") if self.jogModeButton.isChecked() else None
+        )
 
         self.moveUp.pressed.connect(
-            lambda : self.q.put('M811 Y1' if self.jogModeButton.isChecked() else self.q.put('G0 Y{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 Y1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 Y{}".format(self.driveScale))
+            )
+        )
         self.moveUp.released.connect(
-            lambda : self.q.put('M811 Y0') if self.jogModeButton.isChecked() else None)
+            lambda: self.q.put("M811 Y0") if self.jogModeButton.isChecked() else None
+        )
 
         self.moveDown.pressed.connect(
-            lambda : self.q.put('M811 Y-1' if self.jogModeButton.isChecked() else self.q.put('G0 Y-{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 Y-1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 Y-{}".format(self.driveScale))
+            )
+        )
         self.moveDown.released.connect(
-            lambda : self.q.put('M811 Y0') if self.jogModeButton.isChecked() else None)
+            lambda: self.q.put("M811 Y0") if self.jogModeButton.isChecked() else None
+        )
 
         self.rotateLeft.pressed.connect(
-            lambda : self.q.put('M811 L1' if self.jogModeButton.isChecked() else self.q.put('G1 L{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 L1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G1 L{}".format(self.driveScale))
+            )
+        )
         self.rotateLeft.released.connect(
-            lambda : self.q.put('M811 L0') if self.jogModeButton.isChecked() else None)
-        
+            lambda: self.q.put("M811 L0") if self.jogModeButton.isChecked() else None
+        )
+
         self.rotateRight.pressed.connect(
-            lambda : self.q.put('M811 L-1' if self.jogModeButton.isChecked() else self.q.put('G1 L-{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 L-1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G1 L-{}".format(self.driveScale))
+            )
+        )
         self.rotateRight.released.connect(
-            lambda : self.q.put('M811 L0') if self.jogModeButton.isChecked() else None)
+            lambda: self.q.put("M811 L0") if self.jogModeButton.isChecked() else None
+        )
 
         self.moveZUp.pressed.connect(
-            lambda : self.q.put('M811 Z1' if self.jogModeButton.isChecked() else self.q.put('G0 Z{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 Z1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 Z{}".format(self.driveScale))
+            )
+        )
         self.moveZUp.released.connect(
-            lambda : self.q.put('M811 Z0') if self.jogModeButton.isChecked() else None)
+            lambda: self.q.put("M811 Z0") if self.jogModeButton.isChecked() else None
+        )
 
         self.moveZDown.clicked.connect(
-            lambda : self.q.put('M811 Z-1' if self.jogModeButton.isChecked() else self.q.put('G0 Z-{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 Z-1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 Z-{}".format(self.driveScale))
+            )
+        )
         self.lockMoveButton.clicked.connect(
-            lambda : self.q.put('M811 Z0') if self.jogModeButton.isChecked() else None)
+            lambda: self.q.put("M811 Z0") if self.jogModeButton.isChecked() else None
+        )
 
         # Connect vacuum pump buttons
         self.startVacButton.clicked.connect(self._turn_on_vacuum)
@@ -399,7 +569,9 @@ class MaskControlWidget(ControlWidget):
 
         # Connect the disp to the slider
         self.velocitySlider.sliderReleased.connect(self._slider_changed)
-        self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
+        self.velDisp.valueChanged.connect(
+            lambda: self.velocitySlider.setValue(self.velDisp.value())
+        )
 
         self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)
 
@@ -408,9 +580,11 @@ class MaskControlWidget(ControlWidget):
         self.velDisp.setValue(self.velocitySlider.value())
 
         # Send the new velocity to the backend parts
-        value = self.velocitySlider.value() * self.setting.known_units[self.moveUnit.split('/')[0]]
-        self.q.put('M812 X{} Y{} Z{} L{}'.format(value, value, value, value))
-
+        value = (
+            self.velocitySlider.value()
+            * self.setting.known_units[self.moveUnit.split("/")[0]]
+        )
+        self.q.put("M812 X{} Y{} Z{} L{}".format(value, value, value, value))
 
     def _update_drive_step_scale(self):
         """Update the drive step scale."""
@@ -461,16 +635,16 @@ class MaskControlWidget(ControlWidget):
 
     def update_positions(self, dict):
         """Update the position labels."""
-        if 'X' in dict:
-            self.xPosDisplay.display(dict['X'])
-        if 'Y' in dict:
-            self.yPosDisplay.display(dict['Y'])
-        if 'Z' in dict:
-            self.zPosDisplay.display(dict['Z'])
-        if 'L' in dict:
-            self.rPosDisplay.display(dict['L'])
+        if "X" in dict:
+            self.xPosDisplay.display(dict["X"])
+        if "Y" in dict:
+            self.yPosDisplay.display(dict["Y"])
+        if "Z" in dict:
+            self.zPosDisplay.display(dict["Z"])
+        if "L" in dict:
+            self.rPosDisplay.display(dict["L"])
 
-    
+
 class BaseControlWidget(ControlWidget):
     name = "Base Control"
 
@@ -484,7 +658,7 @@ class BaseControlWidget(ControlWidget):
     def connect_actions(self, menubar, toolbar):
         """
         Connect the actions to the buttons.
-        
+
         Parameters
         ----------
         menubar : QMenuBar
@@ -494,27 +668,53 @@ class BaseControlWidget(ControlWidget):
         """
         # Connect the buttons to the actions
         self.moveLeft.pressed.connect(
-            lambda : self.q.put('M811 J-1' if self.jogModeButton.isChecked() else self.q.put('G0 J-{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 J-1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 J-{}".format(self.driveScale))
+            )
+        )
         self.moveLeft.released.connect(
-            lambda : self.q.put('M811 J0') if self.jogModeButton.isChecked() else None)
+            lambda: self.q.put("M811 J0") if self.jogModeButton.isChecked() else None
+        )
         self.moveRight.pressed.connect(
-            lambda : self.q.put('M811 J1' if self.jogModeButton.isChecked() else self.q.put('G0 J{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 J1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 J{}".format(self.driveScale))
+            )
+        )
         self.moveRight.released.connect(
-            lambda : self.q.put('M811 J0') if self.jogModeButton.isChecked() else None)
+            lambda: self.q.put("M811 J0") if self.jogModeButton.isChecked() else None
+        )
         self.moveUp.pressed.connect(
-            lambda : self.q.put('M811 H1' if self.jogModeButton.isChecked() else self.q.put('G0 H{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 H1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 H{}".format(self.driveScale))
+            )
+        )
         self.moveUp.released.connect(
-            lambda : self.q.put('M811 H0') if self.jogModeButton.isChecked() else None)
+            lambda: self.q.put("M811 H0") if self.jogModeButton.isChecked() else None
+        )
         self.moveDown.pressed.connect(
-            lambda : self.q.put('M811 H-1' if self.jogModeButton.isChecked() else self.q.put('G0 H-{}'.format(self.driveScale))))
+            lambda: self.q.put(
+                "M811 H-1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 H-{}".format(self.driveScale))
+            )
+        )
         self.moveDown.released.connect(
-            lambda : self.q.put('M811 H0') if self.jogModeButton.isChecked() else None)
+            lambda: self.q.put("M811 H0") if self.jogModeButton.isChecked() else None
+        )
         self.lockMoveButton.clicked.connect(self._lock_movement)
 
         # Connect the disp to the slider
         self.velocitySlider.sliderReleased.connect(self._slider_changed())
         # Connect the spinbox to the slider
-        self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
+        self.velDisp.valueChanged.connect(
+            lambda: self.velocitySlider.setValue(self.velDisp.value())
+        )
 
         self._connect_movement_scale()
 
@@ -535,7 +735,7 @@ class BaseControlWidget(ControlWidget):
 
         # Send the new velocity to the backend parts
         value = self.velocitySlider.value()
-        self.q.put('M812 X{} Y{} Z{} L{}'.format(value, value, value, value))
+        self.q.put("M812 X{} Y{} Z{} L{}".format(value, value, value, value))
 
     def _connect_movement_scale(self):
         """Connect the movement scale to the movement buttons."""
@@ -573,8 +773,7 @@ class BaseControlWidget(ControlWidget):
 
     def update_positions(self, dict):
         """Update the position labels."""
-        if 'H' in dict:
-            self.xPosDisplay.display(dict['H'])
-        if 'J' in dict:
-            self.yPosLabel.setText(dict['J'])
-        
+        if "H" in dict:
+            self.xPosDisplay.display(dict["H"])
+        if "J" in dict:
+            self.yPosLabel.setText(dict["J"])

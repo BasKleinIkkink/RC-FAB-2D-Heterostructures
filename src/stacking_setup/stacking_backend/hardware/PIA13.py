@@ -15,11 +15,17 @@ except ImportError:
 class PIA13(Base):
     """Class to control a PIA13 Thorlabs piezo actuator."""
 
-    def __init__(self, id : str, channel : int, hardware_controller : KIM101, em_event : mp.Event,
-                settings : Settings) -> ...:
+    def __init__(
+        self,
+        id: str,
+        channel: int,
+        hardware_controller: KIM101,
+        em_event: mp.Event,
+        settings: Settings,
+    ) -> ...:
         """
         Initialize the PIA13.
-        
+
         Parameters
         ----------
         id: str
@@ -34,25 +40,30 @@ class PIA13(Base):
             The settings object.
         """
         self._id = id
-        self._type = 'PIA13'
+        self._type = "PIA13"
         self._channel = channel
         self._hardware_controller = hardware_controller
         self._settings = settings
         self._em_event = em_event
-        self._max_speed = self._settings.get(self._type+'.'+self._id, 'max_vel')
-        self._max_acceleration = self._settings.get(self._type+'.'+self._id, 'max_acc')
-        self._steps_per_um = self._settings.get(self._type+'.'+self._id, 'steps_per_um')
+        self._max_speed = self._settings.get(self._type + "." + self._id, "max_vel")
+        self._max_acceleration = self._settings.get(
+            self._type + "." + self._id, "max_acc"
+        )
+        self._steps_per_um = self._settings.get(
+            self._type + "." + self._id, "steps_per_um"
+        )
         self._lock = tr.Lock()  # Lock for the hardware
 
     # ATTRIBUTES
     @property
     def device_info(self) -> dict:
         """Get the device info."""
-        return {'id': self._id,
-                'type': self._type,
-                'channel': self._channel,
-                'controller': self._hardware_controller.type
-                }
+        return {
+            "id": self._id,
+            "type": self._type,
+            "channel": self._channel,
+            "controller": self._hardware_controller.type,
+        }
 
     @property
     def steps_per_um(self) -> ...:
@@ -80,12 +91,12 @@ class PIA13(Base):
         return drive[3]
 
     @speed.setter
-    def speed(self, speed : Union[float, int]) -> ...:
+    def speed(self, speed: Union[float, int]) -> ...:
         """
         Set the speed of the hardware.
 
         Speed is always in um/s.
-        
+
         Parameters:
         -----------
         speed: float or int
@@ -107,7 +118,7 @@ class PIA13(Base):
     def acceleration(self) -> float:
         """
         Get the acceleration of the hardware in um/s^2.
-        
+
         Returns
         -------
         acceleration: float
@@ -119,22 +130,26 @@ class PIA13(Base):
         return drive[4]
 
     @acceleration.setter
-    def acceleration(self, acceleration : Union[float, int]) -> ...:
+    def acceleration(self, acceleration: Union[float, int]) -> ...:
         """
         Set the acceleration of the hardware.
-        
+
         Parameters
         ----------
         acceleration: float or int
-            The acceleration to set the hardware to. 
+            The acceleration to set the hardware to.
         """
         # First convert to steps/s^2
         if acceleration > self._max_acceleration:
             acceleration = self._max_acceleration
         acceleration *= self._steps_per_um
         self._lock.acquire()
-        self._hardware_controller.setup_drive(channel=self._channel, acceleration=acceleration)
-        self._hardware_controller.setup_jog(channel=self._channel, acceleration=acceleration)
+        self._hardware_controller.setup_drive(
+            channel=self._channel, acceleration=acceleration
+        )
+        self._hardware_controller.setup_jog(
+            channel=self._channel, acceleration=acceleration
+        )
         self._lock.release()
 
     # CONNECTION FUNCTIONS
@@ -160,7 +175,7 @@ class PIA13(Base):
     def is_connected(self) -> bool:
         """
         Check if the hardware is connected.
-        
+
         .. warning::
             This function is mostly used as a support function for other functions,
             and does not capture the lock. This means this function is not thread safe.
@@ -171,7 +186,7 @@ class PIA13(Base):
     def is_moving(self) -> bool:
         """
         Check if the hardware is moving.
-        
+
         .. warning::
             This function is mostly used as a support function for other functions,
             and does not capture the lock. This means this function is not thread safe.
@@ -182,20 +197,21 @@ class PIA13(Base):
     def get_status(self) -> dict:
         """Get the statusreport of the hardware."""
         self._lock.acquire()
-        status = {'id': self._id,
-                'is_moving': self.is_moving(),
-                'position': self.position,
-                'speed': self.speed,
-                'acceleration': self.acceleration,
-                'steps_per_mm': self.steps_per_mm,
-                'max_speed': self._max_speed,
-                'max_acceleration': self._max_acceleration,
-                }
+        status = {
+            "id": self._id,
+            "is_moving": self.is_moving(),
+            "position": self.position,
+            "speed": self.speed,
+            "acceleration": self.acceleration,
+            "steps_per_mm": self.steps_per_mm,
+            "max_speed": self._max_speed,
+            "max_acceleration": self._max_acceleration,
+        }
         self._lock.release()
         return status
 
     # MOVEMENT FUNCTIONS
-    def start_jog(self, direction : str) -> ...:
+    def start_jog(self, direction: str) -> ...:
         """
         Start a jog.
 
@@ -213,8 +229,8 @@ class PIA13(Base):
         self._lock.acquire()
         self._hardware_controller.stop_jog(self._channel)
         self._lock.release()
-        
-    def move_by(self, distance : Union[float, int]) -> ...:
+
+    def move_by(self, distance: Union[float, int]) -> ...:
         """
         Move the hardware by a certain distance.
 
@@ -229,7 +245,7 @@ class PIA13(Base):
         self._hardware_controller.move_by(self._channel, distance)
         self._lock.release()
 
-    def move_to(self, position : Union[float, int]) -> ...:
+    def move_to(self, position: Union[float, int]) -> ...:
         """
         Move the hardware to a certain position.
 
@@ -242,7 +258,7 @@ class PIA13(Base):
         position *= self._steps_per_um
         self._lock.acquire()
         if not self._steps_calibrated:
-            raise NotCalibratedError('Steps per nm were not calibrated/set.')
+            raise NotCalibratedError("Steps per nm were not calibrated/set.")
 
         self._hardware_controller.move_to(self._channel, position)
         self._lock.release()
@@ -252,8 +268,8 @@ class PIA13(Base):
         self._em_event.set()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     controller = KIM101()
-    piezo = PIA13('X', 1, 1, controller)
+    piezo = PIA13("X", 1, 1, controller)
     piezo.connect()
     piezo.move_by(500)

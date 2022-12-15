@@ -10,6 +10,7 @@ from typing import List
 
 class SampleBed(Base):
     """Class to control the sample bed."""
+
     _connected = False
     _type = "SAMPLEHOLDER"
 

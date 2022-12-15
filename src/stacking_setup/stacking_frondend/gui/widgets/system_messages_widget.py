@@ -3,12 +3,21 @@
 # SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 import sys
-from PySide6.QtCore import (QRegularExpression, QSize,
-                            QSortFilterProxyModel, Qt, Slot)
+from PySide6.QtCore import QRegularExpression, QSize, QSortFilterProxyModel, Qt, Slot
 from PySide6.QtGui import QStandardItemModel
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QGridLayout,
-                               QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-                               QTreeView, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QTreeView,
+    QVBoxLayout,
+    QWidget,
+)
 from ....stacking_middleware.message import Message
 from random import randint
 import datetime
@@ -20,14 +29,14 @@ FIXED_STRING = 2
 
 
 class SystemMessageWidget(QWidget):
-    name = 'System Messages'
-    commands_to_ignore = ['M114', 'M154', 'M155']
+    name = "System Messages"
+    commands_to_ignore = ["M114", "M154", "M155"]
     min_size = QSize(700, 1000)
 
     def __init__(self, settings, parent=None):
         """
         Initialize the widget.
-        
+
         Parameters
         ----------
         settings : Settings
@@ -68,12 +77,9 @@ class SystemMessageWidget(QWidget):
         self._filter_pattern_label.setBuddy(self._filter_pattern_line_edit)
 
         self._filter_syntax_combo_box = QComboBox()
-        self._filter_syntax_combo_box.addItem("Regular expression",
-                                          REGULAR_EXPRESSION)
-        self._filter_syntax_combo_box.addItem("Wildcard",
-                                          WILDCARD)
-        self._filter_syntax_combo_box.addItem("Fixed string",
-                                          FIXED_STRING)
+        self._filter_syntax_combo_box.addItem("Regular expression", REGULAR_EXPRESSION)
+        self._filter_syntax_combo_box.addItem("Wildcard", WILDCARD)
+        self._filter_syntax_combo_box.addItem("Fixed string", FIXED_STRING)
         self._filter_syntax_label = QLabel("Filter &syntax:")
         self._filter_syntax_label.setBuddy(self._filter_syntax_combo_box)
 
@@ -86,9 +92,15 @@ class SystemMessageWidget(QWidget):
         self._filter_column_label.setBuddy(self._filter_column_combo_box)
 
         self._filter_pattern_line_edit.textChanged.connect(self.filter_reg_exp_changed)
-        self._filter_syntax_combo_box.currentIndexChanged.connect(self.filter_reg_exp_changed)
-        self._filter_column_combo_box.currentIndexChanged.connect(self.filter_column_changed)
-        self._filter_case_sensitivity_check_box.toggled.connect(self.filter_reg_exp_changed)
+        self._filter_syntax_combo_box.currentIndexChanged.connect(
+            self.filter_reg_exp_changed
+        )
+        self._filter_column_combo_box.currentIndexChanged.connect(
+            self.filter_column_changed
+        )
+        self._filter_case_sensitivity_check_box.toggled.connect(
+            self.filter_reg_exp_changed
+        )
         self._sort_case_sensitivity_check_box.toggled.connect(self.sort_changed)
 
         proxy_layout = QGridLayout()
@@ -120,7 +132,7 @@ class SystemMessageWidget(QWidget):
     def set_source_model(self, model):
         """
         Set the source model.
-        
+
         Parameters
         ----------
         model : QAbstractItemModel
@@ -150,7 +162,9 @@ class SystemMessageWidget(QWidget):
     @Slot()
     def filter_column_changed(self):
         """Filter the model using a column."""
-        self._proxy_model.setFilterKeyColumn(self._filter_column_combo_box.currentIndex())
+        self._proxy_model.setFilterKeyColumn(
+            self._filter_column_combo_box.currentIndex()
+        )
 
     @Slot()
     def sort_changed(self):
@@ -165,7 +179,7 @@ class SystemMessageWidget(QWidget):
     def add_message(self, message):
         """
         Add a message to the model.
-        
+
         Parameters
         ----------
         message : dict

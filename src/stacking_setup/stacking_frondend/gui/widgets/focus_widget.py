@@ -6,7 +6,7 @@ import qtawesome as qta
 
 
 class FocusWidget(QGroupBox):
-    name = 'Focus Widget'
+    name = "Focus Widget"
     min_size = QSize(500, 250)
     max_size = min_size
 
@@ -69,7 +69,7 @@ class FocusWidget(QGroupBox):
     def add_vel_presets(self, presets=["50 um/s", "500 um/s", "1000 um/s"]):
         """
         Add velocity presets to the velocity preset combo box
-        
+
         Parameters
         ----------
         presets : list
@@ -94,7 +94,7 @@ class FocusWidget(QGroupBox):
     def add_drive_step_presets(self, presets=["1 um", "10 um", "100 um"]):
         """
         Add drive step presets to the drive step combo box
-        
+
         Parameters
         ----------
         presets : list
@@ -128,16 +128,46 @@ class FocusWidget(QGroupBox):
         return moveModeFrame
 
     def _create_move_buttons(self):
-        """Create the move buttons"""	
+        """Create the move buttons"""
         moveFrame = QFrame()
         moveFrame.setMinimumSize(QSize(74, 220))
         moveFrame.setMaximumSize(QSize(74, 220))
         moveLayout = QVBoxLayout(moveFrame)
 
         # Add the up, lock and down buttons
-        self.upButton = QPushButton(qta.icon("fa.angle-double-up", options=[{'scale_factor': 2,}]), "")
-        self.lockButton = QPushButton(qta.icon("fa.lock", options=[{'scale_factor': 1.5,}]), "")
-        self.downButton = QPushButton(qta.icon("fa.angle-double-down", options=[{'scale_factor': 2,}]), "")
+        self.upButton = QPushButton(
+            qta.icon(
+                "fa.angle-double-up",
+                options=[
+                    {
+                        "scale_factor": 2,
+                    }
+                ],
+            ),
+            "",
+        )
+        self.lockButton = QPushButton(
+            qta.icon(
+                "fa.lock",
+                options=[
+                    {
+                        "scale_factor": 1.5,
+                    }
+                ],
+            ),
+            "",
+        )
+        self.downButton = QPushButton(
+            qta.icon(
+                "fa.angle-double-down",
+                options=[
+                    {
+                        "scale_factor": 2,
+                    }
+                ],
+            ),
+            "",
+        )
 
         moveLayout.addWidget(self.upButton)
         moveLayout.addWidget(self.lockButton)
@@ -163,7 +193,7 @@ class FocusWidget(QGroupBox):
 
         # Add the position labels
         self.zPosLabel = QLabel(positionDisplayFrame)
-        self.zPosLabel.setText(QCoreApplication.translate("MainWindow", u"Z:", None))
+        self.zPosLabel.setText(QCoreApplication.translate("MainWindow", "Z:", None))
         gridLayout.addWidget(self.zPosLabel, 0, 0, 1, 1)
 
         # Add the position displays
@@ -181,35 +211,45 @@ class FocusWidget(QGroupBox):
         ## Create the parameters frame and layout
         moveParamFrame = QFrame()
         moveParamGrid = QGridLayout(moveParamFrame)
-        
+
         # Create velocity presets
         self.movePresetLabel = QLabel(moveParamFrame)
-        self.movePresetLabel.setText(QCoreApplication.translate("MainWindow", u"Scale :", None))
+        self.movePresetLabel.setText(
+            QCoreApplication.translate("MainWindow", "Scale :", None)
+        )
         self.movePresetCombo = QComboBox(moveParamFrame)
 
         # Create the velocity slider
         self.velSliderLabel = QLabel(moveParamFrame)
-        self.velSliderLabel.setText(QCoreApplication.translate("MainWindow", u"Velocity :", None))
+        self.velSliderLabel.setText(
+            QCoreApplication.translate("MainWindow", "Velocity :", None)
+        )
         self.velocitySlider = QSlider(moveParamFrame)  # Add the slider
         self.velocitySlider.setOrientation(Qt.Horizontal)
 
         # Create the velocity value display
         self.velDispLabel = QLabel()
-        self.velDispLabel.setText(QCoreApplication.translate("MainWindow", u"um/s", None))
+        self.velDispLabel.setText(
+            QCoreApplication.translate("MainWindow", "um/s", None)
+        )
         self.velDisp = QSpinBox()
         self.velDisp.setFixedSize(self.settings.lcd_size)
         self.velDispLable = QLabel()
 
         # Add the drive step dropdown box
         self.driveStepLabel = QLabel(moveParamFrame)
-        self.driveStepLabel.setText(QCoreApplication.translate("MainWindow", u"Drive step :", None))
+        self.driveStepLabel.setText(
+            QCoreApplication.translate("MainWindow", "Drive step :", None)
+        )
         self.driveStepCombo = QComboBox(moveParamFrame)
 
         # Add everything to the layout
         moveParamGrid.addWidget(self.movePresetLabel, 0, 0, 1, 1)
         moveParamGrid.addWidget(self.movePresetCombo, 0, 1, 1, 3)
         moveParamGrid.addWidget(self.velSliderLabel, 1, 0, 1, 1)
-        moveParamGrid.addWidget(self.velocitySlider, 1, 1, 1, 2)  # Add the slider to the layout
+        moveParamGrid.addWidget(
+            self.velocitySlider, 1, 1, 1, 2
+        )  # Add the slider to the layout
         moveParamGrid.addWidget(self.velDispLabel, 1, 4, 1, 1)
         moveParamGrid.addWidget(self.velDisp, 1, 3, 1, 1)
         moveParamGrid.addWidget(self.driveStepLabel, 2, 0, 1, 1)
@@ -220,7 +260,7 @@ class FocusWidget(QGroupBox):
     def connect_actions(self, menubar, toolbar):
         """
         Connect the actions to the buttons
-        
+
         Parameters
         ----------
         menubar : QMenuBar
@@ -228,20 +268,30 @@ class FocusWidget(QGroupBox):
         toolbar : QToolBar
             The toolbar
         """
-        
+
         # Connect the disp to the slider
         self.velocitySlider.sliderReleased.connect(self._slider_changed)
-        self.velDisp.valueChanged.connect(lambda : self.velocitySlider.setValue(self.velDisp.value()))
+        self.velDisp.valueChanged.connect(
+            lambda: self.velocitySlider.setValue(self.velDisp.value())
+        )
 
         # Connect the movment buttons
         self.upButton.pressed.connect(
-            lambda : self.q.put('M811 K1') if self.jogButton.isChecked() else self.q.put('G0 K{}'.format(self.driveScale)))
+            lambda: self.q.put("M811 K1")
+            if self.jogButton.isChecked()
+            else self.q.put("G0 K{}".format(self.driveScale))
+        )
         self.upButton.released.connect(
-            lambda : self.q.put('M811 K0') if self.jogButton.isChecked() else None)
+            lambda: self.q.put("M811 K0") if self.jogButton.isChecked() else None
+        )
         self.downButton.pressed.connect(
-            lambda : self.q.put('M811 K-1') if self.jogButton.isChecked() else self.q.put('G0 K-{}'.format(self.driveScale)))
+            lambda: self.q.put("M811 K-1")
+            if self.jogButton.isChecked()
+            else self.q.put("G0 K-{}".format(self.driveScale))
+        )
         self.downButton.released.connect(
-            lambda : self.q.put('M811 K0') if self.jogButton.isChecked() else None)
+            lambda: self.q.put("M811 K0") if self.jogButton.isChecked() else None
+        )
         self.lockButton.clicked.connect(self._toggle_lock_movement)
         self.movePresetCombo.currentIndexChanged.connect(self._change_movement_scale)
         self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)
@@ -263,8 +313,11 @@ class FocusWidget(QGroupBox):
         self.velDisp.setValue(self.velocitySlider.value())
 
         # Send the new velocity to the backend parts
-        value = self.velocitySlider.value() * self.settings.known_units[self.moveUnit.split('/')[0]]
-        self.q.put('M812 K{}'.format(value, value, value, value))
+        value = (
+            self.velocitySlider.value()
+            * self.settings.known_units[self.moveUnit.split("/")[0]]
+        )
+        self.q.put("M812 K{}".format(value, value, value, value))
 
     def _toggle_lock_movement(self):
         """Toggle the lock movement button"""
@@ -275,8 +328,8 @@ class FocusWidget(QGroupBox):
 
     def update_positions(self, dict):
         """Update the position labels."""
-        if 'K' in dict:
-            self.zPosDisplay.display(dict['K'])
+        if "K" in dict:
+            self.zPosDisplay.display(dict["K"])
 
     def _update_drive_step_scale(self):
         # Get the current selected
@@ -285,6 +338,3 @@ class FocusWidget(QGroupBox):
         self.driveUnit = new_scale.split(" ")[1]
         self.driveScale *= self.settings.known_units[self.driveUnit]
         print(self.driveScale)
-
-        
-       

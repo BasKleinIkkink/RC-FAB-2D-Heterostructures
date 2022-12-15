@@ -1,12 +1,11 @@
 import configparser
 import time
 
-SENTINEL = 'SENTINEL'  # Sentinel command to close the pipe
-EOM_CHAR = 'EOM'  # String indicating the end of a message over a pipe
+SENTINEL = "SENTINEL"  # Sentinel command to close the pipe
+EOM_CHAR = "EOM"  # String indicating the end of a message over a pipe
 
 
 class HandshakeError(Exception):
-    
     def __init__(self, message=None):
         self._message = message
 
@@ -21,6 +20,7 @@ class BaseConnector:
     This class does not manage the connection it is a base class that should
     be inherited.
     """
+
     _connection_method = None
     _role = None
     _handshake_complete = False
@@ -80,7 +80,7 @@ class BaseConnector:
     def handshake(self):
         # Depending on the role of the connector decide
         # what to send and what to receive
-        if self._role == 'FRONDEND':
+        if self._role == "FRONDEND":
             self._frondend_handshake()
             self._handshake_complete = True
 
@@ -88,7 +88,7 @@ class BaseConnector:
             while self.message_waiting():
                 _ = self.receive()
 
-        elif self._role == 'BACKEND':
+        elif self._role == "BACKEND":
             self._backend_handshake()
             self._handshake_complete = True
 
@@ -97,27 +97,27 @@ class BaseConnector:
                 _ = self.receive()
 
         else:
-            raise HandshakeError('Unknown role {}'.format(self._role))
+            raise HandshakeError("Unknown role {}".format(self._role))
 
     def _frondend_handshake(self):
-        if not self.is_connected: return False
+        if not self.is_connected:
+            return False
         # Wait for the response
         while True:
             # Send the hello message
-            self.send('Hello there.')
+            self.send("Hello there.")
 
             if self.message_waiting():
                 res = self.receive()
-            else :
+            else:
                 continue
 
-            if res[0] == 'Hello there general Kenobi.':
+            if res[0] == "Hello there general Kenobi.":
                 return True
             else:
-                raise ValueError('Unexpected message: {}'.format(res[0]))
+                raise ValueError("Unexpected message: {}".format(res[0]))
 
-        raise ValueError('frondend Handshake failed')
-
+        raise ValueError("frondend Handshake failed")
 
     def _backend_handshake(self):
         # Wait for the hello message
@@ -126,12 +126,11 @@ class BaseConnector:
 
             if self.message_waiting():
                 res = self.receive()
-            else :
+            else:
                 continue
 
-            if res[0] == 'Hello there.':
-                self.send('Hello there general Kenobi.')
+            if res[0] == "Hello there.":
+                self.send("Hello there general Kenobi.")
                 break
             else:
-                raise ValueError('Unexpected message: {}'.format(res[0]))
-
+                raise ValueError("Unexpected message: {}".format(res[0]))

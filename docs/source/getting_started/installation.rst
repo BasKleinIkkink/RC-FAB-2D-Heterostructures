@@ -25,6 +25,11 @@ To get the code from the git repository use the following command:
 
     git clone https://github.com/Nynra/RC-FAB-2D-Heterostructure.git
 
+.. note::
+    Because the library is in development it is saved in a private repository and 
+    can only be accessed by the developers. If you want access to the repository
+    please send an email to PI-Bhattacharyya-Members@Physics.LeidenUniv.nl with
+    your github username, and reason for access
 
 This will build a wheel from the source code and install it in the current
 python environment. This is the recommended way to install the library.

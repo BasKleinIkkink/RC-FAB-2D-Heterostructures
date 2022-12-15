@@ -5,10 +5,10 @@ from typeguard import typechecked
 
 
 @typechecked
-def check_for_response(con, lock : Lock, event: Event) -> None:
+def check_for_response(con, lock: Lock, event: Event) -> None:
     """
     Check for a response from the pipe connection.
-    
+
     This function is used in a thread to print responses from the pipe connection
     without having to wait for a loop to finish.
 
@@ -27,7 +27,7 @@ def check_for_response(con, lock : Lock, event: Event) -> None:
 
     """
     response = None
-    
+
     while not event.is_set():
         sleep(0.1)  # Sleep 100ms to prevent the thread from hogging the CPU
 
@@ -44,10 +44,9 @@ def check_for_response(con, lock : Lock, event: Event) -> None:
                     print(msg.__dict__)
             else:
                 print(response)
-            
-            print('\n >>>')
 
-        
+            print("\n >>>")
+
 
 def main(connector) -> None:
     """
@@ -64,16 +63,26 @@ def main(connector) -> None:
 
     """
     # Print the welcome dialog
-    os.system('cls')
+    os.system("cls")
     print("Welcome to the Stacking TUI!")
-    print("Type exit() to exit the program and type help() for a list of possible commands.")
+    print(
+        "Type exit() to exit the program and type help() for a list of possible commands."
+    )
 
-    print('\n Performing handshake with backend...')
+    print("\n Performing handshake with backend...")
     connector.handshake()
 
     # Create the response thread as a deamon so it will close when the program closes
     shutdown_event = Event()
-    res_thread = Thread(target=check_for_response, args=(connector, Lock(), shutdown_event,), daemon=True)
+    res_thread = Thread(
+        target=check_for_response,
+        args=(
+            connector,
+            Lock(),
+            shutdown_event,
+        ),
+        daemon=True,
+    )
     res_thread.start()
 
     # Start the main loop

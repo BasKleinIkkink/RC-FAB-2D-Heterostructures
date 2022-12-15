@@ -24,6 +24,7 @@ Programming subjects
     * `Class inheritance <https://www.w3schools.com/python/python_inheritance.asp>`_
     * `Exception handling <https://docs.python.org/3/tutorial/errors.html>`_
     * `Logging <https://docs.python.org/3/library/logging.html>`_
+    * `Unit testing <https://docs.python.org/3/library/unittest.html>`_
     * `Mocking and monkey patching <https://docs.python.org/3/library/unittest.mock.html>`_
 * Basic stamping process
 
