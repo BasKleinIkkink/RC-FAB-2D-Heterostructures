@@ -358,7 +358,7 @@ const float max_stepper_speed = 500.00;         // max speed of stepper (steps/s
 const float min_stepper_speed = 0.005;          // Min stepper speed (steps/sec) 
 const int HOMING_STEP_SPD     = 400;            // speed when homing in steps/sec in run mode
 const float MAX_LIN_SPD       = 800.00;         // Maximum lineair speed in um/sec (e.g 1200 = 1200 uM/sec)
-const float MOT_ZERO_SPD      = 250;            // Stepper motor speed when zero ing stages to end point/limits
+const float MOT_ZERO_SPD      = 600;            // Stepper motor speed when zero ing stages to end point/limits
 
 
 // Temperature PID control params/settings 
@@ -1080,9 +1080,9 @@ void setup()
   zstage.setSlewRate(SR_980V_us);           // faster may give more torque (but also EM noise),
                                             // options are: 114, 220, 400, 520, 790, 980(V/us)
                                             
-  xstage.setOCThreshold(4);                 // over-current threshold for the 2.8A NEMA23 motor
-  ystage.setOCThreshold(4);                 // over-current threshold for the 2.8A NEMA23 motor
-  zstage.setOCThreshold(4);                 // over-current threshold for the 2.8A NEMA23 motor
+  xstage.setOCThreshold(2);                 // over-current threshold for the 2.8A NEMA23 motor
+  ystage.setOCThreshold(2);                 // over-current threshold for the 2.8A NEMA23 motor
+  zstage.setOCThreshold(2);                 // over-current threshold for the 2.8A NEMA23 motor
                                              // used in testing. If your motor stops working for
                                              // no apparent reason, it's probably this. Start low
                                              // and increase until it doesn't trip, then maybe
@@ -1217,11 +1217,6 @@ void setup()
   } 
   
   delay(50);
-
-  //zstage.run(FWD, 400);              // run/dir/speed     
-  //zstage.run(REV, 400);              // run/dir/speed       
-  //delay(3000);
-  
 
   if(SetManualLimits)
   {
@@ -1492,8 +1487,6 @@ void UpdateStepper()  //
 
      }  // end -  if(ZSTAGE_ENABLE) 
     
-
-
      
      // -----------------   STOP motor(s) when RUNMODE is in STOP  ------------------------------------------------
      if(RUNMODE == 0)                           // stop motor if runmode is zero
@@ -1872,6 +1865,7 @@ void UpdateStepper()  //
 // - Stage is then driven to the home position (0).
 // - All "HOMING" moves after zero-ing will always go to '0' position and not move till limit switch closes.
 // ********************************************************************************************************************************************************************
+
 void ZeroStage()                                // Usually only called once per startup
 {   
    if(DBG_MODE < 2)                             // only print when plotter is off
@@ -1882,6 +1876,12 @@ void ZeroStage()                                // Usually only called once per 
     xstage.getStatus();              // get status from driver board, this get clears error flags
     ystage.getStatus();              // get status from driver board, this get clears error flags
     zstage.getStatus();              // get status from driver board, this get clears error flags
+
+    xstage.setMaxSpeed(SET_SPD_X);    // max speed in units of full steps/s 
+    ystage.setMaxSpeed(SET_SPD_Y);    // max speed in units of full steps/s 
+    zstage.setMaxSpeed(SET_SPD_Z);    // max speed in units of full steps/s 
+
+    delay(10);
 
     // ZERO and MARK STAGES 
 
@@ -1896,14 +1896,15 @@ void ZeroStage()                                // Usually only called once per 
                   if(XSTAGE_DIR == 0)
                   {
                       while(xstage.busyCheck());                  // board not busy check
-                      xstage.run(REV,250);
+                      xstage.run(REV,MOT_ZERO_SPD);
                       INIT_X_STAGE = 1;
-                      //Serial.println("STATE CHANGE to 1");       // status feedback, only for debug  
+                      //Serial.print("Motor zero speed X :");
+                      //Serial.println(MOT_ZERO_SPD);       // status feedback, only for debug  
                   }
                   else
                   {
                       while(xstage.busyCheck());                  // board not busy check
-                      xstage.run(FWD,250);
+                      xstage.run(FWD,MOT_ZERO_SPD);
                       INIT_X_STAGE = 1;   
                       //Serial.println("STATE CHANGE to 1");       // status feedback, only for debug 
                   }
@@ -1919,8 +1920,7 @@ void ZeroStage()                                // Usually only called once per 
               //Serial.print("XSTAGE_LSD: ");             // status feedback, only for debug  
               //Serial.println(XSTAGE_LSD);               // status feedback, only for debug   
                
-              //delay(50);
-    
+              delay(10);
     
               if((XSTAGE_LSU == 1) && (INIT_X_STAGE == 1))
               {
@@ -1939,14 +1939,14 @@ void ZeroStage()                                // Usually only called once per 
     
                     if(XSTAGE_DIR == 0)
                     {
-                      xstage.move(FWD,250);  
+                      xstage.move(FWD,MOT_ZERO_SPD);  
                       while(xstage.busyCheck());                    // board not busy check 
                       xstage.resetPos();
 
                       if(SetManualLimits == 0)
                       {
                           while(xstage.busyCheck());                    // board not busy check 
-                          xstage.run(FWD,250);
+                          xstage.run(FWD,MOT_ZERO_SPD);
                           INIT_X_STAGE = 3; 
                       }
                       else
@@ -1958,14 +1958,14 @@ void ZeroStage()                                // Usually only called once per 
                     }
                     else
                     {
-                      xstage.move(REV,250); 
+                      xstage.move(REV,MOT_ZERO_SPD); 
                       while(xstage.busyCheck());                    // board not busy check 
                       xstage.resetPos(); 
 
                       if(SetManualLimits == 0)
                       {
                         while(xstage.busyCheck());                    // board not busy check 
-                        xstage.run(REV,250);
+                        xstage.run(REV,MOT_ZERO_SPD);
                         INIT_X_STAGE = 3; 
                       }
                       else
@@ -2006,7 +2006,7 @@ void ZeroStage()                                // Usually only called once per 
       
                       if(XSTAGE_DIR == 0)
                       {
-                        xstage.move(REV,250);  
+                        xstage.move(REV,MOT_ZERO_SPD);  
                         while(xstage.busyCheck());                    // board not busy check 
                         END_POS_X =  xstage.getPos();  
                         while(xstage.busyCheck());                    // board not busy check 
@@ -2014,7 +2014,7 @@ void ZeroStage()                                // Usually only called once per 
                       }
                       else
                       {
-                        xstage.move(FWD,250);  
+                        xstage.move(FWD,MOT_ZERO_SPD);  
                         while(xstage.busyCheck());                    // board not busy check 
                         END_POS_X =  xstage.getPos(); 
                         while(xstage.busyCheck());                    // board not busy check 
@@ -2068,14 +2068,14 @@ void ZeroStage()                                // Usually only called once per 
                   if(YSTAGE_DIR == 0)
                   {
                       while(ystage.busyCheck());                  // board not busy check
-                      ystage.run(REV,250);
+                      ystage.run(REV,MOT_ZERO_SPD);
                       INIT_Y_STAGE = 1;
                       //Serial.println("STATE CHANGE to 1");       // status feedback, only for debug  
                   }
                   else
                   {
                       while(ystage.busyCheck());                  // board not busy check
-                      ystage.run(FWD,250);
+                      ystage.run(FWD,MOT_ZERO_SPD);
                       INIT_Y_STAGE = 1;   
                       //Serial.println("STATE CHANGE to 1");       // status feedback, only for debug 
                   }
@@ -2091,7 +2091,7 @@ void ZeroStage()                                // Usually only called once per 
               //Serial.print("XSTAGE_LSD: ");             // status feedback, only for debug  
               //Serial.println(XSTAGE_LSD);               // status feedback, only for debug   
                
-              //delay(50);
+              delay(10);
     
     
               if((YSTAGE_LSU == 1) && (INIT_Y_STAGE == 1))
@@ -2111,14 +2111,14 @@ void ZeroStage()                                // Usually only called once per 
     
                     if(YSTAGE_DIR == 0)
                     {
-                      ystage.move(FWD,250);  
+                      ystage.move(FWD,MOT_ZERO_SPD);  
                       while(ystage.busyCheck());                    // board not busy check 
                       ystage.resetPos();
 
                       if(SetManualLimits == 0)
                       {
                           while(ystage.busyCheck());                    // board not busy check 
-                          ystage.run(FWD,250);
+                          ystage.run(FWD,MOT_ZERO_SPD);
                           INIT_Y_STAGE = 3; 
                       }
                       else
@@ -2130,14 +2130,14 @@ void ZeroStage()                                // Usually only called once per 
                     }
                     else
                     {
-                      ystage.move(REV,250); 
+                      ystage.move(REV,MOT_ZERO_SPD); 
                       while(ystage.busyCheck());                    // board not busy check 
                       ystage.resetPos(); 
 
                       if(SetManualLimits == 0)
                       {
                         while(ystage.busyCheck());                    // board not busy check 
-                        ystage.run(REV,250);
+                        ystage.run(REV,MOT_ZERO_SPD);
                         INIT_Y_STAGE = 3; 
                       }
                       else
@@ -2178,7 +2178,7 @@ void ZeroStage()                                // Usually only called once per 
       
                       if(YSTAGE_DIR == 0)
                       {
-                        ystage.move(REV,250);  
+                        ystage.move(REV,MOT_ZERO_SPD);  
                         while(ystage.busyCheck());                    // board not busy check 
                         END_POS_Y =  ystage.getPos();  
                         while(ystage.busyCheck());                    // board not busy check 
@@ -2186,7 +2186,7 @@ void ZeroStage()                                // Usually only called once per 
                       }
                       else
                       {
-                        ystage.move(FWD,250);  
+                        ystage.move(FWD,MOT_ZERO_SPD);  
                         while(ystage.busyCheck());                    // board not busy check 
                         END_POS_Y =  ystage.getPos(); 
                         while(ystage.busyCheck());                    // board not busy check 
@@ -2240,14 +2240,14 @@ void ZeroStage()                                // Usually only called once per 
               if(ZSTAGE_DIR == 0)
               {
                   while(zstage.busyCheck());                  // board not busy check
-                  zstage.run(REV,250);
+                  zstage.run(REV,MOT_ZERO_SPD);
                   INIT_Z_STAGE = 1;
                   //Serial.println("STATE CHANGE to 1");       // status feedback, only for debug  
               }
               else
               {
                   while(zstage.busyCheck());                  // board not busy check
-                  zstage.run(FWD,250);
+                  zstage.run(FWD,MOT_ZERO_SPD);
                   INIT_Z_STAGE = 1;   
                   //Serial.println("STATE CHANGE to 1");       // status feedback, only for debug 
               }
@@ -2283,14 +2283,14 @@ void ZeroStage()                                // Usually only called once per 
 
                 if(ZSTAGE_DIR == 0)
                 {
-                  zstage.move(FWD,250);  
+                  zstage.move(FWD,MOT_ZERO_SPD);  
                   while(zstage.busyCheck());                    // board not busy check 
                   zstage.resetPos();
 
                   if(SetManualLimits == 0)
                   {
                       while(zstage.busyCheck());                    // board not busy check 
-                      zstage.run(FWD,250);
+                      zstage.run(FWD,MOT_ZERO_SPD);
                       INIT_Z_STAGE = 3; 
                   }
                   else
@@ -2302,14 +2302,14 @@ void ZeroStage()                                // Usually only called once per 
                 }
                 else
                 {
-                  zstage.move(REV,250); 
+                  zstage.move(REV,MOT_ZERO_SPD); 
                   while(zstage.busyCheck());                    // board not busy check 
                   zstage.resetPos(); 
 
                   if(SetManualLimits == 0)
                   {
                     while(zstage.busyCheck());                    // board not busy check 
-                    zstage.run(REV,250);
+                    zstage.run(REV,MOT_ZERO_SPD);
                     INIT_Z_STAGE = 3; 
                   }
                   else
@@ -2350,7 +2350,7 @@ void ZeroStage()                                // Usually only called once per 
   
                   if(ZSTAGE_DIR == 0)
                   {
-                    zstage.move(REV,250);  
+                    zstage.move(REV,MOT_ZERO_SPD);  
                     while(zstage.busyCheck());                    // board not busy check 
                     END_POS_Z =  zstage.getPos();  
                     while(zstage.busyCheck());                    // board not busy check 
@@ -2358,7 +2358,7 @@ void ZeroStage()                                // Usually only called once per 
                   }
                   else
                   {
-                    zstage.move(FWD,250);  
+                    zstage.move(FWD,MOT_ZERO_SPD);  
                     while(zstage.busyCheck());                    // board not busy check 
                     END_POS_Z =  zstage.getPos(); 
                     while(zstage.busyCheck());                    // board not busy check 
@@ -2960,6 +2960,7 @@ void CheckSerialRXD()
                     else                              // Get limit via automiatic Zeroing
                     {
                        ZeroStage();                   // Execute zero stage routine
+                       
                     }
                   break;   
                   
