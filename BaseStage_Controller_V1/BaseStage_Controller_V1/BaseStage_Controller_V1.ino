@@ -607,7 +607,7 @@ float RTD_TEMP_FIL        = 0;              // RTD temp filtered
 float RTD_TEMP_OLD        = 0;              // RTD temp old value
 bool  CHK_RTD             = 0;              // CHECK RTD FLAG
 bool PWR_FLASH            = 0;              // used for power error signaling
-//bool RTD_ERR              = 0;
+//bool RTD_ERR            = 0;
 
 
 // TIMER ISR variables 
@@ -4406,7 +4406,7 @@ void UpdateActors()
         if(ESTOP_SET || RTD_ERR || TC_ERR || ZERO_ERR || MOT_ERR || HTR_ERR ||TEC_ERR )                           // check value
         {
            ERR_LEDSTATE = !ERR_LEDSTATE;              //  toggle, LED STATE 
-           digitalWrite(ERR_LED, ERR_LEDSTATE);       //  Override pin state, for debugging purposes   
+           //digitalWrite(ERR_LED, ERR_LEDSTATE);       //  Override pin state, for debugging purposes   
         }
         else
         {
@@ -4444,7 +4444,22 @@ void DebugPrint()             // contains moutiple debug modes
             Serial.println(""); 
             Serial.print("uptime: "); 
             Serial.print(uptime);        
-            Serial.println(" secs");       
+            Serial.println(" secs"); 
+
+            Serial.print("MOT_ERR: "); 
+            Serial.println(MOT_ERR);   
+            Serial.print("TEC_ERR: "); 
+            Serial.println(TEC_ERR); 
+            Serial.print("ZERO_ERR: "); 
+            Serial.println(ZERO_ERR); 
+             Serial.print("TC_ERR: "); 
+            Serial.println(TC_ERR); 
+
+          
+               
+
+
+
            
             Serial.print("PSU Voltage: "); 
             Serial.println(PSU_CHK_VOLTAGE); 
