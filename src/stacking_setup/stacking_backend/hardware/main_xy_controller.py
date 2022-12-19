@@ -37,6 +37,7 @@ class MainXYController:
         self._port = settings.get(self._type + ".DEFAULT", "port")
         self._baud_rate = settings.get(self._type + ".DEFAULT", "baud_rate")
         self._timeout = settings.get(self._type + ".DEFAULT", "timeout")
+        self._zero_timeout = settings.get(self._type + ".DEFAULT", "zero_timeout")
         self._temp_control_active = False
         self._lock = tr.Lock()
         self._homed = False
@@ -129,7 +130,7 @@ class MainXYController:
                 # Waiting for response timed out
                 print("The command {} did not receive a response.".format(command))
                 raise HardwareError(
-                    "The tango desktop did not respond to the command {}.".format(
+                    "The base controller did not respond to the command {}.".format(
                         command
                     )
                 )
@@ -313,7 +314,7 @@ class MainXYController:
         x_homed = False
         y_homed = False
 
-        etime = time.time() + 20  # Max 20 seconds to home
+        etime = time.time() + self._zero_timeout  # Max 20 seconds to home
         while not (x_homed and y_homed) and time.time() < etime:
             if self._ser.in_waiting > 0:
                 data = self._ser.readlines()
