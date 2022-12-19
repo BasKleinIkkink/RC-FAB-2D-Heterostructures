@@ -22,10 +22,10 @@ m = 1
 x = 10**2 * m
 d_list = np.array([0.01, 0.1, 0.5, 1, 2])
 for i in d_list:
-    G = c.tf([i, x], [m, i, x])
+    G = c.tf([2 * i * w0, w0**2], [1 ,2 * i * w0, w0**2])
     w, mag, phase = c.bode(G, dB=True, Hz=True, deg=True, plot=False)
     axs[0].plot(w, mag, label=f"D={round(i, 2)}")
-    axs[1].plot(w, phase, label=f"D={round(i, 2)}")
+    # axs[1].plot(w, phase, label=f"D={round(i, 2)}")
 
 axs[0].set_xscale('log')
 axs[0].set_xlabel('Frequency [Hz]')
