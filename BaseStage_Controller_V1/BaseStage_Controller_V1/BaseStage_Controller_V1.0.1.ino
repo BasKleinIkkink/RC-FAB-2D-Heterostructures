@@ -267,7 +267,7 @@
 
 #define stage_pos_units     0               // Position unit (position in steps or uM, 0=>steps from zero pos. &  1=> uM from zero pos.)
 #define stage_endpos_micron 10000000        // Maximum position from zero in micron 
-#define stage_endpos_steps  500000          // Maximum position from zero in step
+#define stage_endpos_steps  1200000        // Maximum position from zero in step
 
 // Thermocouple ADC input 
 #define OS_13_BIT           64 
@@ -358,7 +358,7 @@ const float max_stepper_speed = 500.00;         // max speed of stepper (steps/s
 const float min_stepper_speed = 0.005;          // Min stepper speed (steps/sec) 
 const int HOMING_STEP_SPD     = 400;            // speed when homing in steps/sec in run mode
 const float MAX_LIN_SPD       = 800.00;         // Maximum lineair speed in um/sec (e.g 1200 = 1200 uM/sec)
-const float MOT_ZERO_SPD      = 600;            // Stepper motor speed when zero ing stages to end point/limits
+const float MOT_ZERO_SPD      = 5000;            // Stepper motor speed when zero ing stages to end point/limits
 
 
 // Temperature PID control params/settings 
@@ -382,8 +382,8 @@ const int MAX_JOG_STEP_SIZE   = 18;              // Maximum jog step size, for s
 const float MAX_SS_SPD        = 56500.00;        // Max Steps/Sec speed
 const float MIN_SS_SPD        = 100.00;          // slowest possible speed, 1 step per iteration @ 100 Hz ==> 100 steps/sec
 
-const long X_MAN_ENDPOS       = 50000;           // manual end position
-const long Y_MAN_ENDPOS       = 50000;           // manual end position
+const long X_MAN_ENDPOS       = 627500;           // manual end position
+const long Y_MAN_ENDPOS       = 659500;           // manual end position
 const long Z_MAN_ENDPOS       = -50000;          // manual end position
 
 volatile double RXD_TEMP_VAL  = 0.00;            // Temporary value to prevent data entry spikes on plotter screen..
@@ -397,7 +397,7 @@ double CV_COOL                = 0.0;             // Command value (CV) temperatu
 int CV_TEC                    = 0;               // Command value (CV) temperature(in deg C)  => 2 decimal rounding and use point as decimal separator
 
 
-// ERROR STATUS BUTS:
+// ERROR STATUS BITS:
 int GLOBAL_ERR           = 0;                  // Hold global Error state ==> 16 bits
 
 bool PWR_ERR             = 0;                  // HOLDS PWR ERROR, BIT 0 in GLOBAL ERROR
@@ -474,9 +474,9 @@ float JOG_STEP_SIZE_Y = 1;                  // holds stepsize value for slow spe
 float JOG_STEP_SIZE_Z = 1;                  // holds stepsize value for slow speed jog motion 
 
 //float TOP_SPD = 50.5;                     // generic stepper top speed in steps/sec
-float TOP_SPD_X = 2560;                     // generic stepper top speed in steps/sec
-float TOP_SPD_Y = 2560;                     // generic stepper top speed in steps/sec
-float TOP_SPD_Z = 2560;                     // generic stepper top speed in steps/sec
+float TOP_SPD_X = 25600 * 3;                     // generic stepper top speed in steps/sec
+float TOP_SPD_Y = 25600 * 3;                     // generic stepper top speed in steps/sec
+float TOP_SPD_Z = 25600;                     // generic stepper top speed in steps/sec
 
 int LIN_X_SPD = 0;                          // linear speed of stage
 int LIN_Y_SPD = 0;                          // linear speed of stage
@@ -659,9 +659,9 @@ long OLD_POS_MOT_X = 0;                            // holds old position for spe
 long OLD_POS_MOT_Y = 0;                            // holds old position for speed calculation
 long OLD_POS_MOT_Z = 0;                            // holds old position for speed calculation
 
-float SET_SPD_X = 256;
-float SET_SPD_Y = 256;
-float SET_SPD_Z = 256;
+float SET_SPD_X = 2560;
+float SET_SPD_Y = 2560;
+float SET_SPD_Z = 2560;
 
 
 // powerSTEP library instance, parameters are distance from the end of a daisy-chain
@@ -1751,7 +1751,7 @@ void UpdateStepper()  //
 
             if((TARGET_DIST_Z > 25) && (Z_APR_STATE == 1)) 
             {
-               xstage.run(REV, JOG_STEP_SIZE_Z);
+               zstage.run(REV, JOG_STEP_SIZE_Z);
                Z_APR_STATE = 2; 
                //Serial.print("APP CHANGE: ");                     // status feedback, only for debug  
                //Serial.println(Z_APR_STATE);                     // status feedback, only for debug 
@@ -1885,6 +1885,176 @@ void ZeroStage()                                // Usually only called once per 
 
     // ZERO and MARK STAGES 
 
+    // ----------------   ZERO and MARK Y-STAGE   --------------------------------
+      if(YSTAGE_ENABLE)
+      {
+          while((!Y_INIT_DONE))
+          {    
+              if(INIT_Y_STAGE == 0)
+              {
+                  if(YSTAGE_DIR == 0)
+                  {
+                      while(ystage.busyCheck());                  // board not busy check
+                      ystage.run(REV,MOT_ZERO_SPD);
+                      INIT_Y_STAGE = 1;
+                      //Serial.println("STATE CHANGE to 1");       // status feedback, only for debug  
+                  }
+                  else
+                  {
+                      while(ystage.busyCheck());                  // board not busy check
+                      ystage.run(FWD,MOT_ZERO_SPD);
+                      INIT_Y_STAGE = 1;   
+                      //Serial.println("STATE CHANGE to 1");       // status feedback, only for debug 
+                  }
+
+                  digitalWrite(YSTAGE_LED, HIGH);          //  TURN ON MOTOR LED      
+               }    
+    
+              YSTAGE_LSU = digitalRead(LSU_Y_PIN);  // check state of limit switch
+              YSTAGE_LSD = digitalRead(LSD_Y_PIN);  // check state of limit switch
+              
+              //Serial.print("XSTAGE_LSU: ");             // status feedback, only for debug  
+              //Serial.println(XSTAGE_LSU);               // status feedback, only for debug   
+              //Serial.print("XSTAGE_LSD: ");             // status feedback, only for debug  
+              //Serial.println(XSTAGE_LSD);               // status feedback, only for debug   
+               
+              delay(10);
+    
+    
+              if((YSTAGE_LSU == 1) && (INIT_Y_STAGE == 1))
+              {
+                INI_Y_CNT++;
+               
+                //Serial.print("INI_X_CNT: ");             // status feedback, only for debug  
+                //Serial.println(INI_X_CNT);               // status feedback, only for debug 
+    
+                if(INI_Y_CNT > 3 &&  (INIT_Y_STAGE == 1) )
+                {
+                    ystage.softStop();                     // Limit switch engaged, STOP stage
+                    
+                    INIT_Y_STAGE = 2;
+                    //Serial.println("STATE CHANGE to 2");   // status feedback, only for debug 
+                    
+    
+                    if(YSTAGE_DIR == 0)
+                    {
+                      ystage.move(FWD,MOT_ZERO_SPD);  
+                      while(ystage.busyCheck());                    // board not busy check 
+                      ystage.resetPos();
+
+                      if(SetManualLimits == 0)
+                      {
+                          while(ystage.busyCheck());                    // board not busy check 
+                          ystage.run(FWD,MOT_ZERO_SPD);
+                          INIT_Y_STAGE = 3; 
+                      }
+                      else
+                      {
+                          Y_INIT_DONE  = 1;
+                          INIT_Y_STAGE = 0; 
+                      }
+                     
+                    }
+                    else
+                    {
+                      ystage.move(REV,MOT_ZERO_SPD); 
+                      while(ystage.busyCheck());                    // board not busy check 
+                      ystage.resetPos(); 
+
+                      if(SetManualLimits == 0)
+                      {
+                        while(ystage.busyCheck());                    // board not busy check 
+                        ystage.run(REV,MOT_ZERO_SPD);
+                        INIT_Y_STAGE = 3; 
+                      }
+                      else
+                      {
+                          Y_INIT_DONE  = 1;
+                          INIT_Y_STAGE = 0; 
+                      }
+                      
+                    } 
+
+                    ystage.move(FWD, 659500);
+                   // Serial.println("STATE CHANGE to 3");             // status feedback, only for debug  
+                    
+                    INI_Y_CNT  =0;            
+                }
+              }
+              else
+              {
+                  if((YSTAGE_LSU == 0) && (INIT_Y_STAGE == 1))
+                  {
+                    INI_Y_CNT  = 0;     // reset accumulator count
+                  }
+              }
+
+             
+                 
+    
+              if((YSTAGE_LSD == 1) && (INIT_Y_STAGE == 3) && (SetManualLimits == 0))
+              {
+                  INI_Y_CNT++;
+      
+                  if(INI_Y_CNT > 3 && (INIT_Y_STAGE == 3) )
+                  {
+                      ystage.softStop();                     // Limit switch engaged, STOP stage
+                      
+                      INIT_Y_STAGE = 4;                               // increment stage
+    
+                     //Serial.println("STATE CHANGE to 4");          // status feedback, only for debug
+      
+                      if(YSTAGE_DIR == 0)
+                      {
+                        ystage.move(REV,MOT_ZERO_SPD);  
+                        while(ystage.busyCheck());                    // board not busy check 
+                        END_POS_Y =  ystage.getPos();  
+                        while(ystage.busyCheck());                    // board not busy check 
+                        ystage.goTo(659500);
+                      }
+                      else
+                      {
+                        ystage.move(FWD,MOT_ZERO_SPD);  
+                        while(ystage.busyCheck());                    // board not busy check 
+                        END_POS_Y =  ystage.getPos(); 
+                        while(ystage.busyCheck());                    // board not busy check 
+                        ystage.goTo(659500);  // Move to center);
+                      } 
+                      
+                      INIT_Y_STAGE = 5; 
+                      
+                      //Serial.println("STATE CHANGE to 5");          // status feedback, only for debug 
+                  
+                      Y_INIT_DONE  = 1;
+                      INI_Y_CNT    = 0; 
+                      INIT_Y_STAGE = 0;                 
+                  }
+               }
+               else
+               {
+                  if((YSTAGE_LSD == 0) && (INIT_Y_STAGE == 3))
+                  {
+                    INI_Y_CNT = 0;     //   reset                    
+                  }
+               }
+                                      
+           }
+           
+          Serial.print("ENDPOS Y: ");                       // status feedback, only for debug  
+          Serial.println(END_POS_Y);                        // status feedback, only for debug  
+          //Serial.println("ZERO-MARK Y done...");            // status feedback, only for debug 
+          while(ystage.busyCheck());                    // board not busy check 
+          digitalWrite(YSTAGE_LED, LOW);                    //  TURN OFF MOTOR LED
+      
+      
+      }   // if(XSTAGE_ENABLE)
+      else // in case no stage set flag hi
+      {
+        Y_INIT_DONE = 1;
+        while(ystage.busyCheck());                    // board not busy check 
+        digitalWrite(YSTAGE_LED, LOW);                      //  TURN OFF MOTOR LED
+      } 
+
 
       // ----------------   ZERO and MARK X-STAGE   --------------------------------
       if(XSTAGE_ENABLE)
@@ -1976,6 +2146,7 @@ void ZeroStage()                                // Usually only called once per 
                       
                     } 
     
+                    xstage.move(FWD, 659500);
                    // Serial.println("STATE CHANGE to 3");             // status feedback, only for debug  
                     
                     INI_X_CNT  =0;            
@@ -2010,7 +2181,7 @@ void ZeroStage()                                // Usually only called once per 
                         while(xstage.busyCheck());                    // board not busy check 
                         END_POS_X =  xstage.getPos();  
                         while(xstage.busyCheck());                    // board not busy check 
-                        xstage.goTo(0);
+                        xstage.goTo(659500);
                       }
                       else
                       {
@@ -2018,7 +2189,7 @@ void ZeroStage()                                // Usually only called once per 
                         while(xstage.busyCheck());                    // board not busy check 
                         END_POS_X =  xstage.getPos(); 
                         while(xstage.busyCheck());                    // board not busy check 
-                        xstage.goTo(0);
+                        xstage.goTo(659500);
                       } 
                       
                       INIT_X_STAGE = 5; 
@@ -2054,181 +2225,6 @@ void ZeroStage()                                // Usually only called once per 
         while(xstage.busyCheck());                    // board not busy check 
         digitalWrite(XSTAGE_LED, LOW);                      //  TURN OFF MOTOR LED
       } 
-
-
-
-
-      // ----------------   ZERO and MARK Y-STAGE   --------------------------------
-      if(YSTAGE_ENABLE)
-      {
-          while((!Y_INIT_DONE))
-          {    
-              if(INIT_Y_STAGE == 0)
-              {
-                  if(YSTAGE_DIR == 0)
-                  {
-                      while(ystage.busyCheck());                  // board not busy check
-                      ystage.run(REV,MOT_ZERO_SPD);
-                      INIT_Y_STAGE = 1;
-                      //Serial.println("STATE CHANGE to 1");       // status feedback, only for debug  
-                  }
-                  else
-                  {
-                      while(ystage.busyCheck());                  // board not busy check
-                      ystage.run(FWD,MOT_ZERO_SPD);
-                      INIT_Y_STAGE = 1;   
-                      //Serial.println("STATE CHANGE to 1");       // status feedback, only for debug 
-                  }
-
-                  digitalWrite(YSTAGE_LED, HIGH);          //  TURN ON MOTOR LED      
-               }    
-    
-              YSTAGE_LSU = digitalRead(LSU_Y_PIN);  // check state of limit switch
-              YSTAGE_LSD = digitalRead(LSD_Y_PIN);  // check state of limit switch
-              
-              //Serial.print("XSTAGE_LSU: ");             // status feedback, only for debug  
-              //Serial.println(XSTAGE_LSU);               // status feedback, only for debug   
-              //Serial.print("XSTAGE_LSD: ");             // status feedback, only for debug  
-              //Serial.println(XSTAGE_LSD);               // status feedback, only for debug   
-               
-              delay(10);
-    
-    
-              if((YSTAGE_LSU == 1) && (INIT_Y_STAGE == 1))
-              {
-                INI_Y_CNT++;
-               
-                //Serial.print("INI_X_CNT: ");             // status feedback, only for debug  
-                //Serial.println(INI_X_CNT);               // status feedback, only for debug 
-    
-                if(INI_Y_CNT > 3 &&  (INIT_Y_STAGE == 1) )
-                {
-                    ystage.softStop();                     // Limit switch engaged, STOP stage
-                    
-                    INIT_Y_STAGE = 2;
-                    //Serial.println("STATE CHANGE to 2");   // status feedback, only for debug 
-                    
-    
-                    if(YSTAGE_DIR == 0)
-                    {
-                      ystage.move(FWD,MOT_ZERO_SPD);  
-                      while(ystage.busyCheck());                    // board not busy check 
-                      ystage.resetPos();
-
-                      if(SetManualLimits == 0)
-                      {
-                          while(ystage.busyCheck());                    // board not busy check 
-                          ystage.run(FWD,MOT_ZERO_SPD);
-                          INIT_Y_STAGE = 3; 
-                      }
-                      else
-                      {
-                          Y_INIT_DONE  = 1;
-                          INIT_Y_STAGE = 0; 
-                      }
-                     
-                    }
-                    else
-                    {
-                      ystage.move(REV,MOT_ZERO_SPD); 
-                      while(ystage.busyCheck());                    // board not busy check 
-                      ystage.resetPos(); 
-
-                      if(SetManualLimits == 0)
-                      {
-                        while(ystage.busyCheck());                    // board not busy check 
-                        ystage.run(REV,MOT_ZERO_SPD);
-                        INIT_Y_STAGE = 3; 
-                      }
-                      else
-                      {
-                          Y_INIT_DONE  = 1;
-                          INIT_Y_STAGE = 0; 
-                      }
-                      
-                    } 
-    
-                   // Serial.println("STATE CHANGE to 3");             // status feedback, only for debug  
-                    
-                    INI_Y_CNT  =0;            
-                }
-              }
-              else
-              {
-                  if((YSTAGE_LSU == 0) && (INIT_Y_STAGE == 1))
-                  {
-                    INI_Y_CNT  = 0;     // reset accumulator count
-                  }
-              }
-
-             
-                 
-    
-              if((YSTAGE_LSD == 1) && (INIT_Y_STAGE == 3) && (SetManualLimits == 0))
-              {
-                  INI_Y_CNT++;
-      
-                  if(INI_Y_CNT > 3 && (INIT_Y_STAGE == 3) )
-                  {
-                      ystage.softStop();                     // Limit switch engaged, STOP stage
-                      
-                      INIT_Y_STAGE = 4;                               // increment stage
-    
-                     //Serial.println("STATE CHANGE to 4");          // status feedback, only for debug
-      
-                      if(YSTAGE_DIR == 0)
-                      {
-                        ystage.move(REV,MOT_ZERO_SPD);  
-                        while(ystage.busyCheck());                    // board not busy check 
-                        END_POS_Y =  ystage.getPos();  
-                        while(ystage.busyCheck());                    // board not busy check 
-                        ystage.goTo(0);
-                      }
-                      else
-                      {
-                        ystage.move(FWD,MOT_ZERO_SPD);  
-                        while(ystage.busyCheck());                    // board not busy check 
-                        END_POS_Y =  ystage.getPos(); 
-                        while(ystage.busyCheck());                    // board not busy check 
-                        ystage.goTo(0);
-                      } 
-                      
-                      INIT_Y_STAGE = 5; 
-                      
-                      //Serial.println("STATE CHANGE to 5");          // status feedback, only for debug 
-                  
-                      Y_INIT_DONE  = 1;
-                      INI_Y_CNT    = 0; 
-                      INIT_Y_STAGE = 0;                 
-                  }
-               }
-               else
-               {
-                  if((YSTAGE_LSD == 0) && (INIT_Y_STAGE == 3))
-                  {
-                    INI_Y_CNT = 0;     //   reset                    
-                  }
-               }
-                                      
-           }
-           
-          Serial.print("ENDPOS Y: ");                       // status feedback, only for debug  
-          Serial.println(END_POS_Y);                        // status feedback, only for debug  
-          //Serial.println("ZERO-MARK Y done...");            // status feedback, only for debug 
-          while(ystage.busyCheck());                    // board not busy check 
-          digitalWrite(YSTAGE_LED, LOW);                    //  TURN OFF MOTOR LED
-      
-      
-      }   // if(XSTAGE_ENABLE)
-      else // in case no stage set flag hi
-      {
-        Y_INIT_DONE = 1;
-        while(ystage.busyCheck());                    // board not busy check 
-        digitalWrite(YSTAGE_LED, LOW);                      //  TURN OFF MOTOR LED
-      } 
-
-
-
 
    // ----------------   ZERO and MARK Z-STAGE   --------------------------------
   if(ZSTAGE_ENABLE)
@@ -2838,7 +2834,7 @@ void CheckSerialRXD()
                       {
                           while(xstage.busyCheck());
                           digitalWrite(XSTAGE_LED, HIGH);                //  TURN ON MOTOR LED     
-                          xstage.goTo(0);                                // Goto home position
+                          xstage.goTo(END_POS_X);                                // Goto home position
                       }
                    }
                    
@@ -2854,7 +2850,7 @@ void CheckSerialRXD()
                       {
                           while(ystage.busyCheck());
                           digitalWrite(YSTAGE_LED, HIGH);                //  TURN ON MOTOR LED     
-                          ystage.goTo(0);                                // Goto home position
+                          ystage.goTo(END_POS_Y);                                // Goto home position
                       }
                    }
                    
@@ -2870,7 +2866,7 @@ void CheckSerialRXD()
                       {
                           while(zstage.busyCheck());
                           digitalWrite(ZSTAGE_LED, HIGH);                //  TURN ON MOTOR LED     
-                          zstage.goTo(0);                                // Goto home position
+                          zstage.goTo(END_POS_Z);                                // Goto home position
                       }
                    }
 
