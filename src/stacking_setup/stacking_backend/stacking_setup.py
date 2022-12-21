@@ -332,7 +332,6 @@ class StackingSetupBackend:
             new process (hardware objects contain parts that cant be pickled).
         """
         self._logger = self._set_logger()
-        self._emergency_breaker = self._init_emergency_breaker()
         self._hardware = self._init_all_hardware(settings)
         self._connect_all_hardware()
         self._logger.info('Stacking setup initiated with connected hardware: {}'.format(self._hardware))

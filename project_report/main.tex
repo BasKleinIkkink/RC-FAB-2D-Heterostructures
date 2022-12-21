@@ -2,6 +2,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[myheadings]{fullpage}
 \DeclareUnicodeCharacter{0301}{\hspace{-1ex}\'{ }}
+
 % Package for headers 
 \usepackage{fancyhdr}
 \usepackage{lastpage}
@@ -28,6 +29,60 @@
 \usepackage{wrapfig}
 \usepackage[colorinlistoftodos]{todonotes}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+% For python code
+\usepackage{color} 
+\usepackage{listings} 
+\usepackage{setspace} 
+
+\definecolor{Code}{rgb}{0,0,0} 
+\definecolor{Decorators}{rgb}{0.5,0.5,0.5} 
+\definecolor{Numbers}{rgb}{0.5,0,0} 
+\definecolor{MatchingBrackets}{rgb}{0.25,0.5,0.5} 
+\definecolor{Keywords}{rgb}{0,0,1} 
+\definecolor{self}{rgb}{0,0,0} 
+\definecolor{Strings}{rgb}{0,0.63,0} 
+\definecolor{Comments}{rgb}{0,0.63,1} 
+\definecolor{Backquotes}{rgb}{0,0,0} 
+\definecolor{Classname}{rgb}{0,0,0} 
+\definecolor{FunctionName}{rgb}{0,0,0} 
+\definecolor{Operators}{rgb}{0,0,0} 
+\definecolor{Background}{rgb}{0.98,0.98,0.98} 
+ 
+\lstdefinelanguage{Python}{ 
+  numbers=left, 
+  numberstyle=\footnotesize, 
+  numbersep=1em, 
+  xleftmargin=1em, 
+  framextopmargin=2em, 
+  framexbottommargin=2em, 
+  showspaces=false, 
+  showtabs=false, 
+  showstringspaces=false, 
+  frame=l, 
+  tabsize=4,
+  % Basic 
+  basicstyle=\ttfamily\small\setstretch{1}, 
+  backgroundcolor=\color{Background}, 
+  % Comments 
+  commentstyle=\color{Comments}\slshape, 
+  % Strings 
+  stringstyle=\color{Strings}, 
+  morecomment=[s][\color{Strings}]{"""}{"""}, 
+  morecomment=[s][\color{Strings}]{'''}{'''}, 
+  % keywords 
+  morekeywords={import,from,class,def,for,while,if,is,in,elif,else,not,and,or,print,break,continue,return,True,False,None,access,as,,del,except,exec,finally,global,import,lambda,pass,print,raise,try,assert}, 
+  keywordstyle={\color{Keywords}\bfseries}, 
+  % additional keywords 
+  morekeywords={[2]@invariant,pylab,numpy,np,scipy}, 
+  keywordstyle={[2]\color{Decorators}\slshape}, 
+  emph={self}, 
+  emphstyle={\color{self}\slshape}, 
+  % 
+} 
+ 
+\linespread{1.3}
+
 
 % Bibliography
 % \usepackage{biblatex}
@@ -73,14 +128,14 @@
 		%\normalsize Company Name \\ [1.0cm]
 		%Faculty of Social Sciences\\
 		\HRule{2pt} \\
-		\LARGE \textbf{Remote-controlled fabrication of 2D heterostructuren via van der Waals Epitaxy} %para que quede encerrado en las lineas
+		\LARGE \textbf{Remote-controlled fabrication of 2D heterostructuren} %para que quede encerrado en las lineas
 		\HRule{2pt} \\ [0.5cm]
 		\normalsize \today \vspace*{5\baselineskip}}
 		
 \date{}
 
 \author{
-        Report by:\\[0.5cm]
+        Report by:\\
 		B. Klein Ikkink            \\[1cm]
 		 Supervised by:        \\
 		 S. Bhattacharyya, LION \\
@@ -88,6 +143,7 @@
 		 }
 		 
 \maketitle
+\pagenumbering{roman}
 
 \clearpage
 \section*{Foreword}
@@ -105,6 +161,7 @@
 
 \section*{Used abbreviations}
 \label{ap:veel_gebruikte_symbolen}
+\todo{pagina nummering pas hier beginnen, voorgaande in romeinse nummering}
 \begin{itemize}[noitemsep]
     \item LION : Leiden Institute Of Physics
     \item VDWSF: Van Der Waals Stacking Facility
@@ -118,6 +175,7 @@
 \end{itemize}
 
 \clearpage
+\pagenumbering{arabic}
 
 \section{Introduction}
 \todo{Rephrase the text so it isn't flagged as plagiaat}
@@ -167,18 +225,24 @@ Over the past decade, research into two-dimensional (2D) materials and van der W
 \todo{aFBEELDING VAN GRAFEEN EN HEXAGONAAL BOORNITRIDE INVOEGEN}
 Van der Waals heterostructures are composed of two or more 2D materials that are stacked together and can be used to create electronic and optoelectronic nano devices. 
 This research has enabled the development of a wide range of technologies, including flexible electronics, high-speed transistors, and ultra-sensitive sensors. 
-The promise of 2D materials and van der Waals heterostructures is that they can be used to create devices that are faster, more efficient, and more reliable than existing technologies.\\
-\todo{citaat invoegen}
+The promise of 2D materials and van der Waals heterostructures is that they can be used to create devices that are faster, more efficient, and more reliable than existing technologies \citep{geimVanWaalsHeterostructures2013}.
 
  \subsection{Fabrication of van der Waals Heterostructures: Stamping}
  The stamping process is a method used to fabricate van der Waals heterostructures.
- This process involves the transfer of 2D crystals onto a substrate by pressing them together with a stamp. 
+ This process involves the transfer of 2D crystals onto a substrate by pressing them together with a stamp so the van der Waals forces between the layers become strong enough to hold the layers together.
 
- \todo{Volgensmij klopt dit niet met de methode die wij gebruiken}
- The stamp is typically made of a polymer material and is designed to have a specific pattern that matches the desired heterostructure. 
- The stamp is then placed on top of the substrate and the 2D crystals are placed on top of the stamp. 
- Pressure is then applied to the stamp, which causes the 2D crystals to be transferred onto the substrate. This process is repeated until the desired heterostructure is formed. 
- The stamping process is a relatively simple and cost-effective method for fabricating van der Waals heterostructures, but also time consuming with the current instruments available.
+ The general stamping procedure is as follows:
+ \begin{enumerate}[noitemsep]
+  \item The 2D material flakes are plased on top of the substrate
+  \item The operator looks for suitable flakes to use for the stamping
+  \item The operator places the stamp on top of the 2D material flake and changes the sample temperature to stick the flake to the stamp
+  \item The stamp with the flake is positioned above the second 2D material flake on the substrate
+  \item The operator places the stamp on top of the second 2D material flake and changes the sample temperature to release the flake from the stamp
+  \item The operator finds a new suitable flake to place on top of the created stack and repeats the process
+ \end{enumerate}
+
+ This process consists of serval time consuming steps, such as finding suitable flakes, placing the flakes on the stamp and substrate, and changing the sample temperature.
+ The aim of this project is to automate the process of stamping to reduce the time needed to fabricate a stack and to increase the accuracy of the process.
 
 \subsection{Vibration isolation}
 Bij het ontwerpen van de stand van de microscoop moet sterk rekening gehouden worden met de rigiditeit en eigenfrequensie van de opstelling. 
@@ -256,19 +320,39 @@ Zoals te zien in formulde \ref{eq:trilling overdracht met demping} te zien is za
 \todo{uitzoeken aan welke vc norm wij willen voldoen}
 \todo{betekenis van NIST-A norm uitzoeken}
 
+\subsection{Criteria}
+Door het analyseren vcan de workflow van handmatige en gemotoriseerde commerciele stamping opstellingen in combinatie met literatuur studie is een lijst aan minimale eisen opgesteld waar het te ontwikkelen instrument aan moet voldoen.
+
+\begin{enumerate}[noitemsep]
+  \item Mask holder
+  \begin{enumerate}[noitemsep]
+    \item The mask should be motorized and able to move in the x, y and z direction with a resolution of $>30$ nm.
+    \item The pitch of the mask should be able to be adjusted with a resolution of $>0.05^{\circ}$.
+    \item The yaw of the mask should be able to be adjusted with a resolution of $>0.05^{\circ}$, with a minimum range of $180^{\circ}$.
+  \end{enumerate}
+  \item Sample holder
+  \begin{enumerate}[noitemsep]
+    \item The sample holder should be able to hold a minimum of 2 samples.
+    \item The sample should be able to heat with a ramp speed of $2.0 - 50.0^{\circ} C/s$
+    \item The sample should be able to cool with a ramp speed of $-0.1 - 30.0^{\circ} C/s$ 
+  \end{enumerate}
+  \item Microscope \& stand
+  \begin{enumerate}[noitemsep]
+    \item Due to the fact that the VDWSF laboratry has problems with external vibrations (see \ref{fig:GEOPhone_measurement} the microscope stand should be as rigid as possible to make the instrument behave like one rigid body instead of a system of multiple bodies.
+    \item The microscope should a 20x objective with correction collar to be able to focus on the sample through the mask holder glass slide.
+  \end{enumerate}
+
+
+\end{enumerate}
+
 \section{Methods \& Results}
 \subsection{Stand design}
 
 Voor het fabriceren van stacks is het belangrijk dat de opstelling zo min mogenlijk beinvloed word door trillingen uit de omgeving. \todo{Verwijzen naar verwachte trillingen grafiek}. Om deze reden is er voor gekozen om in samenwerking met LION FMD een aantal uitwijkings simulaties uit te voeren om een inschatting te kunnen maken over de maximale uitwijking onder een statische kracht van de microscoop stand. 
 
-\todo{verwijzen naar trilling model}
-Voor het ontwerpen van de stand moet rekening gehouden worden met een aantal aspecten.
+Het complete instrument bestaat uit verschillende aspecten die in de volgende hoofdstukken behandelt zullen worden. Voor een overzicht van de gebruikte hard- en software componenten zie \ref{fig:software_architecture}. 
 
-\begin{enumerate}[noitemsep]
-    \item De opstelling moet een hoge inertia hebben om lastig in trilling te kunnen komen
-    \item de opstelling moet een redelijk hoge resonantie frequensie hebben
-    \item de opstelling moet zo rigide mogenlijk zijn om ervoor te zorgen dat doorkomende trillingen masker en camer in fase laten trillen
-\end{enumerate}
+
 
 \begin{figure}[H]
   \centering
@@ -300,7 +384,7 @@ Voor het ontwerpen van de stand moet rekening gehouden worden met een aantal asp
   \end{minipage}
 \end{figure}
 
-\subsubsection{Mask design}
+\subsection{Mask design}
 the mask consists of two major parts: the mask holder wich holds the stamping polymer and the stages wich are used to position the mask above the sample
 
 For the mask holder 
@@ -322,7 +406,15 @@ For the mask holder
   \end{minipage}
 \end{figure}
 
-\subsubsection{Sample holder design}
+\subsection{Sample holder design}
+
+de hoofdtaak van de samplehouder is zoals de naam zegt het in positie houden van het monster waarmee gewerkt word (in dit geval een waver). Net zoals de rest van het instrument is het van belang om de sample houder zo rigide mogenlijk te maken om ervoor te zorgen dat de trillingen van de masker en de camera in fase blijven.
+
+Tijdens de duur van dit project is het eerste prototype van de samplehouder gefabriceerd en zijn de plannen voor het vervolg ontwerp gemaakt. Het prototype (zie figuur \ref{fig:CAD_mask_holder}) bestaat uit 3 onderdelen: Het sample bed, isolatielaag en de dump cilinder. Het sample bed bevat de benodigde componenten om de het sample naar op gewilde temperatuur tussen 0 en 200 graden C krijgen, hiervoor worden een heating coil (verwarmen) en peltier element (koelen) gebruikt. Het samplebed bevat ook een vacuum aansluiting die gebuikt kan worden om het sample stugger te bevestigen wanneer de gebruiker trillingsproblemen ondervind. 
+
+De functie van de isolatielaag is het isoleren van het samplebed en de dump cilinder om te voorkomen dat warmte vanuit de dumpcilinder teruglekt in het sampleblok (van belang tijdens koelen van het monster)
+
+\todo{keuze voor peek en mica onderbouwen}
 
 \todo{CAD schema van de sample holder invoegen}
 % Insert the temperature graph and the cad schematic of the sample holder
@@ -336,30 +428,48 @@ For the mask holder
   \hfill
   \begin{minipage}[b]{0.45\textwidth}
     \includegraphics[width=1\textwidth]{img/rigidity_simulation/study_8.png}
-    \caption{CAD schematic of the sample holder. By R. Stoelwinder}
+    \caption{CAD schematic of the sample holder. By R. Stoelwinder. The sample holder prototype consists of 4 major parts. 1. The sample bed, wich contains a heating coil, peltier element, thermocouple and PT100 sensor. 2. The sample isolation layer. This is a shroud fabricated out of PEEK}
     \label{fig:CAD_sample_holder}
   \end{minipage}
 \end{figure}
+
+\subsection{Base stage automisation}
+
+\todo{CAD van bracket invoegen}
+
+for this project the base xy stage (\todo{ref naar optosigma stage invoegen}) has to be automated, this will developed in house in collaboration with LION FMD and ELD. 
+
+The stages were automated using NEMA17 stepper motors \todo{citation invoegen}, and optical endstops.
+The stepper motors and endstops are controlled by the controller developed by ELD.
+The contents and used tecniques in the controll box are out of the scope for this report.
+
+The first prototype bracket makes it possible to test the complete system and work out implementation bugs. 
+It is recommended to create further iterations of the brackes as the current version can flex $\pm 3mm$ and this has a detremental effect on the rigidity of the base xy stage, this because the stages are held in place by the stepper motor. 
+Furthermore it is also recommended to replace the ball bearings in the spindles as these were damaged during fabrication and the spindle is now only held in place by the stepper motor
+
+\subsection{Stage calibration}
+Due to the mchanisms used in some of the actuators it is not possible to calibrate all the staged,
+nor is this needed for the application. 
+The stages that cannot be calibrated are the x, y, and z axis of the mask due to the used slip-stick mechanism (see figure \ref{fig:slip_stick_principle}). 
+
+The slip stick mechanism makes it possible to use piezo actuators with high resolution for an unbound range.
+The drawback is that due to the slip stick mechanism (friction based) the actuator has a position uncertainty of \todo{positie uncertainty invoegen} and a sstep uncertainty of \todo{step variatie invoegen}.
 
 \subsection{Software}
 Because one of the main criteria of the project is flexibility and modularity this has to be taken in consideration from the beginning. 
 This means the project needs to be created in a structured and standardised way using design patterns and a modular architecture (see appendix \ref{ap:design_patterns} for the definition of these terms).
 
-\subsection{Stage calibration}
-Due to the mchanisms used in some of the actuators it is not possible to calibrate all the staged,
-nor is this needed for the application. 
-The stages that cannot be calibrated are the x, y, and z axis of the mask due to the used slip-stick mechanism (see figure \ref{fig:slip_stick_principle})
-
 \subsubsection{Architecture}
 As a main architecture a web application inspired framework is used. 
-This means that the system consist of three major components: Frontend, Middleware and backend (for more information see appendix \ref{ap:design_patterns}). 
-This way it is possible to configure the system in several way without having to change the code.
+This means that the system consist of three major components: Frontend, Middleware and backend (for more information about these definitions see appendix \ref{ap:design_patterns}). 
+Using standard design patterns makes getting to know the code and editing it less cumbersome and error prone for future developers.
+An overview of the system flow can be seen in figure \ref{fig:software_architecture}
 
 \todo{laatste pijlen in de correcte richting zetten}
 \begin{figure}[htp]
   \centering
   \includegraphics[width=0.8\textwidth]{img/code_flow.png}
-  \caption{Software architecture of the project.}
+  \caption{Software flow of the project.}
   \label{fig:software_architecture}
 \end{figure}
 
@@ -367,7 +477,7 @@ This way it is possible to configure the system in several way without having to
 The frontend is the part of the system that is visible to the user.
 This part of the system is responsible for the user interface and the communication with the middleware.
 The system has two pre made interface options: GUI and TUI.
-For operators of the system it is recommended to use the GUI as no knoledge of the command set is needed and safety features like thermal-runaway and forbidden areas are enabled.
+For operators of the system it is recommended to use the GUI as no knowledge of the command set is needed and safety features like thermal-runaway and forbidden areas are enabled.
 For developers it is recommended to use the TUI as it is more flexible and allows for more control over the system.
 
 The GUI is created using QT6 with Pyside6 bindings \todo{citation invoegen} to ensure interoperability between different operating systems and detailed documentation for future developers.
@@ -375,15 +485,22 @@ The GUI is created using QT6 with Pyside6 bindings \todo{citation invoegen} to e
 The TUI consists of a simple loop that pushes the gcode commands to the backend and uses a thread to monitor the backend response.
 
 \subsubsection{Middleware}
-\todo{middleware base toevoegen aan de appendix}
+The middleware is a method that can be used to communicate between the frond and backend. 
+The middleware base class (see \ref{ap:middleware_base_class}) contains all the base methods needed for the system to work with a middleware method.
+The system contains two default middleware methods: The processing pipe, wich is used for when the backend runs on the same computer as the frondend but on a seperate core (it is strongly discuraged to run the backend on the same core as the frondend as this makes the backend behavoir depend on core workload.) 
+The second method is the serial method and is based on the PySerial library \todo{citation invoegen} and is used when the backend runs a differend computer than the frondend.
+The serial middleware method can be easily adapted to work with wireless serial communication but this is dicuraged as this method is more prone to errors.
 
 \subsubsection{Backend}
-The backend is the part of the system that is responsible for the communication with the hardware and the middleware.
+The backend is the part of the system that is responsible for the communication with the hardware and the middleware and managed the object the user can interact with (sample holder, mask holder, etc.)
+The backend accepts all classes that inherit from their respective base class and abide the programming guidelines \todo{referentie naar docs toevoegen}
+
+Due to time constraints it was not possible to develop the backend to run on unix based systems
 
 \todo{stukje over FTDI issue tovoegen}
 \todo{stukje over voordeel van runnen op IO controller toevoegen}
 
-\subsection{Forbidden areas}
+\subsubsection{Forbidden areas}
 To prevent the system from damaging itself or the sample it is important to prevent the system from moving to certain areas in certain states.
 
 Phase space variables (system attributes):
@@ -465,6 +582,20 @@ Multi-processing is a technique that allows a computer to run multiple processes
 
 Multi-processing can be used to improve the performance of a program by allowing it to take advantage of multiple processors or cores within a computer. 
 This can be particularly useful for programs that need to perform a lot of calculations or that are designed to run on a distributed system with multiple machines.\\
+
+\clearpage
+\section{Backend base classes}
+The base classes are used as a template for new components. The base classes contain all the functions that are required for the component to work with the rest of the system. Notice that two different errors can be raised: NotImplementedError and NotSupportedError. The functions that raise a NotImplementedError should always be implemented for the component to work correctly with the rest of the system. It is safe to raise NotSupportedError as these are caught and handled by the system.
+
+\label{ap:backend_base_classes}
+\subsection*{Harware base class}
+\label{ap:hardware_base_class}
+\lstinputlisting[language=Python]{code/backend/hardware_base.py}
+
+\clearpage
+\subsection*{Middleware base class}
+\label{ap:middleware_base_class}
+\lstinputlisting[language=Python]{code/backend/middleware_base.py}
 
 
 %\printbibliography

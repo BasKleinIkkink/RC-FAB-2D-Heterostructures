@@ -1,21 +1,26 @@
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Add the foreword}{2}{section*.2}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Create the abstract}{3}{section*.4}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Rephrase the text so it isn't flagged as plagiaat}{6}{section*.7}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ citaat invoegen}{8}{section*.8}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ aFBEELDING VAN GRAFEEN EN HEXAGONAAL BOORNITRIDE INVOEGEN}{8}{section*.9}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ citaat invoegen}{8}{section*.10}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Volgensmij klopt dit niet met de methode die wij gebruiken}{8}{section*.11}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Stuk invoegen over verandering in fase plot (bode) bij verschillende massa, hoe hoger de massa hoe verder de fase drop naar beneden schuift, alles boven de grens heeft geen onvloed op de opstelling}{8}{section*.12}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Grafiek maken van harmonische response over tijd van de gemaakte overdrachtsfunctie (zou alleen bij lage f met hoge A in trilling moeten komen.}{8}{section*.13}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Aantonen dat een hoge dichtheid (en dus massa) de resonantie frequentie verhogen}{9}{section*.15}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ uitzoeken aan welke vc norm wij willen voldoen}{10}{section*.17}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ betekenis van NIST-A norm uitzoeken}{10}{section*.18}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Verwijzen naar verwachte trillingen grafiek}{10}{section*.19}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ verwijzen naar trilling model}{10}{section*.20}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ CAD schema van de mask holder invoegen}{12}{section*.23}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ CAD schema van de sample holder invoegen}{13}{section*.25}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ laatste pijlen in de correcte richting zetten}{13}{section*.27}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ citation invoegen}{13}{section*.29}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ middleware base toevoegen aan de appendix}{15}{section*.30}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ stukje over FTDI issue tovoegen}{15}{section*.31}%
-\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ stukje over voordeel van runnen op IO controller toevoegen}{15}{section*.32}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Add the foreword}{ii}{section*.2}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Create the abstract}{iii}{section*.4}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ pagina nummering pas hier beginnen, voorgaande in romeinse nummering}{v}{section*.7}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Rephrase the text so it isn't flagged as plagiaat}{1}{section*.8}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ citaat invoegen}{3}{section*.9}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ aFBEELDING VAN GRAFEEN EN HEXAGONAAL BOORNITRIDE INVOEGEN}{3}{section*.10}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Stuk invoegen over verandering in fase plot (bode) bij verschillende massa, hoe hoger de massa hoe verder de fase drop naar beneden schuift, alles boven de grens heeft geen onvloed op de opstelling}{3}{section*.11}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Grafiek maken van harmonische response over tijd van de gemaakte overdrachtsfunctie (zou alleen bij lage f met hoge A in trilling moeten komen.}{3}{section*.12}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Aantonen dat een hoge dichtheid (en dus massa) de resonantie frequentie verhogen}{4}{section*.14}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ uitzoeken aan welke vc norm wij willen voldoen}{5}{section*.16}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ betekenis van NIST-A norm uitzoeken}{5}{section*.17}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ Verwijzen naar verwachte trillingen grafiek}{5}{section*.18}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ CAD schema van de mask holder invoegen}{7}{section*.21}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ keuze voor peek en mica onderbouwen}{8}{section*.23}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ CAD schema van de sample holder invoegen}{8}{section*.24}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ CAD van bracket invoegen}{8}{section*.26}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ ref naar optosigma stage invoegen}{8}{section*.27}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ citation invoegen}{8}{section*.28}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ positie uncertainty invoegen}{9}{section*.29}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ step variatie invoegen}{9}{section*.30}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ laatste pijlen in de correcte richting zetten}{9}{section*.31}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ citation invoegen}{9}{section*.33}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ citation invoegen}{9}{section*.34}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ referentie naar docs toevoegen}{11}{section*.35}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ stukje over FTDI issue tovoegen}{11}{section*.36}%
+\contentsline {todo}{\fcolorbox {black}{orange}{\textcolor {orange}{o}}\ stukje over voordeel van runnen op IO controller toevoegen}{11}{section*.37}%
