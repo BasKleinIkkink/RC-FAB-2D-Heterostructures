@@ -17,9 +17,19 @@ Homing update
 
 Changed
 ^^^^^^^^^
-- Added a return position after zeroing (axis does not return to 0 but zero + offset) so the homing pin doesnt get damaged (line 1979)
+- Added a return position after zeroing (axis does not return to 0 but zero + offset) so the homing 
+    pin doesnt get damaged (line 1979)
 - Upped the ZERO_SPD to 5000 (from 600)
 - Switched homing order (now first y then x y can be centered)
 - Y now centers after zeroing the axis
 - Changed x and y man endpos to 659500 (center)
 - Changed homing so it now centers instead of go to the switch
+- Fixed small spelling errors
+
+V1.0.2
+---------
+
+Changed
+^^^^^^^^^^
+- Fixed the homing position correction (X axis corrected center position after zero now during zero)
+
