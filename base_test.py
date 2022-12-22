@@ -13,8 +13,10 @@ if __name__ == '__main__':
     # Do some tests
     print('Is connected: {}'.format(controller.is_connected()))
     controller.zero()
-    #controller.start_jog('x', velocity=400)
-    #controller.start_jog('y', velocity=400)
+    controller.start_jog('x', velocity=400)
+    controller.start_jog('y', velocity=400)
+    sleep(2)
+    controller.stop_jog()
     print('Moving')
     controller.move_to('X', 5000)
     print('X position {}'.format(controller.get_position(axis='x')))

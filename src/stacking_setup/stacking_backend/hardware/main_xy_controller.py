@@ -347,16 +347,8 @@ class MainXYController:
             self.zero()
         else:
             self._lock.acquire()
-            self._send_and_receive("spx0")
+            self._send_and_receive("h")
             self._lock.release()
-            while self.is_moving(axis="x"):
-                time.sleep(0.1)
-            self._lock.acquire()
-            self._send_and_receive("spy0")
-            self._lock.release()
-            while self.is_moving(axis="y"):
-                time.sleep(0.1)
-
             self._homed = True
 
     # MOVING FUNCTIONS

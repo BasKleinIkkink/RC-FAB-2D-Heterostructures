@@ -384,6 +384,8 @@ const float MIN_SS_SPD        = 100.00;          // slowest possible speed, 1 st
 
 const long X_MAN_ENDPOS       = 627500;           // manual end position
 const long Y_MAN_ENDPOS       = 659500;           // manual end position
+const long X_CENTER_POS       = 627500;
+const long Y_CENTER_POS       = 659500;
 const long Z_MAN_ENDPOS       = -50000;          // manual end position
 
 volatile double RXD_TEMP_VAL  = 0.00;            // Temporary value to prevent data entry spikes on plotter screen..
@@ -474,8 +476,8 @@ float JOG_STEP_SIZE_Y = 1;                  // holds stepsize value for slow spe
 float JOG_STEP_SIZE_Z = 1;                  // holds stepsize value for slow speed jog motion 
 
 //float TOP_SPD = 50.5;                     // generic stepper top speed in steps/sec
-float TOP_SPD_X = 25600 * 3;                     // generic stepper top speed in steps/sec
-float TOP_SPD_Y = 25600 * 3;                     // generic stepper top speed in steps/sec
+float TOP_SPD_X = 25600;                     // generic stepper top speed in steps/sec
+float TOP_SPD_Y = 25600;                     // generic stepper top speed in steps/sec
 float TOP_SPD_Z = 25600;                     // generic stepper top speed in steps/sec
 
 int LIN_X_SPD = 0;                          // linear speed of stage
@@ -1975,7 +1977,8 @@ void ZeroStage()                                // Usually only called once per 
                       
                     } 
 
-                    ystage.move(FWD, 659500);
+                    ystage.move(FWD, Y_CENTER_POS);
+                    while(ystage.busyCheck());
                    // Serial.println("STATE CHANGE to 3");             // status feedback, only for debug  
                     
                     INI_Y_CNT  =0;            
@@ -2010,7 +2013,8 @@ void ZeroStage()                                // Usually only called once per 
                         while(ystage.busyCheck());                    // board not busy check 
                         END_POS_Y =  ystage.getPos();  
                         while(ystage.busyCheck());                    // board not busy check 
-                        ystage.goTo(659500);
+                        ystage.goTo(Y_CENTER_POS);
+                        while(ystage.busyCheck());
                       }
                       else
                       {
@@ -2018,7 +2022,8 @@ void ZeroStage()                                // Usually only called once per 
                         while(ystage.busyCheck());                    // board not busy check 
                         END_POS_Y =  ystage.getPos(); 
                         while(ystage.busyCheck());                    // board not busy check 
-                        ystage.goTo(659500);  // Move to center);
+                        ystage.goTo(Y_CENTER_POS);  // Move to center);
+                        while(ystage.busyCheck());
                       } 
                       
                       INIT_Y_STAGE = 5; 
@@ -2146,7 +2151,8 @@ void ZeroStage()                                // Usually only called once per 
                       
                     } 
     
-                    xstage.move(FWD, 627500);
+                    xstage.move(FWD, X_CENTER_POS);
+                    while(xstage.busyCheck());
                    // Serial.println("STATE CHANGE to 3");             // status feedback, only for debug  
                     
                     INI_X_CNT  =0;            
@@ -2181,7 +2187,8 @@ void ZeroStage()                                // Usually only called once per 
                         while(xstage.busyCheck());                    // board not busy check 
                         END_POS_X =  xstage.getPos();  
                         while(xstage.busyCheck());                    // board not busy check 
-                        xstage.goTo(627500);
+                        xstage.goTo(X_CENTER_POS);
+                        while(xstage.busyCheck());
                       }
                       else
                       {
@@ -2189,7 +2196,8 @@ void ZeroStage()                                // Usually only called once per 
                         while(xstage.busyCheck());                    // board not busy check 
                         END_POS_X =  xstage.getPos(); 
                         while(xstage.busyCheck());                    // board not busy check 
-                        xstage.goTo(627500);
+                        xstage.goTo(X_CENTER_POS);
+                        while(xstage.busyCheck());
                       } 
                       
                       INIT_X_STAGE = 5; 
