@@ -358,7 +358,7 @@ const float max_stepper_speed = 500.00;         // max speed of stepper (steps/s
 const float min_stepper_speed = 0.005;          // Min stepper speed (steps/sec) 
 const int HOMING_STEP_SPD     = 400;            // speed when homing in steps/sec in run mode
 const float MAX_LIN_SPD       = 800.00;         // Maximum lineair speed in um/sec (e.g 1200 = 1200 uM/sec)
-const float MOT_ZERO_SPD      = 5000;            // Stepper motor speed when zero ing stages to end point/limits
+const float MOT_ZERO_SPD      = 20000;            // Stepper motor speed when zero ing stages to end point/limits
 
 
 // Temperature PID control params/settings 
@@ -2146,7 +2146,7 @@ void ZeroStage()                                // Usually only called once per 
                       
                     } 
     
-                    xstage.move(FWD, 659500);
+                    xstage.move(FWD, 627500);
                    // Serial.println("STATE CHANGE to 3");             // status feedback, only for debug  
                     
                     INI_X_CNT  =0;            
@@ -2181,7 +2181,7 @@ void ZeroStage()                                // Usually only called once per 
                         while(xstage.busyCheck());                    // board not busy check 
                         END_POS_X =  xstage.getPos();  
                         while(xstage.busyCheck());                    // board not busy check 
-                        xstage.goTo(659500);
+                        xstage.goTo(627500);
                       }
                       else
                       {
@@ -2189,7 +2189,7 @@ void ZeroStage()                                // Usually only called once per 
                         while(xstage.busyCheck());                    // board not busy check 
                         END_POS_X =  xstage.getPos(); 
                         while(xstage.busyCheck());                    // board not busy check 
-                        xstage.goTo(659500);
+                        xstage.goTo(627500);
                       } 
                       
                       INIT_X_STAGE = 5; 
