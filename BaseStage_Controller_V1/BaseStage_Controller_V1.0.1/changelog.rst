@@ -32,4 +32,6 @@ V1.0.2
 Changed
 ^^^^^^^^^^
 - Fixed the homing position correction (X axis corrected center position after zero now during zero)
+- Fixed some issues with setting the manual end position and homing to the center instead of zero position
+  (Z still homes and zeros to the zero position)
 
