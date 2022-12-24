@@ -356,7 +356,7 @@ const int MOT_DRV_DLAY        = 100;            // Pre motor drive delay in 100 
 const int max_microstep_spd   = 550;            // Max micro step speed, when larger driver does 200 steps/rev ==> 10000 st/sec = 3.9 mm/sec   
 const float max_stepper_speed = 500.00;         // max speed of stepper (steps/sec) ==> 2560 st/sec = 0.39 mm /sec 
 const float min_stepper_speed = 0.005;          // Min stepper speed (steps/sec) 
-const int HOMING_STEP_SPD     = 400;            // speed when homing in steps/sec in run mode
+const int HOMING_STEP_SPD     = 800;            // speed when homing in steps/sec in run mode
 const float MAX_LIN_SPD       = 800.00;         // Maximum lineair speed in um/sec (e.g 1200 = 1200 uM/sec)
 const float MOT_ZERO_SPD      = 20000;            // Stepper motor speed when zero ing stages to end point/limits
 
@@ -379,13 +379,13 @@ const float RTD_T_OFFSET      = 0;               // RTD (PT100) temperature offs
 
 const int SLOW_SPD_THR        = 1750;            // slow speed threshold in steps/sec ==> lower than this speed, drive method will switch to slow speed
 const int MAX_JOG_STEP_SIZE   = 18;              // Maximum jog step size, for slow speed, step size @ 100 Hz (default 17), 17 ==> 1700 steps/sec @ 100 Hz update rate
-const float MAX_SS_SPD        = 56500.00;        // Max Steps/Sec speed
+const float MAX_SS_SPD        = 56500;        // Max Steps/Sec speed
 const float MIN_SS_SPD        = 100.00;          // slowest possible speed, 1 step per iteration @ 100 Hz ==> 100 steps/sec
 
-const long X_MAN_ENDPOS       = 627500;           // manual end position
-const long Y_MAN_ENDPOS       = 659500;           // manual end position
 const long X_CENTER_POS       = 627500;
 const long Y_CENTER_POS       = 659500;
+const long X_MAN_ENDPOS       = 2 * X_CENTER_POS;           // manual end position
+const long Y_MAN_ENDPOS       = 2 * Y_CENTER_POS;           // manual end position
 const long Z_MAN_ENDPOS       = -50000;          // manual end position
 
 volatile double RXD_TEMP_VAL  = 0.00;            // Temporary value to prevent data entry spikes on plotter screen..
@@ -1977,8 +1977,6 @@ void ZeroStage()                                // Usually only called once per 
                       
                     } 
 
-                    ystage.move(FWD, Y_CENTER_POS);
-                    while(ystage.busyCheck());
                    // Serial.println("STATE CHANGE to 3");             // status feedback, only for debug  
                     
                     INI_Y_CNT  =0;            
@@ -2013,8 +2011,7 @@ void ZeroStage()                                // Usually only called once per 
                         while(ystage.busyCheck());                    // board not busy check 
                         END_POS_Y =  ystage.getPos();  
                         while(ystage.busyCheck());                    // board not busy check 
-                        ystage.goTo(Y_CENTER_POS);
-                        while(ystage.busyCheck());
+                
                       }
                       else
                       {
@@ -2022,8 +2019,7 @@ void ZeroStage()                                // Usually only called once per 
                         while(ystage.busyCheck());                    // board not busy check 
                         END_POS_Y =  ystage.getPos(); 
                         while(ystage.busyCheck());                    // board not busy check 
-                        ystage.goTo(Y_CENTER_POS);  // Move to center);
-                        while(ystage.busyCheck());
+                      
                       } 
                       
                       INIT_Y_STAGE = 5; 
@@ -2045,10 +2041,12 @@ void ZeroStage()                                // Usually only called once per 
                                       
            }
            
+          ystage.goTo(Y_CENTER_POS);
+          while(ystage.busyCheck());                    // board not busy check 
           Serial.print("ENDPOS Y: ");                       // status feedback, only for debug  
           Serial.println(END_POS_Y);                        // status feedback, only for debug  
           //Serial.println("ZERO-MARK Y done...");            // status feedback, only for debug 
-          while(ystage.busyCheck());                    // board not busy check 
+
           digitalWrite(YSTAGE_LED, LOW);                    //  TURN OFF MOTOR LED
       
       
@@ -2151,7 +2149,7 @@ void ZeroStage()                                // Usually only called once per 
                       
                     } 
     
-                    xstage.move(FWD, X_CENTER_POS);
+                    xstage.move(FWD, 0);
                     while(xstage.busyCheck());
                    // Serial.println("STATE CHANGE to 3");             // status feedback, only for debug  
                     
@@ -2187,8 +2185,7 @@ void ZeroStage()                                // Usually only called once per 
                         while(xstage.busyCheck());                    // board not busy check 
                         END_POS_X =  xstage.getPos();  
                         while(xstage.busyCheck());                    // board not busy check 
-                        xstage.goTo(X_CENTER_POS);
-                        while(xstage.busyCheck());
+                        
                       }
                       else
                       {
@@ -2196,8 +2193,7 @@ void ZeroStage()                                // Usually only called once per 
                         while(xstage.busyCheck());                    // board not busy check 
                         END_POS_X =  xstage.getPos(); 
                         while(xstage.busyCheck());                    // board not busy check 
-                        xstage.goTo(X_CENTER_POS);
-                        while(xstage.busyCheck());
+                        
                       } 
                       
                       INIT_X_STAGE = 5; 
@@ -2218,11 +2214,13 @@ void ZeroStage()                                // Usually only called once per 
                }
                                       
            }
-           
+          
+          xstage.goTo(X_CENTER_POS);
+          while(xstage.busyCheck());                    // board not busy check 
           Serial.print("ENDPOS X: ");                       // status feedback, only for debug  
           Serial.println(END_POS_X);                        // status feedback, only for debug  
           //Serial.println("ZERO-MARK X done...");            // status feedback, only for debug 
-          while(xstage.busyCheck());                    // board not busy check 
+
           digitalWrite(XSTAGE_LED, LOW);                    //  TURN OFF MOTOR LED
       
       
@@ -2842,7 +2840,7 @@ void CheckSerialRXD()
                       {
                           while(xstage.busyCheck());
                           digitalWrite(XSTAGE_LED, HIGH);                //  TURN ON MOTOR LED     
-                          xstage.goTo(END_POS_X);                                // Goto home position
+                          xstage.goTo(X_CENTER_POS);                                // Goto home position
                       }
                    }
                    
@@ -2858,7 +2856,7 @@ void CheckSerialRXD()
                       {
                           while(ystage.busyCheck());
                           digitalWrite(YSTAGE_LED, HIGH);                //  TURN ON MOTOR LED     
-                          ystage.goTo(END_POS_Y);                                // Goto home position
+                          ystage.goTo(Y_CENTER_POS);                                // Goto home position
                       }
                    }
                    
@@ -3513,7 +3511,8 @@ void CheckSerialRXD()
                                         {
                                           Serial.println("svx OK ");                    // reply ACK to GUI
                                           Serial.println(SER_RXD_VAL);                  // Echo param data, optional 
-                                          VELOCITY_X_CMD = float(SER_RXD_VAL)/116;      // divide input value to obtain decimal value
+                                          //VELOCITY_X_CMD = float(SER_RXD_VAL)/116;      // divide input value to obtain decimal value
+                                          VELOCITY_X_CMD = float(SER_RXD_VAL);      // divide input value to obtain decimal value
                                           Serial.print("VELOCITY_X_CMD: ");             // Testing reply ACK to GUI
                                           Serial.println(VELOCITY_X_CMD);               // Testing ony  
                                           SET_VELO_X = 1;  
@@ -3554,7 +3553,8 @@ void CheckSerialRXD()
                                         {
                                           Serial.println("svy OK ");                      // reply ACK to GUI
                                           Serial.println(SER_RXD_VAL);                    // Echo param data, optional 
-                                          VELOCITY_Y_CMD = float(SER_RXD_VAL)/116;        // divide input value to obtain decimal value
+                                          VELOCITY_Y_CMD = float(SER_RXD_VAL);        // divide input value to obtain decimal value
+                                          //VELOCITY_Y_CMD = float(SER_RXD_VAL)/116;        // divide input value to obtain decimal value
                                           //Serial.print("VELOCITY_Y_CMD: ");             // Testing reply ACK to GUI
                                           //Serial.println(VELOCITY_Y_CMD);               // Testing ony 
                                           SET_VELO_Y = 1; 
