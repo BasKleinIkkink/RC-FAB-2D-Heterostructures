@@ -1,0 +1,999 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global}
+    \entry{geimVanWaalsHeterostructures2013}{article}{}
+      \name{author}{2}{}{%
+        {{hash=40f0ba5816a970378fff1e96ae8538f7}{%
+           family={Geim},
+           familyi={G\bibinitperiod},
+           given={A.\bibnamedelimi K.},
+           giveni={A\bibinitperiod\bibinitdelim K\bibinitperiod}}}%
+        {{hash=95e5b1f7631e44941e31f4157a125fe8}{%
+           family={Grigorieva},
+           familyi={G\bibinitperiod},
+           given={I.\bibnamedelimi V.},
+           giveni={I\bibinitperiod\bibinitdelim V\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Nature Publishing Group}%
+      }
+      \strng{namehash}{5ab4e57d4738a23288dc97aa47c145cd}
+      \strng{fullhash}{5ab4e57d4738a23288dc97aa47c145cd}
+      \strng{bibnamehash}{5ab4e57d4738a23288dc97aa47c145cd}
+      \strng{authorbibnamehash}{5ab4e57d4738a23288dc97aa47c145cd}
+      \strng{authornamehash}{5ab4e57d4738a23288dc97aa47c145cd}
+      \strng{authorfullhash}{5ab4e57d4738a23288dc97aa47c145cd}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Fabrication techniques developed for graphene research allow the disassembly of many layered crystals (so-called van der Waals materials) into individual atomic planes and their reassembly into designer heterostructures, which reveal new properties and phenomena.}
+      \field{issn}{1476-4687}
+      \field{issue}{7459}
+      \field{journaltitle}{Nature}
+      \field{langid}{english}
+      \field{month}{7}
+      \field{number}{7459}
+      \field{title}{Van Der {{Waals}} Heterostructures}
+      \field{urlday}{9}
+      \field{urlmonth}{9}
+      \field{urlyear}{2022}
+      \field{volume}{499}
+      \field{year}{2013}
+      \field{dateera}{ce}
+      \field{urldateera}{ce}
+      \field{pages}{419\bibrangedash 425}
+      \range{pages}{7}
+      \verb{doi}
+      \verb 10.1038/nature12385
+      \endverb
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\BTCWJ8BT\\Geim and Grigorieva - 2013 - Van der Waals heterostructures.pdf;C\:\\Users\\baskl\\Zotero\\storage\\7GT98J7L\\nature12385.html
+      \endverb
+      \verb{urlraw}
+      \verb https://www.nature.com/articles/nature12385
+      \endverb
+      \verb{url}
+      \verb https://www.nature.com/articles/nature12385
+      \endverb
+      \keyw{Graphene,Materials science,Nanoscale materials,Physics}
+    \endentry
+    \entry{gantSystemDeterministicTransfer2020}{article}{}
+      \name{author}{8}{}{%
+        {{hash=684e6057f37fb5de087982efd28a09b0}{%
+           family={Gant},
+           familyi={G\bibinitperiod},
+           given={Patricia},
+           giveni={P\bibinitperiod}}}%
+        {{hash=e92105a3f5ce0acadfa2f1aa50258142}{%
+           family={Carrascoso},
+           familyi={C\bibinitperiod},
+           given={Felix},
+           giveni={F\bibinitperiod}}}%
+        {{hash=d306011228317400a4fa26b51c867089}{%
+           family={Zhao},
+           familyi={Z\bibinitperiod},
+           given={Qinghua},
+           giveni={Q\bibinitperiod}}}%
+        {{hash=41e493217841938c554f657e895f56cd}{%
+           family={Ryu},
+           familyi={R\bibinitperiod},
+           given={Yu\bibnamedelima Kyoung},
+           giveni={Y\bibinitperiod\bibinitdelim K\bibinitperiod}}}%
+        {{hash=89a93206eb879789486173dedff2c871}{%
+           family={Seitz},
+           familyi={S\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+        {{hash=dbd85230b224d5272b9d5d4a3265c9b1}{%
+           family={Prins},
+           familyi={P\bibinitperiod},
+           given={Ferry},
+           giveni={F\bibinitperiod}}}%
+        {{hash=e50345ff8b019721f4d3dc6078f7b253}{%
+           family={Frisenda},
+           familyi={F\bibinitperiod},
+           given={Riccardo},
+           giveni={R\bibinitperiod}}}%
+        {{hash=7554bf1e8c6cb34c29797efcd88c9b44}{%
+           family={Castellanos-Gomez},
+           familyi={C\bibinithyphendelim G\bibinitperiod},
+           given={Andres},
+           giveni={A\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IOP Publishing}%
+      }
+      \strng{namehash}{d6164822ca68b72d3b802a693798cb2c}
+      \strng{fullhash}{465794945917eab0acc1267d947090d3}
+      \strng{bibnamehash}{d6164822ca68b72d3b802a693798cb2c}
+      \strng{authorbibnamehash}{d6164822ca68b72d3b802a693798cb2c}
+      \strng{authornamehash}{d6164822ca68b72d3b802a693798cb2c}
+      \strng{authorfullhash}{465794945917eab0acc1267d947090d3}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The isolation of air-sensitive two-dimensional (2D) materials and the race to achieve a better control of the interfaces in van der Waals heterostructures has pushed the scientific community towards the development of experimental setups that allow to exfoliate and transfer 2D materials under inert atmospheric conditions. These systems are typically based on over pressurized N2 of Ar gloveboxes that require the use of very thick gloves to operate within the chamber or the implementation of several motorized micro-manipulators. Here, we set up a deterministic transfer system for 2D materials within a gloveless anaerobic chamber. Unlike other setups based on over-pressurized gloveboxes, in our system the operator can manipulate the 2D materials within the chamber with bare hands. This experimental setup allows us to exfoliate 2D materials and to deterministically place them at a desired location with accuracy in a controlled O2-free and very low humidity ({$<$}2\% RH) atmosphere. We illustrate the potential of this system to work with air-sensitive 2D materials by comparing the stability of black phosphorus and perovskite flakes inside and outside the anaerobic chamber.}
+      \field{issn}{2053-1583}
+      \field{journaltitle}{2D Mater.}
+      \field{langid}{english}
+      \field{month}{2}
+      \field{number}{2}
+      \field{title}{A System for the Deterministic Transfer of {{2D}} Materials under Inert Environmental Conditions}
+      \field{urlday}{7}
+      \field{urlmonth}{1}
+      \field{urlyear}{2023}
+      \field{volume}{7}
+      \field{year}{2020}
+      \field{dateera}{ce}
+      \field{urldateera}{ce}
+      \field{pages}{025034}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1088/2053-1583/ab72d6
+      \endverb
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\DY9Y3C26\\Gant et al. - 2020 - A system for the deterministic transfer of 2D mate.pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://dx.doi.org/10.1088/2053-1583/ab72d6
+      \endverb
+      \verb{url}
+      \verb https://dx.doi.org/10.1088/2053-1583/ab72d6
+      \endverb
+    \endentry
+    \entry{castellanos-gomezDeterministicTransferTwodimensional2014}{article}{}
+      \name{author}{7}{}{%
+        {{hash=7554bf1e8c6cb34c29797efcd88c9b44}{%
+           family={Castellanos-Gomez},
+           familyi={C\bibinithyphendelim G\bibinitperiod},
+           given={Andres},
+           giveni={A\bibinitperiod}}}%
+        {{hash=4c854060a5c2c13d6156d25ede08348b}{%
+           family={Buscema},
+           familyi={B\bibinitperiod},
+           given={Michele},
+           giveni={M\bibinitperiod}}}%
+        {{hash=1229729793ccd702c2e7169bff340177}{%
+           family={Molenaar},
+           familyi={M\bibinitperiod},
+           given={Rianda},
+           giveni={R\bibinitperiod}}}%
+        {{hash=51f53c7b277fdd3f87afa76bfbc89d92}{%
+           family={Singh},
+           familyi={S\bibinitperiod},
+           given={Vibhor},
+           giveni={V\bibinitperiod}}}%
+        {{hash=c77a59b79f03ccd70ca2f9530a4d0df3}{%
+           family={Janssen},
+           familyi={J\bibinitperiod},
+           given={Laurens},
+           giveni={L\bibinitperiod}}}%
+        {{hash=718d1910dbfc00408a04ad35e86f4542}{%
+           family={Zant},
+           familyi={Z\bibinitperiod},
+           given={Herre\bibnamedelimb S.\bibnamedelimi J.},
+           giveni={H\bibinitperiod\bibinitdelim S\bibinitperiod\bibinitdelim J\bibinitperiod},
+           prefix={van\bibnamedelima der},
+           prefixi={v\bibinitperiod\bibinitdelim d\bibinitperiod}}}%
+        {{hash=43b855785b8aada558387cc4afda42e4}{%
+           family={Steele},
+           familyi={S\bibinitperiod},
+           given={Gary\bibnamedelima A.},
+           giveni={G\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IOP Publishing}%
+      }
+      \strng{namehash}{c9ae5c128727b7094aafdbd0ef1e8fc9}
+      \strng{fullhash}{0b6918e1b5d7e2b432d8856b80db6973}
+      \strng{bibnamehash}{c9ae5c128727b7094aafdbd0ef1e8fc9}
+      \strng{authorbibnamehash}{c9ae5c128727b7094aafdbd0ef1e8fc9}
+      \strng{authornamehash}{c9ae5c128727b7094aafdbd0ef1e8fc9}
+      \strng{authorfullhash}{0b6918e1b5d7e2b432d8856b80db6973}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The deterministic transfer of two-dimensional crystals constitutes a crucial step towards the fabrication of heterostructures based on the artificial stacking of two-dimensional materials. Moreover, controlling the positioning of two-dimensional crystals facilitates their integration in complex devices, which enables the exploration of novel applications and the discovery of new phenomena in these materials. To date, deterministic transfer methods rely on the use of sacrificial polymer layers and wet chemistry to some extent. Here, we develop an all-dry transfer method that relies on viscoelastic stamps and does not employ any wet chemistry step. This is found to be very advantageous to freely suspend these materials as there are no capillary forces involved in the process. Moreover, the whole fabrication process is quick, efficient, clean and it can be performed with high yield.}
+      \field{issn}{2053-1583}
+      \field{journaltitle}{2D Mater.}
+      \field{langid}{english}
+      \field{month}{4}
+      \field{number}{1}
+      \field{title}{Deterministic Transfer of Two-Dimensional Materials by All-Dry Viscoelastic Stamping}
+      \field{urlday}{7}
+      \field{urlmonth}{1}
+      \field{urlyear}{2023}
+      \field{volume}{1}
+      \field{year}{2014}
+      \field{dateera}{ce}
+      \field{urldateera}{ce}
+      \field{pages}{011002}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1088/2053-1583/1/1/011002
+      \endverb
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\MWXZNCRT\\Castellanos-Gomez et al. - 2014 - Deterministic transfer of two-dimensional material.pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://dx.doi.org/10.1088/2053-1583/1/1/011002
+      \endverb
+      \verb{url}
+      \verb https://dx.doi.org/10.1088/2053-1583/1/1/011002
+      \endverb
+    \endentry
+    \entry{HQGrapheneSystemsDesigns}{online}{}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labeltitlesource}{title}
+      \field{title}{{{HQGraphene}} Systems Designs, Produces and Sells Transfer Systems}
+      \field{urlday}{31}
+      \field{urlmonth}{12}
+      \field{urlyear}{2022}
+      \field{urldateera}{ce}
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\QBZDA7K3\\www.hq2d.com.html
+      \endverb
+      \verb{urlraw}
+      \verb https://www.hq2d.com/
+      \endverb
+      \verb{url}
+      \verb https://www.hq2d.com/
+      \endverb
+    \endentry
+    \entry{isolationVibrationCriterionVC}{online}{}
+      \name{author}{1}{}{%
+        {{hash=0f10549ac6e26ad2dc3856819f46aae6}{%
+           family={Isolation},
+           familyi={I\bibinitperiod},
+           given={Minus\bibnamedelimb K.\bibnamedelimi Vibration},
+           giveni={M\bibinitperiod\bibinitdelim K\bibinitperiod\bibinitdelim V\bibinitperiod}}}%
+      }
+      \list{organization}{1}{%
+        {Minus K Vibration Isolation}%
+      }
+      \strng{namehash}{0f10549ac6e26ad2dc3856819f46aae6}
+      \strng{fullhash}{0f10549ac6e26ad2dc3856819f46aae6}
+      \strng{bibnamehash}{0f10549ac6e26ad2dc3856819f46aae6}
+      \strng{authorbibnamehash}{0f10549ac6e26ad2dc3856819f46aae6}
+      \strng{authornamehash}{0f10549ac6e26ad2dc3856819f46aae6}
+      \strng{authorfullhash}{0f10549ac6e26ad2dc3856819f46aae6}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Vibration isolation references}
+      \field{title}{Vibration {{Criterion}} ({{VC}}) Curves | {{Minus K}}}
+      \field{urlday}{17}
+      \field{urlmonth}{12}
+      \field{urlyear}{2022}
+      \field{urldateera}{ce}
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\T4B4LDY9\\vc_curves_minus_k_vibration_isolation.html
+      \endverb
+      \verb{urlraw}
+      \verb https://www.minusk.com/content/technology/vc_curves_minus_k_vibration_isolation.html
+      \endverb
+      \verb{url}
+      \verb https://www.minusk.com/content/technology/vc_curves_minus_k_vibration_isolation.html
+      \endverb
+    \endentry
+    \entry{castellanos-gomezVanWaalsHeterostructures2022}{article}{}
+      \name{author}{10}{}{%
+        {{hash=7554bf1e8c6cb34c29797efcd88c9b44}{%
+           family={Castellanos-Gomez},
+           familyi={C\bibinithyphendelim G\bibinitperiod},
+           given={Andres},
+           giveni={A\bibinitperiod}}}%
+        {{hash=d08a43e8d0557d0f1c41d00369694872}{%
+           family={Duan},
+           familyi={D\bibinitperiod},
+           given={Xiangfeng},
+           giveni={X\bibinitperiod}}}%
+        {{hash=f1998021f35655460bef1ce957575f37}{%
+           family={Fei},
+           familyi={F\bibinitperiod},
+           given={Zhe},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=d65cf6dd7c9c475b60aa7389010d844a}{%
+           family={Gutierrez},
+           familyi={G\bibinitperiod},
+           given={Humberto\bibnamedelima Rodriguez},
+           giveni={H\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+        {{hash=fed5caf84a516c72d99ab5164b478c7d}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Yuan},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=8582a9a19f3c3afe4a93ba5a25b27fc2}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Xinyu},
+           giveni={X\bibinitperiod}}}%
+        {{hash=5d65d57ad26f599f74f1197de801f39b}{%
+           family={Quereda},
+           familyi={Q\bibinitperiod},
+           given={Jorge},
+           giveni={J\bibinitperiod}}}%
+        {{hash=2552ce900f90a65e9981774d8911835c}{%
+           family={Qian},
+           familyi={Q\bibinitperiod},
+           given={Qi},
+           giveni={Q\bibinitperiod}}}%
+        {{hash=62a06981932b7dc64f499ec927b97044}{%
+           family={Sutter},
+           familyi={S\bibinitperiod},
+           given={Eli},
+           giveni={E\bibinitperiod}}}%
+        {{hash=570df63c81612740073c46d1c5a84893}{%
+           family={Sutter},
+           familyi={S\bibinitperiod},
+           given={Peter},
+           giveni={P\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Nature Publishing Group}%
+      }
+      \strng{namehash}{e965f89732cc2649b5516911b472ae35}
+      \strng{fullhash}{f2f3c06c2e7071ce1d430bfea01222be}
+      \strng{bibnamehash}{e965f89732cc2649b5516911b472ae35}
+      \strng{authorbibnamehash}{e965f89732cc2649b5516911b472ae35}
+      \strng{authornamehash}{e965f89732cc2649b5516911b472ae35}
+      \strng{authorfullhash}{f2f3c06c2e7071ce1d430bfea01222be}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The integration of dissimilar materials into heterostructures has become a powerful tool for engineering interfaces and electronic structure. The advent of 2D materials has provided unprecedented opportunities for novel heterostructures in the form of van der Waals stacks, laterally stitched 2D layers and more complex layered and 3D architectures. This Primer provides an overview of state-of-the-art methodologies for producing such van der Waals heterostructures, focusing on the two fundamentally different strategies, top-down deterministic assembly and bottom-up synthesis. Successful techniques, advantages and limitations are discussed for both approaches. As important as the fabrication itself is the characterization of the resulting engineered materials, for which a range of analysis techniques covering structure, composition and emerging functionality are highlighted. Examples of the properties of artificial van der Waals structures include optoelectronics and plasmonics, twistronics and unique functionality arising from the generalization of van der Waals assembly from 2D to 3D crystalline components. Finally, current issues of reproducibility, limitations and opportunities for future breakthroughs in terms of enhanced homogeneity, interfacial purity, feature control and ultimately orders-of-magnitude increased complexity of van der Waals heterostructures are discussed.}
+      \field{day}{28}
+      \field{issn}{2662-8449}
+      \field{issue}{1}
+      \field{journaltitle}{Nat Rev Methods Primers}
+      \field{langid}{english}
+      \field{month}{7}
+      \field{number}{1}
+      \field{title}{Van Der {{Waals}} Heterostructures}
+      \field{urlday}{22}
+      \field{urlmonth}{9}
+      \field{urlyear}{2022}
+      \field{volume}{2}
+      \field{year}{2022}
+      \field{dateera}{ce}
+      \field{urldateera}{ce}
+      \field{pages}{1\bibrangedash 19}
+      \range{pages}{19}
+      \verb{doi}
+      \verb 10.1038/s43586-022-00139-1
+      \endverb
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\YISD4MIS\\s43586-022-00139-1.html
+      \endverb
+      \verb{urlraw}
+      \verb https://www.nature.com/articles/s43586-022-00139-1
+      \endverb
+      \verb{url}
+      \verb https://www.nature.com/articles/s43586-022-00139-1
+      \endverb
+      \keyw{Chemical bonding,Two-dimensional materials}
+    \endentry
+    \entry{jungSurfaceEffectsElectronic2014}{article}{}
+      \name{author}{3}{}{%
+        {{hash=35169b1671581ef29a000e86f8e4db1e}{%
+           family={Jung},
+           familyi={J\bibinitperiod},
+           given={Yeonwoong},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=cf3b3136f22eaaf0292afb6a60e22bed}{%
+           family={Shen},
+           familyi={S\bibinitperiod},
+           given={Jie},
+           giveni={J\bibinitperiod}}}%
+        {{hash=1f7e92e4814227811c205361c4267caf}{%
+           family={Cha},
+           familyi={C\bibinitperiod},
+           given={Judy},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{de1fc7091dfb825e3073e94e9936d4ea}
+      \strng{fullhash}{de1fc7091dfb825e3073e94e9936d4ea}
+      \strng{bibnamehash}{de1fc7091dfb825e3073e94e9936d4ea}
+      \strng{authorbibnamehash}{de1fc7091dfb825e3073e94e9936d4ea}
+      \strng{authornamehash}{de1fc7091dfb825e3073e94e9936d4ea}
+      \strng{authorfullhash}{de1fc7091dfb825e3073e94e9936d4ea}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The renewed interest in two-dimensional materials, particularly transition metal dichalcogenides, has been explosive, evident in a number of review and perspective articles on the topic. Our ability to synthesize and study these 2D materials down to a single layer and to stack them to form van der Waals heterostructures opens up a wide range of possibilities from fundamental studies of nanoscale effects to future electronic and optoelectronic applications. Bottom-up and top-down synthesis and basic electronic properties of 2D chalcogenide materials have been covered in great detail elsewhere. Here, we bring attention to more subtle effects: how the environmental, surface, and crystal defects modify the electronic band structure and transport properties of 2D chalcogenide nanomaterials. Surface effects such as surface oxidation and substrate influence may dominate the overall transport properties, particularly in single layer chalcogenide devices. Thus, understanding such effects is critical for successful applications based on these materials. In this review, we discuss two classes of chalcogenides – Bi-based and Mo-based chalcogenides. The first are topological insulators with unique surface electronic properties and the second are promising for flexible optoelectronic applications as well as hydrogen evolution catalytic reactions.}
+      \field{day}{31}
+      \field{journaltitle}{Nano Convergence}
+      \field{month}{3}
+      \field{title}{R {{Surface}} Effects on Electronic Transport of {{2D}} Chalcogenide Thin Films and Nanostructures}
+      \field{volume}{1}
+      \field{year}{2014}
+      \field{dateera}{ce}
+      \verb{doi}
+      \verb 10.1186/s40580-014-0018-2
+      \endverb
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\5NGA7A42\\Jung et al. - 2014 - R Surface effects on electronic transport of 2D ch.pdf
+      \endverb
+    \endentry
+    \entry{pizzoccheroHotPickupTechnique2016}{article}{}
+      \name{author}{8}{}{%
+        {{hash=5725782afe6c7e7174fc8e859d207056}{%
+           family={Pizzocchero},
+           familyi={P\bibinitperiod},
+           given={Filippo},
+           giveni={F\bibinitperiod}}}%
+        {{hash=92effba7bdebe0f90766b2a6e244e6a8}{%
+           family={Gammelgaard},
+           familyi={G\bibinitperiod},
+           given={Lene},
+           giveni={L\bibinitperiod}}}%
+        {{hash=9f8ab808f3171d89bbd6905198fcb6e7}{%
+           family={Jessen},
+           familyi={J\bibinitperiod},
+           given={Bjarke\bibnamedelima S.},
+           giveni={B\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+        {{hash=07c7898b4c3a0a7f792db6894b4594eb}{%
+           family={Caridad},
+           familyi={C\bibinitperiod},
+           given={José\bibnamedelima M.},
+           giveni={J\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+        {{hash=1f647bb6da8304b7be380ec58eb6373a}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Lei},
+           giveni={L\bibinitperiod}}}%
+        {{hash=00c1651925040335862417178201693b}{%
+           family={Hone},
+           familyi={H\bibinitperiod},
+           given={James},
+           giveni={J\bibinitperiod}}}%
+        {{hash=09581cbd2d81892880fc2318c34df3eb}{%
+           family={Bøggild},
+           familyi={B\bibinitperiod},
+           given={Peter},
+           giveni={P\bibinitperiod}}}%
+        {{hash=ba7e0a5ed0a6e75e4bc40a483d23d7c1}{%
+           family={Booth},
+           familyi={B\bibinitperiod},
+           given={Timothy\bibnamedelima J.},
+           giveni={T\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Nature Publishing Group}%
+      }
+      \strng{namehash}{14983bd227bf1f2969ae7f9115f40f08}
+      \strng{fullhash}{77edc7af2845835d964528eb7d8f3cd0}
+      \strng{bibnamehash}{14983bd227bf1f2969ae7f9115f40f08}
+      \strng{authorbibnamehash}{14983bd227bf1f2969ae7f9115f40f08}
+      \strng{authornamehash}{14983bd227bf1f2969ae7f9115f40f08}
+      \strng{authorfullhash}{77edc7af2845835d964528eb7d8f3cd0}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The assembly of individual two-dimensional materials into van der Waals heterostructures enables the construction of layered three-dimensional materials with desirable electronic and optical properties. A core problem in the fabrication of these structures is the formation of clean interfaces between the individual two-dimensional materials which would affect device performance. We present here a technique for the rapid batch fabrication of van der Waals heterostructures, demonstrated by the controlled production of 22 mono-, bi- and trilayer graphene stacks encapsulated in hexagonal boron nitride with close to 100\% yield. For the monolayer devices, we found semiclassical mean-free paths up to 0.9\,μm, with the narrowest samples showing clear indications of the transport being affected by boundary scattering. The presented method readily lends itself to fabrication of van der Waals heterostructures in both ambient and controlled atmospheres, while the ability to assemble pre-patterned layers paves the way for complex three-dimensional architectures.}
+      \field{day}{16}
+      \field{issn}{2041-1723}
+      \field{issue}{1}
+      \field{journaltitle}{Nat Commun}
+      \field{langid}{english}
+      \field{month}{6}
+      \field{number}{1}
+      \field{title}{The Hot Pick-up Technique for Batch Assembly of van Der {{Waals}} Heterostructures}
+      \field{urlday}{8}
+      \field{urlmonth}{1}
+      \field{urlyear}{2023}
+      \field{volume}{7}
+      \field{year}{2016}
+      \field{dateera}{ce}
+      \field{urldateera}{ce}
+      \field{pages}{11894}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1038/ncomms11894
+      \endverb
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\JWQ4SPTZ\\Pizzocchero et al. - 2016 - The hot pick-up technique for batch assembly of va.pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://www.nature.com/articles/ncomms11894
+      \endverb
+      \verb{url}
+      \verb https://www.nature.com/articles/ncomms11894
+      \endverb
+      \keyw{Condensed-matter physics,Nanoscience and technology}
+    \endentry
+    \entry{frisendaRecentProgressAssembly2018}{article}{}
+      \name{author}{7}{}{%
+        {{hash=e50345ff8b019721f4d3dc6078f7b253}{%
+           family={Frisenda},
+           familyi={F\bibinitperiod},
+           given={Riccardo},
+           giveni={R\bibinitperiod}}}%
+        {{hash=8d329298f9c3b640a58c42bbc7748069}{%
+           family={Navarro-Moratalla},
+           familyi={N\bibinithyphendelim M\bibinitperiod},
+           given={Efrén},
+           giveni={E\bibinitperiod}}}%
+        {{hash=684e6057f37fb5de087982efd28a09b0}{%
+           family={Gant},
+           familyi={G\bibinitperiod},
+           given={Patricia},
+           giveni={P\bibinitperiod}}}%
+        {{hash=f9f9143bea54c564fda855c1fe04e750}{%
+           family={Lara},
+           familyi={L\bibinitperiod},
+           given={David\bibnamedelimb Pérez\bibnamedelima De},
+           giveni={D\bibinitperiod\bibinitdelim P\bibinitperiod\bibinitdelim D\bibinitperiod}}}%
+        {{hash=104adca655c0c282c6fcedc11db38805}{%
+           family={Jarillo-Herrero},
+           familyi={J\bibinithyphendelim H\bibinitperiod},
+           given={Pablo},
+           giveni={P\bibinitperiod}}}%
+        {{hash=60c4a1cfe7c2a1bfa064af9ccca4fa5f}{%
+           family={V.\bibnamedelimi Gorbachev},
+           familyi={V\bibinitperiod\bibinitdelim G\bibinitperiod},
+           given={Roman},
+           giveni={R\bibinitperiod}}}%
+        {{hash=7554bf1e8c6cb34c29797efcd88c9b44}{%
+           family={Castellanos-Gomez},
+           familyi={C\bibinithyphendelim G\bibinitperiod},
+           given={Andres},
+           giveni={A\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Royal Society of Chemistry}%
+      }
+      \strng{namehash}{f92d098c92de22d3764c99b89eb46345}
+      \strng{fullhash}{66e928838ad36649e524654177922fe5}
+      \strng{bibnamehash}{f92d098c92de22d3764c99b89eb46345}
+      \strng{authorbibnamehash}{f92d098c92de22d3764c99b89eb46345}
+      \strng{authornamehash}{f92d098c92de22d3764c99b89eb46345}
+      \strng{authorfullhash}{66e928838ad36649e524654177922fe5}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Chemical Society Reviews}
+      \field{langid}{english}
+      \field{number}{1}
+      \field{title}{Recent Progress in the Assembly of Nanodevices and van Der {{Waals}} Heterostructures by Deterministic Placement of {{2D}} Materials}
+      \field{urlday}{8}
+      \field{urlmonth}{1}
+      \field{urlyear}{2023}
+      \field{volume}{47}
+      \field{year}{2018}
+      \field{dateera}{ce}
+      \field{urldateera}{ce}
+      \field{pages}{53\bibrangedash 68}
+      \range{pages}{16}
+      \verb{doi}
+      \verb 10.1039/C7CS00556C
+      \endverb
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\VTA54SUZ\\Frisenda et al. - 2018 - Recent progress in the assembly of nanodevices and.pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://pubs.rsc.org/en/content/articlelanding/2018/cs/c7cs00556c
+      \endverb
+      \verb{url}
+      \verb https://pubs.rsc.org/en/content/articlelanding/2018/cs/c7cs00556c
+      \endverb
+    \endentry
+    \entry{zhaoInexpensiveSystemDeterministic2020}{article}{}
+      \name{author}{5}{}{%
+        {{hash=d306011228317400a4fa26b51c867089}{%
+           family={Zhao},
+           familyi={Z\bibinitperiod},
+           given={Qinghua},
+           giveni={Q\bibinitperiod}}}%
+        {{hash=ad1506e9f10da2cad4389eac16751647}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Tao},
+           giveni={T\bibinitperiod}}}%
+        {{hash=41e493217841938c554f657e895f56cd}{%
+           family={Ryu},
+           familyi={R\bibinitperiod},
+           given={Yu\bibnamedelima Kyoung},
+           giveni={Y\bibinitperiod\bibinitdelim K\bibinitperiod}}}%
+        {{hash=e50345ff8b019721f4d3dc6078f7b253}{%
+           family={Frisenda},
+           familyi={F\bibinitperiod},
+           given={Riccardo},
+           giveni={R\bibinitperiod}}}%
+        {{hash=7554bf1e8c6cb34c29797efcd88c9b44}{%
+           family={Castellanos-Gomez},
+           familyi={C\bibinithyphendelim G\bibinitperiod},
+           given={Andres},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{bb967b3faf04ebe0a5b62d495321a1fa}
+      \strng{fullhash}{aab8f242e3027436a05472e100c56c4a}
+      \strng{bibnamehash}{aab8f242e3027436a05472e100c56c4a}
+      \strng{authorbibnamehash}{aab8f242e3027436a05472e100c56c4a}
+      \strng{authornamehash}{bb967b3faf04ebe0a5b62d495321a1fa}
+      \strng{authorfullhash}{aab8f242e3027436a05472e100c56c4a}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Abstract The development of systems for the deterministic transfer of two-dimensional (2D) materials have undoubtedly contributed to great advancements in 2D materials research. In fact, they have made it possible to fabricate van der Waals heterostructures and 2D materials-based devices with complex architectures. Nonetheless, as far as we know, the number of existing papers providing enough details to reproduce these systems by other research groups is very scarce in the literature. Moreover, these systems typically require the use of expensive optical and mechanical components hampering their applicability in research groups with a low budget. Here, we demonstrate how a deterministic placement system for 2D materials, set up with full capabilities, can be implemented for under 900 € -- which can be easily implemented in labs and educational labs with low budgets.}
+      \field{day}{23}
+      \field{issn}{2515-7639}
+      \field{journaltitle}{J. Phys. Mater.}
+      \field{langid}{english}
+      \field{month}{1}
+      \field{number}{1}
+      \field{title}{An Inexpensive System for the Deterministic Transfer of {{2D}} Materials}
+      \field{urlday}{7}
+      \field{urlmonth}{1}
+      \field{urlyear}{2023}
+      \field{volume}{3}
+      \field{year}{2020}
+      \field{dateera}{ce}
+      \field{urldateera}{ce}
+      \field{pages}{016001}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1088/2515-7639/ab6a72
+      \endverb
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\DQJNXNYZ\\Zhao et al. - 2020 - An inexpensive system for the deterministic transf.pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://iopscience.iop.org/article/10.1088/2515-7639/ab6a72
+      \endverb
+      \verb{url}
+      \verb https://iopscience.iop.org/article/10.1088/2515-7639/ab6a72
+      \endverb
+    \endentry
+    \entry{huangReliableExfoliationLargeArea2015}{article}{}
+      \name{author}{8}{}{%
+        {{hash=fed5caf84a516c72d99ab5164b478c7d}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Yuan},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=62a06981932b7dc64f499ec927b97044}{%
+           family={Sutter},
+           familyi={S\bibinitperiod},
+           given={Eli},
+           giveni={E\bibinitperiod}}}%
+        {{hash=63029dcf43beda0f4807b83ff55297ed}{%
+           family={Shi},
+           familyi={S\bibinitperiod},
+           given={Norman\bibnamedelima N.},
+           giveni={N\bibinitperiod\bibinitdelim N\bibinitperiod}}}%
+        {{hash=c9db0adb575412724d00322c727a4911}{%
+           family={Zheng},
+           familyi={Z\bibinitperiod},
+           given={Jiabao},
+           giveni={J\bibinitperiod}}}%
+        {{hash=93b761568349cac8f0e485022c2b10a4}{%
+           family={Yang},
+           familyi={Y\bibinitperiod},
+           given={Tianzhong},
+           giveni={T\bibinitperiod}}}%
+        {{hash=71bf1364e209b7ff5825fb82f979c333}{%
+           family={Englund},
+           familyi={E\bibinitperiod},
+           given={Dirk},
+           giveni={D\bibinitperiod}}}%
+        {{hash=a4e8eee6a1f01612540b00a7e4428d11}{%
+           family={Gao},
+           familyi={G\bibinitperiod},
+           given={Hong-Jun},
+           giveni={H\bibinithyphendelim J\bibinitperiod}}}%
+        {{hash=570df63c81612740073c46d1c5a84893}{%
+           family={Sutter},
+           familyi={S\bibinitperiod},
+           given={Peter},
+           giveni={P\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {American Chemical Society}%
+      }
+      \strng{namehash}{14e144014e4d62c35aff73382e8a0794}
+      \strng{fullhash}{85f7febff83ee0dc98d041555ed636d5}
+      \strng{bibnamehash}{14e144014e4d62c35aff73382e8a0794}
+      \strng{authorbibnamehash}{14e144014e4d62c35aff73382e8a0794}
+      \strng{authornamehash}{14e144014e4d62c35aff73382e8a0794}
+      \strng{authorfullhash}{85f7febff83ee0dc98d041555ed636d5}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Mechanical exfoliation has been a key enabler of the exploration of the properties of two-dimensional materials, such as graphene, by providing routine access to high-quality material. The original exfoliation method, which remained largely unchanged during the past decade, provides relatively small flakes with moderate yield. Here, we report a modified approach for exfoliating thin monolayer and few-layer flakes from layered crystals. Our method introduces two process steps that enhance and homogenize the adhesion force between the outermost sheet in contact with a substrate: Prior to exfoliation, ambient adsorbates are effectively removed from the substrate by oxygen plasma cleaning, and an additional heat treatment maximizes the uniform contact area at the interface between the source crystal and the substrate. For graphene exfoliation, these simple process steps increased the yield and the area of the transferred flakes by more than 50 times compared to the established exfoliation methods. Raman and AFM characterization shows that the graphene flakes are of similar high quality as those obtained in previous reports. Graphene field-effect devices were fabricated and measured with back-gating and solution top-gating, yielding mobilities of ∼4000 and 12\,000 cm2/(V s), respectively, and thus demonstrating excellent electrical properties. Experiments with other layered crystals, e.g., a bismuth strontium calcium copper oxide (BSCCO) superconductor, show enhancements in exfoliation yield and flake area similar to those for graphene, suggesting that our modified exfoliation method provides an effective way for producing large area, high-quality flakes of a wide range of 2D materials.}
+      \field{day}{24}
+      \field{issn}{1936-0851}
+      \field{journaltitle}{ACS Nano}
+      \field{month}{11}
+      \field{number}{11}
+      \field{title}{Reliable {{Exfoliation}} of {{Large-Area High-Quality Flakes}} of {{Graphene}} and {{Other Two-Dimensional Materials}}}
+      \field{urlday}{22}
+      \field{urlmonth}{9}
+      \field{urlyear}{2022}
+      \field{volume}{9}
+      \field{year}{2015}
+      \field{dateera}{ce}
+      \field{urldateera}{ce}
+      \field{pages}{10612\bibrangedash 10620}
+      \range{pages}{9}
+      \verb{doi}
+      \verb 10.1021/acsnano.5b04258
+      \endverb
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\NCAFNQ53\\Huang et al. - 2015 - Reliable Exfoliation of Large-Area High-Quality Fl.pdf;C\:\\Users\\baskl\\Zotero\\storage\\K3MSW9ED\\acsnano.html
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1021/acsnano.5b04258
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1021/acsnano.5b04258
+      \endverb
+    \endentry
+    \entry{hesselberthMicroscopieBeweging}{article}{}
+      \name{author}{1}{}{%
+        {{hash=55b343a8d36ca60eb6c01e311c90bbba}{%
+           family={Hesselberth},
+           familyi={H\bibinitperiod},
+           given={Marcel},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{55b343a8d36ca60eb6c01e311c90bbba}
+      \strng{fullhash}{55b343a8d36ca60eb6c01e311c90bbba}
+      \strng{bibnamehash}{55b343a8d36ca60eb6c01e311c90bbba}
+      \strng{authorbibnamehash}{55b343a8d36ca60eb6c01e311c90bbba}
+      \strng{authornamehash}{55b343a8d36ca60eb6c01e311c90bbba}
+      \strng{authorfullhash}{55b343a8d36ca60eb6c01e311c90bbba}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{In het Kamerlingh Onnes laboratorium is het kijken naar atomen en structuren op nanometerschaal de gewoonste zaak van de wereld. De fysici hebben er een twintigtal meetopstellingen opgebouwd die elk op een heel eigen manier de state of the art in de experimentele techniek vertegenwoordigen.}
+      \field{title}{Microscopie in Beweging}
+      \verb{file}
+      \verb C\:\\Werkmap\\school\\Literatuur\\Physics\\Vibration\\eureka_meethal.pdf
+      \endverb
+    \endentry
+    \entry{EvaluateStressDisplacement}{online}{}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We will now look at a few of the available results contours and the various display customization options. Note: Conditional Procedure – If you previously ran the analysis and are returning to complete the tutorial in a separate session of Inventor Nastran, you must perform two additional steps upon reopening the CAD model}
+      \field{langid}{american}
+      \field{title}{Evaluate the {{Stress}} and {{Displacement Results}} | {{Inventor Nastran}} 2020 | {{Autodesk Knowledge Network}}}
+      \field{urlday}{26}
+      \field{urlmonth}{12}
+      \field{urlyear}{2022}
+      \field{urldateera}{ce}
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\379GNNZJ\\GUID-0A5A8BA1-439D-4A80-90B5-C3FDD5AF8BEB-htm.html
+      \endverb
+      \verb{urlraw}
+      \verb https://knowledge.autodesk.com/support/inventor-nastran/learn-explore/caas/CloudHelp/cloudhelp/2020/ENU/NINCAD-QuickStart/files/GUID-0A5A8BA1-439D-4A80-90B5-C3FDD5AF8BEB-htm.html
+      \endverb
+      \verb{url}
+      \verb https://knowledge.autodesk.com/support/inventor-nastran/learn-explore/caas/CloudHelp/cloudhelp/2020/ENU/NINCAD-QuickStart/files/GUID-0A5A8BA1-439D-4A80-90B5-C3FDD5AF8BEB-htm.html
+      \endverb
+    \endentry
+    \entry{lingPolyetherEtherKetone2020}{article}{}
+      \name{author}{4}{}{%
+        {{hash=05ab7b1eaf5b76694a56e81b40739994}{%
+           family={Ling},
+           familyi={L\bibinitperiod},
+           given={Xuanzhe},
+           giveni={X\bibinitperiod}}}%
+        {{hash=6ab3a827b4e49f0ac39f22a3d5d868e7}{%
+           family={Jing},
+           familyi={J\bibinitperiod},
+           given={Xishuang},
+           giveni={X\bibinitperiod}}}%
+        {{hash=539c11c435e82fda5df2ecc456bad6a4}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Chengyang},
+           giveni={C\bibinitperiod}}}%
+        {{hash=7a0a7acef08a0dcfd24dcfe41f925c24}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Siyu},
+           giveni={S\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IOP Publishing}%
+      }
+      \strng{namehash}{2ed784e42e5b5f602a46ef84c4edac47}
+      \strng{fullhash}{80e54c4662203254839c5aa0702a4c8b}
+      \strng{bibnamehash}{80e54c4662203254839c5aa0702a4c8b}
+      \strng{authorbibnamehash}{80e54c4662203254839c5aa0702a4c8b}
+      \strng{authornamehash}{2ed784e42e5b5f602a46ef84c4edac47}
+      \strng{authorfullhash}{80e54c4662203254839c5aa0702a4c8b}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The physical, chemical and mechanical properties of polyether ether ketone (PEEK) materials have been comprehensively analyzed. Based on methods for reinforcing modification of PEEK, this review has investigated the application status of PEEK materials, summarized the current production and research and development status quo of PEEK at home and abroad and suggested that the application of PEEK should be promoted.}
+      \field{issn}{1755-1315}
+      \field{journaltitle}{IOP Conf. Ser.: Earth Environ. Sci.}
+      \field{langid}{english}
+      \field{month}{3}
+      \field{number}{1}
+      \field{title}{Polyether {{Ether Ketone}} ({{PEEK}}) {{Properties}} and {{Its Application Status}}}
+      \field{urlday}{8}
+      \field{urlmonth}{1}
+      \field{urlyear}{2023}
+      \field{volume}{453}
+      \field{year}{2020}
+      \field{dateera}{ce}
+      \field{urldateera}{ce}
+      \field{pages}{012080}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1088/1755-1315/453/1/012080
+      \endverb
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\MLEU2XB4\\Ling et al. - 2020 - Polyether Ether Ketone (PEEK) Properties and Its A.pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://dx.doi.org/10.1088/1755-1315/453/1/012080
+      \endverb
+      \verb{url}
+      \verb https://dx.doi.org/10.1088/1755-1315/453/1/012080
+      \endverb
+    \endentry
+    \entry{mazerollePositioningHandlingMeasuring2003}{article}{}
+      \name{author}{4}{}{%
+        {{hash=ab28d890fc767887930de88b5672b42a}{%
+           family={Mazerolle},
+           familyi={M\bibinitperiod},
+           given={S.},
+           giveni={S\bibinitperiod}}}%
+        {{hash=caf82e63fd63a6e99085970a7087f3fe}{%
+           family={Rabe},
+           familyi={R\bibinitperiod},
+           given={Renzel},
+           giveni={R\bibinitperiod}}}%
+        {{hash=92bd911440f024c70e87ad3cbbe70dc7}{%
+           family={Varidel},
+           familyi={V\bibinitperiod},
+           given={T.},
+           giveni={T\bibinitperiod}}}%
+        {{hash=f8d534f7c79ac9e7c6ad3ef400681cbc}{%
+           family={Breguet},
+           familyi={B\bibinitperiod},
+           given={Jean-Marc},
+           giveni={J\bibinithyphendelim M\bibinitperiod}}}%
+      }
+      \strng{namehash}{2cacc2d5cbc393936a3555f96d03255e}
+      \strng{fullhash}{ded6c8deacc39fe496d7e678aaa469f1}
+      \strng{bibnamehash}{ded6c8deacc39fe496d7e678aaa469f1}
+      \strng{authorbibnamehash}{ded6c8deacc39fe496d7e678aaa469f1}
+      \strng{authornamehash}{2cacc2d5cbc393936a3555f96d03255e}
+      \strng{authorfullhash}{ded6c8deacc39fe496d7e678aaa469f1}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Abstract In this paper we present our latest developments in high precision positioning and handling systems operating inside Scanning Electron Microscopes (SEM). This work is motivated by the growing need of new instruments for the in-situ analysis of materials. In the medium terms, these instruments will permit more laboratories to accomplish complex and repetitive tests on several samples and with various tools, without the need to open the SME chamber, increasing thus productivity and improving the reliability of the analysis. The concept of a complete manipulator system, working inside a SEM chamber (Lab-In-SEM: LIS) is proposed. Then the performances of a miniature-indenter -scratch(Miniatureindenter-scratch for SEM chamber: MISS) are described and compared with the commercial instrument MTS-XP. Examples of nano-indentation and scratch operations will be described. Then we present a five degrees-of-freedom manipulator (Ztilt-5). The Ztilt-5 has a resolution of 100nm, a workspace of several cubic centimeters and can lift weight up to 300 g. Its geometrical model has been implemented on a PC-based controller allowing telemanipulation, and joint or task spaces control. The Ztilt-5 is powered with a new type of piezo-actuators.}
+      \field{day}{1}
+      \field{month}{1}
+      \field{title}{Positioning, {{Handling}} and {{Measuring}} inside a {{Scanning Electron Microscope}}}
+      \field{year}{2003}
+      \field{dateera}{ce}
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\LJ94HJSF\\Mazerolle et al. - 2003 - Positioning, Handling and Measuring inside a Scann.pdf
+      \endverb
+    \endentry
+    \entry{ThorlabsMT402RightAngle}{online}{}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Thorlabs specializes in the building blocks for laser and fiber optic systems. From optomechanical components to telecom test instrumentation, Thorlabs' extensive manufacturing capabilities allow us to ship high quality, well priced components and devices for next-day delivery. Optomechanics, optics, opto-electronics, laser diodes, fiber optics and ASE test sources as well as fiber optic amplifiers.}
+      \field{langid}{english}
+      \field{title}{Thorlabs - {{MT402 Right-Angle Bracket}} for {{MT Series Translation Stages}}}
+      \field{urlday}{26}
+      \field{urlmonth}{12}
+      \field{urlyear}{2022}
+      \field{urldateera}{ce}
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\IW4HIK2U\\thorproduct.html
+      \endverb
+      \verb{urlraw}
+      \verb https://www.thorlabs.com
+      \endverb
+      \verb{url}
+      \verb https://www.thorlabs.com
+      \endverb
+    \endentry
+    \entry{ThorlabsXRNG1QuickConnect}{online}{}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Thorlabs specializes in the building blocks for laser and fiber optic systems. From optomechanical components to telecom test instrumentation, Thorlabs' extensive manufacturing capabilities allow us to ship high quality, well priced components and devices for next-day delivery. Optomechanics, optics, opto-electronics, laser diodes, fiber optics and ASE test sources as well as fiber optic amplifiers.}
+      \field{langid}{english}
+      \field{title}{Thorlabs - {{XRNG1}}/{{M Quick-Connect Goniometer}}, 74.0 Mm to {{Point}} of {{Rotation}}, ±8° {{Adjustment}}, {{Metric}}}
+      \field{urlday}{26}
+      \field{urlmonth}{12}
+      \field{urlyear}{2022}
+      \field{urldateera}{ce}
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\D7NSQBAF\\thorproduct.html
+      \endverb
+      \verb{urlraw}
+      \verb https://www.thorlabs.com
+      \endverb
+      \verb{url}
+      \verb https://www.thorlabs.com
+      \endverb
+    \endentry
+    \entry{ThorlabsXRNR1O56}{online}{}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Thorlabs specializes in the building blocks for laser and fiber optic systems. From optomechanical components to telecom test instrumentation, Thorlabs' extensive manufacturing capabilities allow us to ship high quality, well priced components and devices for next-day delivery. Optomechanics, optics, opto-electronics, laser diodes, fiber optics and ASE test sources as well as fiber optic amplifiers.}
+      \field{langid}{english}
+      \field{title}{Thorlabs - {{XRNR1}}/{{M Ø56}}.0 Mm {{Compact Rotation Stage}} with 2}
+      \field{urlday}{26}
+      \field{urlmonth}{12}
+      \field{urlyear}{2022}
+      \field{urldateera}{ce}
+      \verb{file}
+      \verb C\:\\Users\\baskl\\Zotero\\storage\\FKUEJD8T\\thorproduct.html
+      \endverb
+      \verb{urlraw}
+      \verb https://www.thorlabs.com
+      \endverb
+      \verb{url}
+      \verb https://www.thorlabs.com
+      \endverb
+    \endentry
+    \entry{ThorlabsXRNB1Base}{online}{}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Thorlabs specializes in the building blocks for laser and fiber optic systems. From optomechanical components to telecom test instrumentation, Thorlabs' extensive manufacturing capabilities allow us to ship high quality, well priced components and devices for next-day delivery. Optomechanics, optics, opto-electronics, laser diodes, fiber optics and ASE test sources as well as fiber optic amplifiers.}
+      \field{langid}{english}
+      \field{title}{Thorlabs - {{XRN-B1}}/{{M Base Plate}} for {{Stages}} with 2}
+      \field{urlday}{26}
+      \field{urlmonth}{12}
+      \field{urlyear}{2022}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://www.thorlabs.com
+      \endverb
+      \verb{url}
+      \verb https://www.thorlabs.com
+      \endverb
+    \endentry
+  \enddatalist
+  \missing{ThorlabsMT11}
+\endrefsection
+\endinput
+

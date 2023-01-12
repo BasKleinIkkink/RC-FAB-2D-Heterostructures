@@ -85,15 +85,15 @@
 
 
 % Bibliography
-\usepackage[style=ieee, refsection=chapter, backref=true]{biblatex}
-\usepackage{csquotes}
-\usepackage{multicols}
-\usepackage{wrapfig}
+\usepackage[style=ieee, backref=true]{biblatex}
 \addbibresource{references.bib}
+\usepackage{csquotes}
+\usepackage{multicol}
+\usepackage{wrapfig}
+
 
 %% Language and font encodings
 \usepackage[english]{babel}
-\usepackage{csquotes}
 \usepackage{todonotes}
 
 
@@ -228,7 +228,11 @@ The setup will be based on a commercial (Olympus BXFM) optical microscope, but t
 \clearpage
 \section{Background}
 
+\todo{Ask semonti for the figure}
+\todo{Zoom in on the middle with an adapted scalebar, also make notations in the image with the expected properties (mono-bilayer etc)}
+\todo{Make one figure of the the 2 columns (a and b), with one caption}
 
+\todo{monash sewtup ref to lab Michael Fuhrer}
 \begin{figure}[H]
   \centering
   \begin{minipage}[b]{0.58\textwidth}
@@ -324,6 +328,8 @@ By analyzing the workflow of the manual and motorized commercial stamping setups
 
 \subsection{Vibration isolation}
 \label{ch:vibration_isolation}
+
+\todo{Find a way to put this in the results (choice was made before designing but still part of the process)}
 During the design phase of the project it is important to take the susceptibility to vibration of the instrument into account due to the fact that the VDWSF lab has vibrational issues when no dampeners are used as seen in appendix \ref{ap:vibrational_measurement}.
 With commercial stacking setups external vibrations are a known issue during the stacking process. 
 Due to instrument not vibrating in phase, the phase difference between the mask and the sample can cause tearing in the flake, positioning the flake also becomes more cumbersome.
@@ -417,6 +423,10 @@ A tradeoff of this solution is that the eigen-frequency given by equation \ref{e
 \section{Methods \& Results}
 In the next chapters the methods and results used for the development of the instrument are discussed.
 
+\todo{Add the vibration isolation part here because it is important for the complete design cycle}
+
+\todo{Also explain the subdivisions of the project and where to find what content}
+
 \subsection{Stand design}
 One of the main issues in the stamping process is the susceptibility to vibrations caused by external factors as described in \ref{ch:vibration_isolation}.
 The VDWSF only complies to VC-A (see appendix \ref{ap:vibrational_measurement}), this means the external vibrations have to be taken into account when designing the instrument, especially the stand of the microscope. 
@@ -494,6 +504,8 @@ The final design for the microscope stand can be seen in figure \ref{fig:trap_st
 
 \clearpage
 \subsection{Mask design}
+
+\todo{refer back to the complete image for a visualisation of the mask omponents}
 the mask consists of two major parts: the mask holder which holds the stamping polymer and the stages which are used to align the flake on the mask with the target flake.
 The design of the mask holder is fairly straight forward, the mask should be as rigid as possible while minimizing the cantilevers in the design.
 To make the stack of stages used to manipulate the mask more stable a custom bracket was fabricated to position the mask near the center of the stage stack.
@@ -508,6 +520,7 @@ Over the duration of this project, the first prototype of the sample holder was 
 Both versions of the sample holder consist of three parts: The sample bed (see figure \ref{fig:prototype_sample_holder}), insulation layer and the spacer bus (see appendix \ref{doc:tech_stages}).\\
 
 \subsubsection{Sample bed}
+\todo{Create a new render of the original model}
 
 \begin{figure}[H]
   \centering
@@ -547,6 +560,8 @@ Due to time constraints is was not possible to fabricate the next iteration of t
 
 
 \subsubsection{Spacer bus}
+
+\todo{Remove the grid from all te graphs}
 
 To be able to meet the criteria set in \ref{ch:criteria} the sample bed has to be able to cool down to $20^\circ$C, this means that the heat energy from the sample bed has to be transported to the cylinder and dissipated.
 
@@ -592,8 +607,8 @@ The code used to generate the model can be found in appendix \ref{ap:cylinder_mo
 \begin{figure}[H]
   \centering
   \begin{minipage}[b]{0.45\textwidth}
-    %\includegraphics[width=\textwidth]{img/sample_holder_and_mask/temp_cycling.png}
-    \caption{Temperature graph of the sample holder when simulating workload by heating to 110 degrees and cooling down to ambient temperature ($25^\circ$) while waiting for 120 seconds when the level is reached.}
+    \includegraphics[width=\textwidth]{img/sample_holder_and_mask/reduced_cylinder_thermocycle.png}
+    \caption{Spacer bus temperature over time when simulating maximum workload (change temperature withing 120 s of reaching target, in practice the time on target temperature will be longer due finding a suitable target flake and alignment) by heating to 110 degrees and cooling down to ambient temperature ($25^\circ$) while waiting for 120 seconds when the level is reached.}
     \label{fig:temperature_graph}
   \end{minipage}
   \hfill
@@ -637,6 +652,9 @@ The contents and used techniques in the control box are out of the scope for thi
 The first prototype bracket makes it possible to test the complete system and work out implementation bugs. 
 It is recommended to create further iterations of the bracket as the current version can flex $\pm 3mm$ and this has a detrimental effect on the rigidity of the base xy stage, this because the stages are held in place by the stepper motor. 
 Furthermore it is also recommended to replace the ball bearings in the spindles as these were damaged during fabrication and the spindle is now only held in place by the stepper motor
+
+
+Due to the linair nature of the pulse wave modulation used to controll the stepper motor compared to the stepper speed a lineair grid search model with lack of fit accesment is used
 
 \subsection{Stage calibration}
 Due to the mechanisms used in some of the actuators it is not possible to calibrate all the staged,
@@ -726,15 +744,16 @@ The forbidden areas will be determined using a fractional factorial design with 
 \newpage
 \begin{multicols*}
 {2}[\printbibheading]
-    \AtNextBibliography{\footnotesize}
+    %\AtNextBibliography{\footnotesize}
     \printbibliography[heading = none]
-    \addcontentsline{toc}{section}{Bibliography}
+    %\addcontentsline{toc}{section}{Bibliography}
 \end{multicols*}
 
 \clearpage
 \appendix
 
 \section{Hardware functional decompositions}
+
 \label{ap:hardware_functional_decomposition}
 \begin{figure}[htp]
   \centering

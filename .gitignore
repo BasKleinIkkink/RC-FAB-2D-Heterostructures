@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Some data folders
+data_processing/vac_vibration/data_files/
+data_processing/stage_vibration/doe/
+
 # Distribution / packaging
 .Python
 build/

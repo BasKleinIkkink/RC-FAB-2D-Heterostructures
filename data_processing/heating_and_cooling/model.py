@@ -30,7 +30,7 @@ class GridConditions:
     L = 1  # Length of the space in m
     _TAl0 = 40 # Starting temperature of the aluminium in C 
     TN0 = 22  # Starting temperature of the nitrogen in C 
-    # t_list = [round(i/2, 2) for i in range(2 * 10 * 60)]  # List of checkpoints in s
+    t_list = [round(i/2, 2) for i in range(2 * 5 * 60)]  # List of checkpoints in s
     t_list = [0.01, 60, 180, 300]	
     a = L/N  # Lenght of bar in one grid spacing
 
