@@ -1,6 +1,6 @@
-from src.stacking_setup.stacking_backend.stacking_setup import StackingSetupBackend
-from src.stacking_setup.stacking_middleware.pipeline_connection import PipelineConnection as Connection
-from src.stacking_setup.stacking_frondend.gui.main import main as ui_main
+from src.stacking_setup.components.stacking_backend.stacking_setup import StackingSetupBackend
+from src.stacking_setup.components.stacking_middleware.pipeline_connection import PipelineConnection as Connection
+from src.stacking_setup.components.stacking_frondend.gui.main import main as ui_main
 from multiprocessing import Pipe
 
 

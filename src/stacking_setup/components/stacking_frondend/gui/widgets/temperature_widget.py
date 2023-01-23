@@ -21,8 +21,10 @@ import random
 
 class TemperatureWidget(QGroupBox):
     name = "Temperature Dock"
-    min_size = QSize(450, 450)
-    max_size = QSize(500, 450)
+    # min_size = QSize(450, 450)
+    # max_size = QSize(500, 450)
+    min_size = QSize(450, 200)
+    max_size = QSize(450, 200)
 
     def __init__(self, settings, q, parent=None):
         """
@@ -46,7 +48,7 @@ class TemperatureWidget(QGroupBox):
         self.setMaximumSize(self.max_size)
 
         # Add the chart
-        self.mainVerticalLayout.addWidget(self._create_chart())
+        # self.mainVerticalLayout.addWidget(self._create_chart())
         self.mainVerticalLayout.addWidget(self._create_numeric_temp_indicator())
 
         # Add the divider
@@ -65,7 +67,7 @@ class TemperatureWidget(QGroupBox):
         self.controlDiv.setFrameShadow(QFrame.Sunken)
         self.mainVerticalLayout.addWidget(self.controlDiv)
 
-        self.mainVerticalLayout.addWidget(self._create_custom_ramping())
+        # self.mainVerticalLayout.addWidget(self._create_custom_ramping())
 
         self.add_temp_presets()
 
@@ -131,35 +133,35 @@ class TemperatureWidget(QGroupBox):
 
         return paramFrame
 
-    def _create_custom_ramping(self):
-        """Create the widgets needed for custom ramping"""
-        self.coolRampLabel = QLabel()
-        self.coolRampLabel.setText("Cooling ramp :")
-        self.coolRampCombo = QComboBox()
-        self.coolRampCombo.addItem("Default")
+    # def _create_custom_ramping(self):
+    #     """Create the widgets needed for custom ramping"""
+    #     self.coolRampLabel = QLabel()
+    #     self.coolRampLabel.setText("Cooling ramp :")
+    #     self.coolRampCombo = QComboBox()
+    #     self.coolRampCombo.addItem("Default")
 
-        self.heatRampLabel = QLabel()
-        self.heatRampLabel.setText("Heating ramp :")
-        self.heatRampCombo = QComboBox()
-        self.heatRampCombo.addItem("Default")
+    #     self.heatRampLabel = QLabel()
+    #     self.heatRampLabel.setText("Heating ramp :")
+    #     self.heatRampCombo = QComboBox()
+    #     self.heatRampCombo.addItem("Default")
 
-        frame = QFrame()
-        grid = QGridLayout(frame)
-        grid.addWidget(self.coolRampLabel, 0, 0, 1, 1)
-        grid.addWidget(self.coolRampCombo, 0, 1, 1, 2)
-        grid.addWidget(self.heatRampLabel, 1, 0, 1, 1)
-        grid.addWidget(self.heatRampCombo, 1, 1, 1, 2)
-        return frame
+    #     frame = QFrame()
+    #     grid = QGridLayout(frame)
+    #     grid.addWidget(self.coolRampLabel, 0, 0, 1, 1)
+    #     grid.addWidget(self.coolRampCombo, 0, 1, 1, 2)
+    #     grid.addWidget(self.heatRampLabel, 1, 0, 1, 1)
+    #     grid.addWidget(self.heatRampCombo, 1, 1, 1, 2)
+    #     return frame
 
-    def _create_chart(self):
-        """Add the chart to the main frame."""
-        chart = self.Chart()
-        chart.legend().hide()
-        chart.setAnimationOptions(QChart.AllAnimations)
-        self.chart_view = QChartView(chart)
-        self.chart_view.setRenderHint(QPainter.Antialiasing)
-        self.chart = chart
-        return self.chart_view
+    # def _create_chart(self):
+    #     """Add the chart to the main frame."""
+    #     chart = self.Chart()
+    #     chart.legend().hide()
+    #     chart.setAnimationOptions(QChart.AllAnimations)
+    #     self.chart_view = QChartView(chart)
+    #     self.chart_view.setRenderHint(QPainter.Antialiasing)
+    #     self.chart = chart
+    #     return self.chart_view
 
     def add_temp_presets(self, presets=["0 °C", "50 °C", "100 °C", "150 °C", "200 °C"]):
         """Add the temperature presets to the combo box."""
