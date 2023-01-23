@@ -1,0 +1,67 @@
+% !TEX TS-program = luatex
+% !TEX encoding = UTF-8 Unicode
+% !TEX spellcheck = en-GB
+\documentclass[fontsize=10pt,%
+ twoside,%
+ titlepage=false,%
+ a4paper,%
+ % draft,%
+ openany%
+]{scrbook}
+\setcounter{secnumdepth}{3}
+
+\usepackage{stageverslag}
+
+% \usepackage{lua-visual-debug}
+
+% https://tex.stackexchange.com/questions/114932/how-to-run-a-program-inside-lualatex
+\newcommand\foo[1]{\directlua{
+local handle = io.popen([[#1]]) 
+local result = handle:read("*a") 
+tex.print(result)
+handle:close()}\relax}
+
+\begin{document}
+
+\newcounter{tipclean}
+\setcounter{tipclean}{\pagedifference{tip-clean-A}{tip-clean-B}}
+
+\newcounter{geophone}
+\setcounter{geophone}{\pagedifference{geophone-A}{geophone-B}}
+
+\newcounter{matlab}
+\setcounter{matlab}{\pagedifference{matlab-A}{matlab-B}}
+
+\newcounter{pagesum}
+\addtocounter{pagesum}{\numexpr\value{tipclean}}
+\addtocounter{pagesum}{\numexpr\value{geophone}}
+% \setcounter{pagesum}{%
+%   \numexpr\value{tipclean}+\numexpr\value{geophone}\relax%
+% }
+
+\begin{table}[htpb]
+    \centering
+    \begin{tabular}{l|r|r||r||r}
+        chapter & beg & end & amount of pages & amount of words \\\hline\hline
+        \verb|tip-clean.tex| &  \pageref{tip-clean-A} & \pageref{tip-clean-B}  & \thetipclean & \foo{detex tip-clean.tex | wc -w | tr -d '[:space:]'}\\\hline
+    \verb|geophone.tex| &  \pageref{geophone-A} & \pageref{geophone-B}  & \thegeophone & \foo{detex geophone.tex | wc -w | tr -d '[:space:]'}\\\hline\hline
+    total pages & & & \textbf{\thepagesum}/\pageref{LastPage} & \\\hline
+    \verb|appendix-matlab.tex| &  \pageref{matlab-A} & \pageref{matlab-B}  & \thematlab & \foo{detex appendix-matlab.tex | wc -w | tr -d '[:space:]'}\\
+    \end{tabular}
+\end{table}
+\begin{center}
+    last compiled on: \today\ at \currenttime
+\end{center}
+\tableofcontents
+
+\subfile{tip-clean.tex}
+
+\setcounter{section}{0}
+\subfile{geophone.tex}
+
+% \chapter{performance of the transfer stage}
+
+\appendix
+\RemoveFromHook{cmd/section/before}[secclear]
+\subfile{appendix-matlab.tex}
+\end{document}

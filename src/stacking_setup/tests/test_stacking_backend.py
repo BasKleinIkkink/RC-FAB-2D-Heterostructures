@@ -10,11 +10,11 @@ parent_dir_path = os.path.abspath(os.path.join(dir_path, os.pardir))
 sys.path.insert(0, parent_dir_path)
 
 # The code to be tested
-from src.stacking_setup.stacking_backend.stacking_setup import StackingSetupBackend
-from src.stacking_setup.stacking_backend.hardware.base import Base, NotSupportedError
-from src.stacking_setup.stacking_backend.configs.settings import Settings
-from src.stacking_setup.stacking_middleware.message import Message
-from src.stacking_setup.stacking_backend.configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_LINEAR_AXES, ACCEPTED_ROTATIONAL_AXES
+from components.stacking_backend.stacking_setup import StackingSetupBackend
+from components.stacking_backend.hardware.base import Base, NotSupportedError
+from components.stacking_backend.configs.settings import Settings
+from components.stacking_middleware.message import Message
+from components.stacking_backend.configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_LINEAR_AXES, ACCEPTED_ROTATIONAL_AXES
 
 
 def mock_pia13(id):
@@ -678,12 +678,12 @@ class TestSettings(unittest.TestCase):
         settings.save('test.ini')
 
         # Check if the file exists
-        self.assertTrue(os.path.isfile('.\\src\\stacking_setup\\stacking_backend\\configs\\test.ini'))
+        self.assertTrue(os.path.isfile('.\\src\\stacking_setup\\components\\stacking_backend\\configs\\test.ini'))
 
         new_settings = Settings('test.ini')
 
         # Delete the file
-        os.remove('.\\src\\stacking_setup\\stacking_backend\\configs\\test.ini')
+        os.remove('.\\src\\stacking_setup\\components\\stacking_backend\\configs\\test.ini')
 
         # Check if the value is correct
         self.assertEqual(new_settings.get('PIA13.Z', 'l'), 1)
