@@ -68,17 +68,17 @@ class SampleBed(Base):
     @property
     def position(self) -> Union[int, float]:
         """Get the position of the hardware (udeg from zero)."""
-        self.lock.acquire()
+        self._lock.acquire()
         pos = self._motor_controller.get_position()
-        self.lock.release()
+        self._lock.release()
         return pos * 10e3
 
     @property
     def speed(self) -> Union[float, int]:
         """Get the speed of the motor (mdeg/s)."""
-        self.lock.acquire()
+        self._lock.acquire()
         speed = self._motor_controller.get_drive_parameters()[-1]
-        self.lock.release()
+        self._lock.release()
         return speed * 10e3
 
     @speed.setter
@@ -86,20 +86,20 @@ class SampleBed(Base):
         """Set the speed of the motor (mdeg/s)."""
         if speed > self._max_speed:
             speed = self._max_speed
-        speed /= 10e3
-        self.lock.acquire()
+        # speed /= 10e3
+        self._lock.acquire()
         self._motor_controller.setup_drive(velocity=speed)
         self._motor_controller.setup_jog(velocity=speed)
-        self.lock.release()
+        self._lock.release()
 
         self.acceleration = speed * 4 * 10e3
 
     @property
     def acceleration(self) -> Union[float, int]:
         """Get the acceleration of the motor (mdeg/s^2)."""
-        self.lock.acquire()
+        self._lock.acquire()
         acceleration = self._motor_controller.get_drive_parameters()[0]
-        self.lock.release()
+        self._lock.release()
         return acceleration * 10e3
 
     @acceleration.setter
@@ -107,11 +107,11 @@ class SampleBed(Base):
         """Set the acceleration of the motor (mdeg/s^2)."""
         if acceleration > self._max_acceleration:
             acceleration = self._max_acceleration
-        acceleration /= 10e3
-        self.lock.acquire()
-        self._motor_controller.setup_drive(acceleration=acceleration)
-        self._motor_controller.setup_jog(acceleration=acceleration)
-        self.lock.release()
+        # acceleration /= 10e3
+        self._lock.acquire()
+        self._motor_controller.setup_drive(acceleration=25)
+        self._motor_controller.setup_jog(acceleration=25)
+        self._lock.release()
 
     @property
     def temperature(self) -> float:
@@ -197,7 +197,7 @@ class SampleBed(Base):
 
         .. important::
             This function is mostly used as a support function for other functions,
-            and does not capture the lock. This means this function alone is not thread safe.
+            and does not capture the _lock. This means this function alone is not thread safe.
 
         Returns
         -------
@@ -213,7 +213,7 @@ class SampleBed(Base):
 
         .. important::
             This function is mostly used as a support function for other functions,
-            and does not capture the lock. This means this function alone is not thread safe.
+            and does not capture the _lock. This means this function alone is not thread safe.
         """
         state = self._motor_controller.is_homed()
         return state
@@ -235,16 +235,16 @@ class SampleBed(Base):
         """
         if self._em_event.is_set():
             return None
-        self.lock.acquire()
+        self._lock.acquire()
         self._motor_controller.start_jog(direction=direction, kind=kind)
-        self.lock.release()
+        self._lock.release()
         return 0, None
 
     def stop_jog(self) -> tuple:
         """Stop the continuous movement."""
-        self.lock.acquire()
+        self._lock.acquire()
         self._motor_controller.stop_jog()
-        self.lock.release()
+        self._lock.release()
         return 0, None
 
     def home(self, hold_until_done: bool = True) -> None:
@@ -258,9 +258,9 @@ class SampleBed(Base):
         """
         if self._em_event.is_set():
             return None
-        self.lock.acquire()
+        self._lock.acquire()
         self._motor_controller.home(hold_until_done=hold_until_done)
-        self.lock.release()
+        self._lock.release()
 
     def rotate_to(
         self,
@@ -282,11 +282,11 @@ class SampleBed(Base):
         """
         if self._em_event.is_set():
             return None
-        self.lock.acquire()
+        self._lock.acquire()
         self._motor_controller.rotate_to(
             position=position / 10e3, hold_until_done=hold_until_done, scale=scale
         )
-        self.lock.release()
+        self._lock.release()
 
     def rotate_by(
         self,
@@ -297,19 +297,18 @@ class SampleBed(Base):
         """Move the motor by a given distance."""
         if self._em_event.is_set():
             return None
-        self.lock.acquire()
+        self._lock.acquire()
         self._motor_controller.rotate_by(
             distance=distance / 10e3, hold_until_done=hold_until_done, scale=scale
         )
-        self.lock.release()
+        self._lock.release()
 
     def stop(self) -> None:
         """Stop the motor."""
-        self.lock.acquire()
         self._motor_controller.stop()
-        self.lock.release()
 
     def emergency_stop(self) -> None:
         """Stop the motor."""
         self._em_event.set()
-        self._controller._controller.stop(immediate=True, sync=False)
+        self._motor_controller._controller.stop(immediate=True, sync=False)
+        self._base_controller.emergency_stop()

@@ -195,7 +195,7 @@ class TemperatureWidget(QGroupBox):
         self.targetTempDisp.display(self.target_spin_box.value())
 
         # Aslo update the value in the graph
-        self.chart.target_temp = self.target_spin_box.value()
+        # self.chart.target_temp = self.target_spin_box.value()
 
     def _change_spinbox_value(self):
         """Change the value of the spinbox depending on the selected preset."""

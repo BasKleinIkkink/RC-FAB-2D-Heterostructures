@@ -325,6 +325,18 @@ class KDC101:
         self._controller.stop()
         self._lock.release()
 
+    def _wait_move(self):
+        # Wait until the movement is done but keep checking the error flag
+        while True:
+            if not self._em_event.is_set():
+                if not self._controller.is_moving():
+                    break
+                else:
+                    continue
+            else:
+                self.emergency_stop()
+                break
+
     @typechecked
     def rotate_to(
         self,
@@ -353,7 +365,7 @@ class KDC101:
         self._lock.acquire()
         self._controller.move_to(position=position, scale=scale)
         if hold_until_done:
-            self._controller.wait_move()
+            self._wait_move()
         self._lock.release()
 
     @typechecked
@@ -380,14 +392,12 @@ class KDC101:
         self._lock.acquire()
         self._controller.move_by(distance=distance, scale=scale)
         if hold_until_done:
-            self._controller.wait_move()
+            self._wait_move()
         self._lock.release()
 
     def stop(self) -> ...:
         """Stop the motor."""
-        self._lock.acquire()
         self._controller.stop()
-        self._lock.release()
 
     def emergency_stop(self) -> ...:
         """
@@ -399,7 +409,6 @@ class KDC101:
             The channel of the motor to stop.
         """
         self._controller.stop(immediate=True)
-        self._em_event.set()
 
 
 if __name__ == "__main__":

@@ -6,12 +6,12 @@
 Welcome to Stacking setup's documentation!
 ==========================================
 
-**Stacking setup** is a python library that is used to control custrom stacking setups for stacking 2D materials. The library consists of 3 parts: The backend, frondend, and middleware. 
-All of the hardware control takes place in the backend components, all interactions with the user (except for CLI) takes place in the frondend components, the middleware connects the frond and backend.
+**Stacking setup** is a python library that is used to control custom stacking setups for stacking 2D materials. The library consists of 3 parts: The backend, frondend, and middleware. 
+All of the hardware control takes place in the backend components, all interactions with the user (except for CLI) takes place in the frontend components, the middleware connects the frond and backend.
 
 .. note::
-
-    The library is still in development and is not yet ready for use.
+    This project was created for research purposes and not commercial distribution, this means that the code is not as well tested
+    as expected from a commercial product. The code is provided as is and no support is provided. Safe operation is the responsibility of the user.
 
 Getting started
 ---------------
@@ -19,6 +19,8 @@ Getting started
    :maxdepth: 1
 
    getting_started/getting_started
+   gewtting_started/gotchas
+   getting_started/troubleshooting
    LICENSE
 
 Library contents

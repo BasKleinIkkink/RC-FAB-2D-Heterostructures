@@ -342,7 +342,6 @@ class KIM101:
 
     def emergency_stop(self) -> ...:
         """Stop all connected piezos."""
-        self._em_event.set()
         self._controller.stop(sync=False)
 
 

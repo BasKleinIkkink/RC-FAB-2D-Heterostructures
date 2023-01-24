@@ -288,8 +288,9 @@ class StackingSetupBackend:
             self._base_controller = MainXYController(settings=settings, em_event=self._emergency_stop_event)
 
             if self._settings.get('SAMPLEHOLDER.L', 'enabled'):
-                _hardware.append(SampleBed(id='J', hardware_controller=self._motor_controller, 
-                                em_event=self._emergency_stop_event, settings=settings))
+                _hardware.append(SampleBed(id='L', motor_controller=self._motor_controller,
+                                        base_controller=self._base_controller,  
+                                        em_event=self._emergency_stop_event, settings=settings))
 
         # Initiate the focus stage
         if self._settings.get('TANGODESKTOP.K', 'enabled'):
@@ -315,6 +316,7 @@ class StackingSetupBackend:
     
     def _emergency_stop(self) -> ...:
         """Emergency stop the hardware."""
+        self._logger.critical('Emergency stop initiated')
         self._emergency_stop_event.set()
         for part in self._hardware:
             part.emergency_stop()
@@ -469,6 +471,10 @@ class StackingSetupBackend:
             elif command_id == 'M811':
                 # Use jogging
                 exit_code, msg = self._echo(func=self.M811, command_id='M811',
+                        command=parsed_command[command_id])
+            elif command_id == 'M812':
+                # Use jogging
+                exit_code, msg = self._echo(func=self.M812, command_id='M812',
                         command=parsed_command[command_id])
             else:
                 exit_code = 1
@@ -1025,4 +1031,26 @@ class StackingSetupBackend:
                     self._logger.debug('No speed given for axis {}'.format(axis.id))
                     pass
 
+        return 0, None
+
+    def M813(self, command : dict) -> tuple:
+        """
+        Unconditionally stop all movement without triggering the emergency event
+
+        
+
+        Parameters
+        ----------
+        command : dict
+            Not used but added for compatibility with the excecution loop and echo functions
+
+        Returns
+        -------
+        exit_code : int
+            0 if the command was successful, 1 if not.
+        msg : str
+            A message with the result of the command.
+        """
+        for axis in self._hardware:
+            axis.stop()
         return 0, None

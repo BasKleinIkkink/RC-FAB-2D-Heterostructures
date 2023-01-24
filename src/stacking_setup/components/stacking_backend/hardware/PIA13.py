@@ -263,9 +263,12 @@ class PIA13(Base):
         self._hardware_controller.move_to(self._channel, position)
         self._lock.release()
 
+    def stop(self) -> ...:
+        self._hardware_controller.stop() 
+
     def emergency_stop(self) -> ...:
         """Stop the hardware."""
-        self._em_event.set()
+        self._hardware_controller.emergency_stop()
 
 
 if __name__ == "__main__":
