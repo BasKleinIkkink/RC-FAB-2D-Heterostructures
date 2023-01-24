@@ -104,7 +104,20 @@ class KIM101:
     @typechecked
     def _wait_move(self, channel: int) -> ...:
         """Wait until the piezo is on the given channel is not moving anymore."""
-        self._controller.wait_move(channel=channel)
+        # Because this function was originally blocking it had to be made non blocking
+        # to be able to respond to the emergency stop event.
+        while True:
+            if not self._em_event.is_set():
+                # self._controller.wait_move(channel=channel)
+                if not self.is_moving(channel):
+                    break
+                else:
+                    continue
+            else:
+                # Emergency stop was triggered
+                self._controller.stop()
+                break
+
 
     # JOG AND DRIVE PARAMETERS
     @typechecked
