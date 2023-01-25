@@ -338,3 +338,15 @@ class FocusWidget(QGroupBox):
         self.driveUnit = new_scale.split(" ")[1]
         self.driveScale *= self.settings.known_units[self.driveUnit]
         print(self.driveScale)
+
+    def estop(self, state=False):
+        """Disable all the buttons"""
+        self.upButton.setEnabled(state)
+        self.downButton.setEnabled(state)
+        self.lockButton.setEnabled(state)
+        self.movePresetCombo.setEnabled(state)
+        self.velocitySlider.setEnabled(state)
+        self.velDisp.setEnabled(state)
+        self.driveStepCombo.setEnabled(state)
+        self.jogButton.setEnabled(state)
+        self.driveButton.setEnabled(state)

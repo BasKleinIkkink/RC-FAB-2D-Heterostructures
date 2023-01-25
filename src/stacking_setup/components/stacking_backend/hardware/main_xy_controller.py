@@ -135,13 +135,18 @@ class MainXYController:
                     )
                 )
 
-    def check_error(self) -> ...:
+    def start_check_error(self):
+        self.error_thread = tr.Thread(target=self._check_error, daemon=True)
+        self.error_thread.start()
+    
+    def _check_error(self) -> ...:
         """Check if the controller has an error."""
         self._lock.acquire()
         res = self._send_and_receive("e", expect_response=True)
 
         # Check critical error codes
         if res[0] != b"0":
+            self._em_event.set()
             self.emergency_stop()
         elif res[1] != b"0":
             raise HardwareError(

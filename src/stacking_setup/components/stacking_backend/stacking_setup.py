@@ -162,6 +162,35 @@ class StackingSetupBackend:
     The class is the main backend class for the stacking setup. It handles the
     communication from the user (frondend) to the hardware. The class is a
     multiprocessing class, so it can be used in a seperate process.
+
+    Used Gcode commands
+    -------------------
+    - G0 : Lineair movement
+    - G1 : Rotational movement
+    - G2 : Jogging movement (velocity control)
+    - G28 : Home all axes
+    - G90 : Set to absolute coordinates
+    - G91 : Set to relative coordinates
+
+    - X, Y, Z : Move the mask holder
+    - I, J, K : Move the base plate
+    - L : Move or control the sample holder
+
+    - M0 : Unconditional stop
+    - M105 : Report current temperature
+    - M112 : Emergency stop
+    - M113 : Keep host alive
+    - M114 : Report current position
+    - M140 : Set bed temperature
+    - M154 : Position auto report
+    - M155 : Temperature auto report
+    - M190 : Wait for bed temperature
+    - M503 : Report settings
+    - M510 : Lock machine
+    - M511 : Unlock machine
+    - M512 : Set password
+    - M810 - M819 : G-code macros
+    - M999 : STOP restart
     """
     _emergency_breaker = None
     _hardware = None 

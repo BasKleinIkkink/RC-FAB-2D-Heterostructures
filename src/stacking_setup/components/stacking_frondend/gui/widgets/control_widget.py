@@ -556,9 +556,7 @@ class MaskControlWidget(ControlWidget):
                 else self.q.put("G0 Z-{}".format(self.driveScale))
             )
         )
-        self.lockMoveButton.clicked.connect(
-            lambda: self.q.put("M811 Z0") if self.jogModeButton.isChecked() else None
-        )
+        self.lockMoveButton.clicked.connect(self._lock_movement())
 
         # Connect vacuum pump buttons
         self.startVacButton.clicked.connect(self._turn_on_vacuum)
@@ -643,6 +641,27 @@ class MaskControlWidget(ControlWidget):
             self.zPosDisplay.display(dict["Z"])
         if "L" in dict:
             self.rPosDisplay.display(dict["L"])
+
+    def estop(self, state=False):
+        """Disable all buttons."""
+        self.moveUp.setEnabled(state)
+        self.moveDown.setEnabled(state)
+        self.moveLeft.setEnabled(state)
+        self.moveRight.setEnabled(state)
+        self.rotateLeft.setEnabled(state)
+        self.rotateRight.setEnabled(state)
+        self.moveZUp.setEnabled(state)
+        self.moveZDown.setEnabled(state)
+        self.lockMoveButton.setEnabled(state)
+        self.movePresetCombo.setEnabled(state)
+        self.velocitySlider.setEnabled(state)
+        self.velDisp.setEnabled(state)
+        self.velDispLabel.setEnabled(state)
+        self.jogModeButton.setEnabled(state)
+        self.driveModeButton.setEnabled(state)
+        self.driveStepCombo.setEnabled(state)
+        self.stopVacButton.setEnabled(state)
+        self.startVacButton.setEnabled(state)
 
 
 class BaseControlWidget(ControlWidget):
@@ -777,3 +796,18 @@ class BaseControlWidget(ControlWidget):
             self.xPosDisplay.display(dict["H"])
         if "J" in dict:
             self.yPosLabel.setText(dict["J"])
+
+    def estop(self, state=False):
+        """Disable all the buttons."""
+        self.moveLeft.setEnabled(state)
+        self.moveRight.setEnabled(state)
+        self.moveUp.setEnabled(state)
+        self.moveDown.setEnabled(state)
+        self.lockMoveButton.setEnabled(state)
+        self.movePresetCombo.setEnabled(state)
+        self.velocitySlider.setEnabled(state)
+        self.velDisp.setEnabled(state)
+        self.velDispLabel.setEnabled(state)
+        self.jogModeButton.setEnabled(state)
+        self.driveModeButton.setEnabled(state)
+        self.driveStepCombo.setEnabled(state)

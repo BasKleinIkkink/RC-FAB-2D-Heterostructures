@@ -218,82 +218,89 @@ class TemperatureWidget(QGroupBox):
             self.currentTempDisp.display(temps["N"]["current"])
             self.targetTempDisp.display(temps["N"]["target"])
 
-    class Chart(QChart):
-        def __init__(self, parent=None):
-            super().__init__(QChart.ChartTypeCartesian, parent, Qt.WindowFlags())
-            self._timer = QTimer()
-            self._series = QLineSeries(self)
-            self._set_temp = QLineSeries(self)
-            self._titles = []
-            self._axisX = QValueAxis()
-            self._axisY = QValueAxis()
-            self._step = 0
-            self._x = 0
-            self._y = 0
-            self._target_temp = 0
-            self.step_size = 1
+    def estop(self, state=False):
+        # Disable the sliders and spinboxes
+        self.target_spin_box.setEnabled(state)
+        self.tempPresetCombo.setEnabled(state)
+        self.target_spin_box.setValue(23)
 
-            # self._timer.timeout.connect(self.handleTimeout)
-            # self._timer.setInterval(1000)
 
-            green = QPen(Qt.green)
-            green.setWidth(3)
-            self._series.setPen(green)
-            self._series.append(self._x, self._y)
+    # class Chart(QChart):
+    #     def __init__(self, parent=None):
+    #         super().__init__(QChart.ChartTypeCartesian, parent, Qt.WindowFlags())
+    #         self._timer = QTimer()
+    #         self._series = QLineSeries(self)
+    #         self._set_temp = QLineSeries(self)
+    #         self._titles = []
+    #         self._axisX = QValueAxis()
+    #         self._axisY = QValueAxis()
+    #         self._step = 0
+    #         self._x = 0
+    #         self._y = 0
+    #         self._target_temp = 0
+    #         self.step_size = 1
 
-            red = QPen(Qt.red)
-            red.setWidth(3)
-            self._set_temp.setPen(red)
-            self._set_temp.append(self._x, self._target_temp)
+    #         # self._timer.timeout.connect(self.handleTimeout)
+    #         # self._timer.setInterval(1000)
 
-            self.addSeries(self._series)
-            self.addSeries(self._set_temp)
-            self.addAxis(self._axisX, Qt.AlignBottom)
-            self.addAxis(self._axisY, Qt.AlignLeft)
+    #         green = QPen(Qt.green)
+    #         green.setWidth(3)
+    #         self._series.setPen(green)
+    #         self._series.append(self._x, self._y)
 
-            self._series.attachAxis(self._axisX)
-            self._series.attachAxis(self._axisY)
-            self._set_temp.attachAxis(self._axisX)
-            self._set_temp.attachAxis(self._axisY)
-            self._axisX.setTickCount(10)
-            self._axisX.setRange(0, 60)
-            self._axisY.setRange(0, 50)
+    #         red = QPen(Qt.red)
+    #         red.setWidth(3)
+    #         self._set_temp.setPen(red)
+    #         self._set_temp.append(self._x, self._target_temp)
 
-            # Change the background to transparent
-            brush = QBrush(Qt.transparent)
-            self.setBackgroundBrush(brush)
+    #         self.addSeries(self._series)
+    #         self.addSeries(self._set_temp)
+    #         self.addAxis(self._axisX, Qt.AlignBottom)
+    #         self.addAxis(self._axisY, Qt.AlignLeft)
 
-            # Set the ylasbel as the temperature unit
-            self._axisY.setTitleText("Temp (°C)")
-            self._axisX.setTitleText("Time (s)")
+    #         self._series.attachAxis(self._axisX)
+    #         self._series.attachAxis(self._axisY)
+    #         self._set_temp.attachAxis(self._axisX)
+    #         self._set_temp.attachAxis(self._axisY)
+    #         self._axisX.setTickCount(10)
+    #         self._axisX.setRange(0, 60)
+    #         self._axisY.setRange(0, 50)
 
-            self._timer.start()
+    #         # Change the background to transparent
+    #         brush = QBrush(Qt.transparent)
+    #         self.setBackgroundBrush(brush)
 
-        @property
-        def target_temp(self):
-            return self._target_temp
+    #         # Set the ylasbel as the temperature unit
+    #         self._axisY.setTitleText("Temp (°C)")
+    #         self._axisX.setTitleText("Time (s)")
 
-        @target_temp.setter
-        def target_temp(self, value):
-            self._target_temp = value
+    #         self._timer.start()
 
-        @Slot()
-        def handleTimeout(self):
-            x = self.plotArea().width() / self._axisX.tickCount()
-            y = (self._axisX.max() - self._axisX.min()) / self._axisX.tickCount()
-            self._x += y
-            self._y = random.uniform(0, 50) - 2.5
-            self._series.append(self._x, self._y)
-            self._set_temp.append(self._x, self._target_temp)
+    #     @property
+    #     def target_temp(self):
+    #         return self._target_temp
 
-            # Update the y axis mx to 10% above the max value
-            if self._y > self._target_temp:
-                self._axisY.setRange(0, y)
-            else:
-                self._axisY.setRange(0, self._target_temp)
+    #     @target_temp.setter
+    #     def target_temp(self, value):
+    #         self._target_temp = value
 
-            self.scroll(x, 0)
-            # if self._x == 100:
-            #    self._timer.stop()
+    #     @Slot()
+    #     def handleTimeout(self):
+    #         x = self.plotArea().width() / self._axisX.tickCount()
+    #         y = (self._axisX.max() - self._axisX.min()) / self._axisX.tickCount()
+    #         self._x += y
+    #         self._y = random.uniform(0, 50) - 2.5
+    #         self._series.append(self._x, self._y)
+    #         self._set_temp.append(self._x, self._target_temp)
 
-            # Always plot the target temp in red
+    #         # Update the y axis mx to 10% above the max value
+    #         if self._y > self._target_temp:
+    #             self._axisY.setRange(0, y)
+    #         else:
+    #             self._axisY.setRange(0, self._target_temp)
+
+    #         self.scroll(x, 0)
+    #         # if self._x == 100:
+    #         #    self._timer.stop()
+
+    #         # Always plot the target temp in red

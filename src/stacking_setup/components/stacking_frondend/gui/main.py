@@ -18,8 +18,27 @@ from .widgets.control_widget import BaseControlWidget, MaskControlWidget
 from .widgets.focus_widget import FocusWidget
 from .widgets.temperature_widget import TemperatureWidget
 from .configs.settings import Settings
-from ...stacking_middleware.message import Message
-from ast import literal_eval
+
+
+VERBOSE_OUTPUT = True
+
+
+class EstopFlag(threading.Event):
+    """
+    This class is a wrapper around the threading.Event class.
+
+    The main purpose is to make sure the flag cannot be reset by calling clear
+    or pushing the button in the GUI again.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def clear(self):
+        raise AttributeError("Cannot reset the estop flag, us M999 method.")
+
+    def M999(self):
+        super().clear()
 
 
 class MainWindow(QMainWindow):
@@ -32,7 +51,7 @@ class MainWindow(QMainWindow):
         self._connector = connector
         self._connector.__init_lock__()
         self._q = queue.Queue()
-        self._shutdown_event = threading.Event()
+        self._shutdown_event = EstopFlag()
         self._settings = Settings()
 
         # Resize to the screen resolution
@@ -46,7 +65,7 @@ class MainWindow(QMainWindow):
         self.load_widgets()  # Load the docks
         self.connect_actions()
 
-        self._connect_backend()
+        # self._connect_backend()
 
     def _connect_backend(self):
         # Handshake with the frondend
@@ -69,7 +88,9 @@ class MainWindow(QMainWindow):
         self.toolBar = QToolBar(self)
         self.addToolBar(Qt.LeftToolBarArea, self.toolBar)
         self.toolBar.addAction("Home all", self._home_all)
-        self.toolBar.addAction("Estop", self._trigger_estop)
+        self.toolBar.addAction("Stop", self._trigger_stop)
+        self.toolBar.addSeparator()
+        self.toolBar.addAction("E-stop", self._trigger_estop)
 
     def _home_all(self):
         """Home all the axes."""
@@ -77,14 +98,56 @@ class MainWindow(QMainWindow):
 
     def _trigger_estop(self):
         """Trigger the emergency stop."""
+        if VERBOSE_OUTPUT:
+            print("Triggered estop!")
         self._q.put("M112")
-        print("Emergency stop triggered!!!")
+
+        # If the flag is set disable all the widget buttons
+        self.baseControlWidget.estop()
+        self.maskControlWidget.estop()
+        self.microscopeWidget.estop()
+        self.temperatureWidget.estop()
+
+    def _reset_estop(self):
+        if VERBOSE_OUTPUT:
+            print("Reset the estop")
+        self._q.put("M999")
+        self._shutdown_event.M999()
+
+        # If the flag is set disable all the widget buttons
+        self.baseControlWidget.estop(True)
+        self.maskControlWidget.estop(True)
+        self.microscopeWidget.estop(True)
+        self.temperatureWidget.estop(True)
+
+    def _trigger_stop(self):
+        if VERBOSE_OUTPUT:
+            print("Triggered the stop")
+        self._q.put("M813")
+
+    def _lock_unlock_machine(self):
+        # Get the button state
+        state = not self._optionsMenu.actions()[0].isChecked()
+
+        if VERBOSE_OUTPUT:
+            print("Set machine lock to {}".format(state))
+
+        # If the flag is set disable all the widget buttons
+        self.baseControlWidget.estop(state)
+        self.maskControlWidget.estop(state)
+        self.microscopeWidget.estop(state)
+        self.temperatureWidget.estop(state)
 
     def set_menubar(self):
         """Add the menu bar and the options to it."""
         menuBar = QMenuBar(self)
         self.setMenuBar(menuBar)
         self._viewMenu = menuBar.addMenu("&View")
+        self._optionsMenu = menuBar.addMenu("&Options")
+        self._optionsMenu.addAction("Lock/Unlock system", self._lock_unlock_machine)
+        self._optionsMenu.actions()[-1].setCheckable(True)
+        self._optionsMenu.actions()[-1].setChecked(False)
+        self._optionsMenu.addAction("Reset e-stop", self._reset_estop)
 
     def load_widgets(self):
         """Load the dock widgets from the _included_widgets list."""
@@ -160,6 +223,8 @@ class MainWindow(QMainWindow):
     # Communication with the backend
     def _start_event_handeler(self):
         """Start the event handeler."""
+        if VERBOSE_OUTPUT:
+            print("Starting the event handeler")
         # Strart the handler
         self._connector.send("G91")  # Set relative positioning
         self.event_handle_thread = threading.Thread(

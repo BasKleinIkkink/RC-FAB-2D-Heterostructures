@@ -84,6 +84,8 @@ class SampleBed(Base):
     @speed.setter
     def speed(self, speed: Union[float, int]) -> None:
         """Set the speed of the motor (mdeg/s)."""
+        if self._em_event.is_set():
+            return
         if speed > self._max_speed:
             speed = self._max_speed
         # speed /= 10e3
@@ -105,6 +107,8 @@ class SampleBed(Base):
     @acceleration.setter
     def acceleration(self, acceleration: Union[float, int]) -> None:
         """Set the acceleration of the motor (mdeg/s^2)."""
+        if self._em_event.is_set():
+            return
         if acceleration > self._max_acceleration:
             acceleration = self._max_acceleration
         # acceleration /= 10e3
@@ -132,6 +136,8 @@ class SampleBed(Base):
     @target_temperature.setter
     def target_temperature(self, temperature: Union[float, int]) -> ...:
         """Set the target temperature of the sample bed."""
+        if self._em_event.is_set():
+            return
         if temperature > self._max_temperature:
             temperature = self._max_temperature
         self._lock.acquire()
