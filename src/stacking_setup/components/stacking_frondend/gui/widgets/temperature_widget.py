@@ -193,9 +193,7 @@ class TemperatureWidget(QGroupBox):
         """Change the target temperature of the indicator."""
         print("Change target indicator")
         self.targetTempDisp.display(self.target_spin_box.value())
-
-        # Aslo update the value in the graph
-        # self.chart.target_temp = self.target_spin_box.value()
+        self.q.put('M140 S{}'.format(self.target_spin_box.value()))
 
     def _change_spinbox_value(self):
         """Change the value of the spinbox depending on the selected preset."""
@@ -212,11 +210,9 @@ class TemperatureWidget(QGroupBox):
             self.target_spin_box.setValue(value)
             self.target_spin_box.setDisabled(True)
 
-    def update_temperatures(self, temps):
+    def update_temperature(self, temp):
         """Update the current temperature of the indicator."""
-        if "N" in temps:
-            self.currentTempDisp.display(temps["N"]["current"])
-            self.targetTempDisp.display(temps["N"]["target"])
+        self.currentTempDisp.display(temp['L'])
 
     def estop(self, state=False):
         # Disable the sliders and spinboxes

@@ -174,7 +174,7 @@ class PipelineConnection(BaseConnector):
         self._connection = connection
         self._role = role
         if role == "FRONDEND":
-            self._lock = tr.Lock()
+            self._lock = self.__init_lock__()
         else:
             # The lock cannot be pickled, so it is created on the backend
             pass

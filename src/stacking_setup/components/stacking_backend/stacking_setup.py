@@ -1,8 +1,5 @@
 import multiprocessing as mp
 import threading as tr
-import traceback
-import functools
-import sys
 import time
 import logging
 from typeguard import typechecked
@@ -20,144 +17,9 @@ from ..stacking_middleware.pipeline_connection import PipelineConnection
 from ..stacking_middleware.serial_connection import SerialConnection
 from .configs.settings import Settings
 from queue import Queue
-    
+from .repeated_timer import RepeatedTimer
+from .catch_remote_exceptions import catch_remote_exceptions
 
-class RepeatedTimer:
-    """
-    Class to repeat a task every x seconds.
-    
-    The class is a wrapper around a threading.Timer object and resets
-    it every time the function is called.
-    """
-
-    def __init__(self, interval : Union[int, float], function : callable, 
-            *args, **kwargs) -> ...:
-        """
-        Initiate the timer.
-        
-        Parameters
-        ----------
-        interval : float, int
-            The interval in seconds.
-        function : callable
-            The function to repeat.
-
-            .. note::
-                Because the timer is reset and a new thread is started
-                every time the function is called, the user should make
-                sure that the function is thread safe and exits cleanly.
-
-        args
-            The arguments for the function.
-        kwargs
-            The keyword arguments for the function.
-        """
-        self._timer = None
-        self._interval = interval
-        self._function = function
-        self._args = args
-        self._kwargs = kwargs
-        self._is_running = False
-        self._next_call = time.time()
-        self.start()
-
-    @property
-    def interval(self) -> Union[int, float]:
-        """
-        Get the interval.
-        
-        Returns
-        -------
-        float, int
-            The interval in seconds.
-        """
-        return self._interval
-
-    @property
-    def is_running(self) -> bool:
-        """
-        Get the running status.
-        
-        Returns
-        -------
-        bool
-            True if the timer is running, False otherwise.
-        """
-        return self._is_running
-
-    @property
-    def next_call(self) -> Union[int, float]:
-        """
-        Get the next call.
-        
-        Returns
-        -------
-        float, int
-            The next call in seconds.
-        """
-        return self._next_call
-
-    def _run(self) -> ...:
-        """Run the function."""
-        self._is_running = False
-        self.start()
-        self._function(*self._args, **self._kwargs)
-
-    def start(self) -> ...:
-        """Wait for the next run."""
-        if not self.is_running:
-            self._next_call += self._interval
-            if self._timer is None:
-                self._timer = tr.Timer(self.next_call - time.time(), self._run)
-                self._timer.setDaemon(True)
-            else:
-                self._timer.interval = self.next_call - time.time()
-                self._timer.finished.clear()
-            self._timer.start()
-            self._is_running = True
-
-    def stop(self) -> ...:
-        """Stop the timer."""
-        self._timer.cancel()
-        self._timer.join()
-        self._is_running = False
-
-
-def catch_remote_exceptions(wrapped_function : callable) -> callable:
-    """
-    Catch and propagate the remote exeptions.
-
-    The function is a wrapper around the function to catch the remote exceptions.
-    This is usefull for the multiprocessing module, because the exceptions can't be pickled.
-
-    https://stackoverflow.com/questions/6126007/python-getting-a-traceback
-
-    Parameters
-    ----------
-    wrapped_function : function
-        The function to wrap.
-
-    Raises
-    ------
-    Exception
-        The remote exception that should be send to the main process.
-
-    Returns
-    -------
-    function
-        The wrapped function.
-    """
-
-    @functools.wraps(wrapped_function)
-    def new_function(*args, **kwargs):
-        try:
-            return wrapped_function(*args, **kwargs)
-
-        except:
-            raise Exception(
-                "".join(traceback.format_exception(*sys.exc_info())))
-
-    return new_function
 
 
 class StackingSetupBackend:
@@ -218,7 +80,6 @@ class StackingSetupBackend:
         self._shutdown = mp.Event()
         self._settings = Settings()
         self._positioning = 'REL'  # Always initiate in relative positioning mode
-        self._execution_q = Queue()
 
     def _set_logger(self) -> tr.Thread:
         """
@@ -234,7 +95,7 @@ class StackingSetupBackend:
         logger : tr.Thread
             The logger thread.
         """
-        logging.basicConfig(level=logging.DEBUG, filename='log.log', 
+        logging.basicConfig(level=logging.CRITICAL, filename='log.log', 
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
         return logging.getLogger(__name__)
 
@@ -374,6 +235,7 @@ class StackingSetupBackend:
             new process (hardware objects contain parts that cant be pickled).
         """
         self._logger = self._set_logger()
+        self._execution_q = mp.Queue()
         self._hardware = self._init_all_hardware(settings)
         self._connect_all_hardware()
         self._logger.info('Stacking setup initiated with connected hardware: {}'.format(self._hardware))
@@ -458,9 +320,15 @@ class StackingSetupBackend:
             else:
                 time.sleep(0.01)
 
-        self._disconnect_all_hardware()
-        self._logger.info('Stacking process stopped.')
-        self._con_to_main.disconnect()
+
+        if self._emergency_stop_event.is_set():
+            self._con_to_main.send(Message(exit_code=1, msg='Emergency stop triggered', command_id='M112'))
+            self._emergency_stop()
+            self._logger.critical('Emergency stop triggered')
+        else:
+            self._disconnect_all_hardware()
+            self._logger.critical('Stacking process stopped.')
+            self._con_to_main.disconnect()
         
     @typechecked        
     def _execute_command(self, parsed_command : dict) -> ...:
@@ -485,7 +353,7 @@ class StackingSetupBackend:
             return
 
         if 'M999' in parsed_command.keys():
-            exit_code, msg = self.M999
+            exit_code, msg = self.M999()
             self._con_to_main.send(Message(exit_code=exit_code, msg='', command_id='M999', command='M999'))
             return
 
@@ -508,6 +376,10 @@ class StackingSetupBackend:
             elif command_id == 'M114':
                 # Get the position
                 self._echo(func=self.M114, command_id='M114')
+            elif command_id == 'M140':
+                # Set the bed temperature
+                self._echo(func=self.M140, command_id='M140',
+                        command=parsed_command[command_id])
             elif command_id == 'M154':
                 # Position autoreport
                 self._echo(func=self.M154, command_id='M154', 
@@ -881,6 +753,25 @@ class StackingSetupBackend:
 
         return 0, positions
 
+    def M140(self, command : dict) -> tuple:
+        """
+        Set the sample bed temperature
+
+        Parameters
+        ----------
+        command : dict
+            A dict with the temperature to set under key 'S'.
+        """
+        if 'S' not in command.keys():
+            return 1, 'No temperature given'
+        else:
+            for i in self._hardware:
+                try:
+                    i.target_temperature = command['S']
+                except NotSupportedError:
+                    self._logger.debug('Temperature not supported for axis {}'.format(i.id))
+            return 0, None
+
     def M999(self) -> tuple:
         """
         Reset the machine.
@@ -952,7 +843,8 @@ class StackingSetupBackend:
 
     def _auto_position_report(self) -> ...:
         """Send a position update to the host. (support function for M154)"""
-        if self._con_to_main.is_connected:
+        if not self._shutdown and not self._emergency_stop_event.is_set() and \
+                self._con_to_main.is_connected:
             exit_code, positions = self.M114()
             if exit_code == 0:
                 self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M154', 
@@ -1014,12 +906,13 @@ class StackingSetupBackend:
 
     def _auto_temperature_report(self) -> ...:
         """Send a position update to the host. (support function for M154)"""
-        if self._con_to_main.is_connected:
-            exit_code, positions = self.M105()
+        if not self._shutdown and not self._emergency_stop_event.is_set() and \
+                self._con_to_main.is_connected:
+            exit_code, temps = self.M105()
             if exit_code == 0:
-                self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M155', command=''))
+                self._con_to_main.send(Message(exit_code=0, msg=temps, command_id='M155', command=''))
             else:
-                self._con_to_main.send(Message(exit_code=1, msg='Could not get positions.', command_id='M155', command=''))
+                self._con_to_main.send(Message(exit_code=1, msg='Could not get temperatures.', command_id='M155', command=''))
         else:
             self._auto_temperature_timer.stop()
 
