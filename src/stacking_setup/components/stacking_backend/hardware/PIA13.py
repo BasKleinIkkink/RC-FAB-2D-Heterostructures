@@ -265,7 +265,7 @@ class PIA13(Base):
 
     def emergency_stop(self) -> ...:
         """Stop the hardware."""
-        self._em_event.set()
+        self._hardware_controller.emergency_stop()
 
 
 if __name__ == "__main__":
