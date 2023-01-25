@@ -46,7 +46,7 @@ class MainWindow(QMainWindow):
         self.load_widgets()  # Load the docks
         self.connect_actions()
 
-        # self._connect_backend()
+        self._connect_backend()
 
     def _connect_backend(self):
         # Handshake with the frondend

@@ -20,6 +20,21 @@ class HardwareNotConnectedError(Exception):
         return self._msg
 
 
+class NotHomedError(Exception):
+    """
+    Exception raised when the hardware is not homed.
+    
+    This exception will also be raised if the hardware is not zeroed before operations.
+    """
+
+    def __init__(self, msg=None):
+        """Initialize the exception."""
+        self._msg = msg
+
+    def __str__(self):
+        return self._msg
+
+
 class NotCalibratedError(Exception):
     """
     Exception raised when the hardware is not calibrated for the asked function.
@@ -204,9 +219,21 @@ class Base:
         raise NotSupportedError()
 
     def stop(self):
-        """Unconditionally stop the hardware."""
+        """
+        Unconditionally stop the hardware.
+        
+        This method is different from the emergency_stop method, as it is thread safe.
+        It should call the thread safe stop function of the used controller. This method
+        also does not disable any follow up calls to the hardware part.
+        """
         raise NotImplementedError()
 
     def emergency_stop(self):
-        """Unconditionally stop the hardware."""
+        """
+        Unconditionally stop the hardware.
+        
+        Should call the non-blocking, non thread-safe stop function of the used controller.
+        Make sure to use a non thread safe method to stop the hardware, otherwise the
+        hardware might not stop.
+        """
         raise NotImplementedError()

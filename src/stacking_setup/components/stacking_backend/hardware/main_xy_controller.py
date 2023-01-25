@@ -156,6 +156,7 @@ class MainXYController:
         res = self._send_and_receive("gb", expect_response=True)
         if res[14] != b"0" or res[1] != b"0":
             raise HardwareError("One or both of the stepper motors have stalled.")
+        self._lock.release()
 
     # MOVEMENT ATTRIBUTES
     @property
@@ -204,6 +205,8 @@ class MainXYController:
     @target_temperature.setter
     def target_temperature(self, temperature: Union[float, int]) -> ...:
         """Set the target temperature of the hardware."""
+        if self._em_event.is_set():
+            return
         self._lock.acquire()
         if not self._temp_control_active:
             # Activate the temp control
@@ -307,6 +310,8 @@ class MainXYController:
         HardwareError
             If the stepper motors do not succesfully zero.
         """
+        if self._em_event.is_set():
+            return
         self._lock.acquire()
         self._send_and_receive("z", expect_confirmation=True)
 
@@ -343,6 +348,8 @@ class MainXYController:
         .. note::
             This method will move the x and y axis to the internal 0 position.
         """
+        if self._em_event.is_set():
+            return
         if not self._zeroed:
             self.zero()
         else:
@@ -361,6 +368,8 @@ class MainXYController:
         axis: 'x', 'y' or None
             The axis to get the position of. If None, the position of all axes will be returned.
         """
+        if self._em_event.is_set():
+            return
         self._lock.acquire()
         res1 = self._send_and_receive("gpx", expect_response=True)[0]
         res2 = self._send_and_receive("gpy", expect_response=True)[0]
@@ -389,6 +398,8 @@ class MainXYController:
             The direction to jog, this can be + or -.
 
         """
+        if self._em_event.is_set():
+            return
         self._lock.acquire()
         self._send_and_receive("sv{}{}".format(axis, velocity))
         self._lock.release()
@@ -420,6 +431,8 @@ class MainXYController:
         position : float or int
             The position to move to.
         """
+        if self._em_event.is_set():
+            return
         self._lock.acquire()
         self._send_and_receive("sp{}{}".format(id.lower(), position))
         self._lock.release()
@@ -459,7 +472,7 @@ class MainXYController:
             will check before executing any commands. This will prevent
             any commands from being executed until the flag is cleared.
         """
-        self.send_and_receive("x")
+        self._send_and_receive("x")
 
     def vacuum_on(self) -> ...:
         """Turn the vacuum on."""
