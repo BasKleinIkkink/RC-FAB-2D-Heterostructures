@@ -19,6 +19,7 @@ from .hardware.TangoDesktop import TangoDesktop
 from ..stacking_middleware.pipeline_connection import PipelineConnection
 from ..stacking_middleware.serial_connection import SerialConnection
 from .configs.settings import Settings
+from queue import Queue
     
 
 class RepeatedTimer:
@@ -106,8 +107,12 @@ class RepeatedTimer:
         """Wait for the next run."""
         if not self.is_running:
             self._next_call += self._interval
-            self._timer = tr.Timer(self.next_call - time.time(), self._run)
-            self._timer.setDaemon(True)
+            if self._timer is None:
+                self._timer = tr.Timer(self.next_call - time.time(), self._run)
+                self._timer.setDaemon(True)
+            else:
+                self._timer.interval = self.next_call - time.time()
+                self._timer.finished.clear()
             self._timer.start()
             self._is_running = True
 
@@ -213,6 +218,7 @@ class StackingSetupBackend:
         self._shutdown = mp.Event()
         self._settings = Settings()
         self._positioning = 'REL'  # Always initiate in relative positioning mode
+        self._execution_q = Queue()
 
     def _set_logger(self) -> tr.Thread:
         """
@@ -233,12 +239,16 @@ class StackingSetupBackend:
         return logging.getLogger(__name__)
 
     @typechecked
-    def _echo(self, func : callable, command_id : str, command : Union[dict, None]=None) -> tuple:
+    def _echo(self, func : callable, command_id : str, command : Union[dict, None]=None) -> ...:
         """
         Echo the command response (error code and msg) to the main process.
 
-        The function passes the command response (error code and msg) to the main
-        process.
+        The goal of this function is to excecute actions in a seperate thread and pass the status
+        messages to the main process.
+
+        .. attention::
+            Actions have to be done in a seperate thread so the backend stays responsive and can 
+            respond to the emergency stop command (M112)
 
         Parameters
         ----------
@@ -248,30 +258,31 @@ class StackingSetupBackend:
             The command id.
         command : dict, None
             The command.
-
-        Returns
-        -------
-        exit_code : int
-            0 if the command was successful, 1 if not.
-        msg : str
-            A message with the result of the command or an error message
         """
-        # Wrap the function
-        #@functools.wraps(func)
-        #def new_function(*args, **kwargs):
-        #    return func(*args, **kwargs)
+        if self._emergency_stop_event.is_set():
+            self._logger.critical('Cannot execute command {} when the estop is set'.format(command_id))
+            return
 
         # Send the exit code and msg over the pipe to main
+        thread = tr.Thread(target=self._threaded_excecution, args=(self._execution_q, func, command_id, command,),
+                            daemon=True)
+        thread.start()
+        return
+
+    def _threaded_excecution(self, q : Queue, func : callable, command_id : str, command : Union[dict, None]=None) -> ...:
         if command is not None:
             exit_code, msg = func(command)
         else:
             exit_code, msg = func()
 
-        self._con_to_main.send(Message(exit_code=exit_code, command_id=command_id, 
-                msg=str(msg), command=command))
+        if msg is None:
+            msg = ''
+        elif not isinstance(msg, (str, dict),):
+            msg = str(msg)
 
-        # Return the exit code and msg
-        return exit_code, msg
+        q.put(Message(exit_code=exit_code, msg=msg, command_id=command_id, command=command))
+        return
+
 
     def _init_all_hardware(self, settings : Settings) -> list:
         """
@@ -378,6 +389,16 @@ class StackingSetupBackend:
         self._controller_process.set_deamon=True
         self._controller_process.start()
 
+    def _check_command_output(self):
+        """Check if the command output queue is not empty and send the output to the main process."""
+        got_error = False
+        while not self._execution_q.empty():
+            message = self._execution_q.get()
+            if message.exit_code != 0:
+                got_error = True
+            self._con_to_main.send(message)
+        return got_error
+
     @catch_remote_exceptions
     def _controller_loop(self, emergency_stop_event : mp.Event, shutdown_event : mp.Event, 
                         con_to_main : Union[PipelineConnection, SerialConnection], 
@@ -459,51 +480,49 @@ class StackingSetupBackend:
 
         # Excecute the priority commands first
         if 'M112' in parsed_command.keys():
-            exit_code, msg = self._echo(func=self.M112, command_id='M112')
-            # Remove the command from the dict
-            del parsed_command['M112']
+            exit_code, msg, = self.M112()
+            self._con_to_main.send(Message(exit_code=exit_code, msg='', command_id='M112', command='M112'))
             return
 
         if 'M999' in parsed_command.keys():
-            exit_code, msg = self._echo_(func=self.M999, command_id='M999')
-            # Remove the command from the dict
-            del parsed_command['M999']
+            exit_code, msg = self.M999
+            self._con_to_main.send(Message(exit_code=exit_code, msg='', command_id='M999', command='M999'))
             return
 
         # Excecute the machine commands (start with M)
         keys = list(parsed_command.keys())
         for command_id in keys:
-            if exit_code:
-                break
+            if self._check_command_output() or exit_code:
+                return
 
             if command_id[0] != 'M':
                 # The command is not a machine command so skip it
                 continue
             elif command_id == 'M105':
                 # Get the temperature
-                exit_code, msg = self._echo(func=self.M105, command_id='M105')
+                self._echo(func=self.M105, command_id='M105')
             elif command_id == 'M113':
                 # Keep the host alive
-                exit_code, msg = self._echo(func=self.M113, command_id='M113', 
+                self._echo(func=self.M113, command_id='M113', 
                         command=parsed_command[command_id])
             elif command_id == 'M114':
                 # Get the position
-                exit_code, msg = self._echo(func=self.M114, command_id='M114')
+                self._echo(func=self.M114, command_id='M114')
             elif command_id == 'M154':
                 # Position autoreport
-                exit_code, msg = self._echo(func=self.M154, command_id='M154', 
+                self._echo(func=self.M154, command_id='M154', 
                         command=parsed_command[command_id])
             elif command_id == 'M155':
                 # Temperature autoreport
-                exit_code, msg = self._echo(func=self.M155, command_id='M155', 
+                self._echo(func=self.M155, command_id='M155', 
                         command=parsed_command[command_id])
             elif command_id == 'M811':
                 # Use jogging
-                exit_code, msg = self._echo(func=self.M811, command_id='M811',
+                self._echo(func=self.M811, command_id='M811',
                         command=parsed_command[command_id])
             elif command_id == 'M812':
                 # Use jogging
-                exit_code, msg = self._echo(func=self.M812, command_id='M812',
+                self._echo(func=self.M812, command_id='M812',
                         command=parsed_command[command_id])
             else:
                 exit_code = 1
@@ -520,31 +539,31 @@ class StackingSetupBackend:
 
         # Excecute the movement commands
         for command_id in keys:
-            if exit_code:
+            if self._check_command_output() or exit_code:
                 # There was an error in one of the previous commands
                 break
 
             if command_id == 'G0':
                 # Move to all the given axes at the same time
-                exit_code, msg = self._echo(func=self.G0, command_id='G0', 
+                self._echo(func=self.G0, command_id='G0', 
                         command=parsed_command[command_id])
             elif command_id == 'G1':
                 # Rotate the given axis
-                exit_code, msg = self._echo(func=self.G1, command_id='G1', 
+                self._echo(func=self.G1, command_id='G1', 
                         command=parsed_command[command_id])
             elif command_id == 'G2':
                 # Jog the given axis
-                exit_code, msg = self._echo(func=self.G2, command_id='G2',
+                self._echo(func=self.G2, command_id='G2',
                         command=parsed_command[command_id])
             elif command_id == 'G28':
                 # Home all axes
-                exit_code, msg = self._echo(func=self.G28, command_id='G28')
+                self._echo(func=self.G28, command_id='G28')
             elif command_id == 'G90':
                 # Set to absolute positioning
-                exit_code, msg = self._echo(func=self.G90, command_id='G90')
+                self._echo(func=self.G90, command_id='G90')
             elif command_id == 'G91':
                 # Set to relative positioning
-                exit_code, msg = self._echo(func=self.G91, command_id='G91')	
+                self._echo(func=self.G91, command_id='G91')	
             else:
                 exit_code = 1
                 self._con_to_main.send(Message(exit_code=exit_code, msg='Unknown command', 
@@ -559,7 +578,8 @@ class StackingSetupBackend:
             if key not in keys:
                 del parsed_command[key]
 
-        if not exit_code or len(parsed_command) != 0:
+        self._check_command_output()
+        if len(parsed_command) != 0:
             message = Message(exit_code=1, msg='Not all commands were executed: {}'.format(parsed_command), 
                             command=parsed_command, command_id='None')
             self._con_to_main.send(message)

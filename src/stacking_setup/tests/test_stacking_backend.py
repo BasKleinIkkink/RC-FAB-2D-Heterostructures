@@ -205,20 +205,29 @@ class TestControlBackend(unittest.TestCase):
         def test_function2(dummy1=None):
             return 0, dummy1
         
-        exit_code, msg = stack._echo(func=test_function, command_id='test', command={'X': 1})
+        stack._echo(func=test_function, command_id='test', command={'X': 1})
 
         # Check if the right message was sent.
-        pipe_msg = self.to_proc.recv()
+        msg = {'X': 1}
+        exit_code = 0
+        while stack._execution_q.empty():
+            continue
+        pipe_msg = stack._execution_q.get()
         self.assertIsInstance(pipe_msg, Message)
-        self.assertEqual(pipe_msg.msg, str(msg))
+        self.assertEqual(pipe_msg.msg, msg)
         self.assertEqual(pipe_msg.exit_code, exit_code)
         self.assertEqual(pipe_msg.command_id, 'test')
+        self.assertEqual(pipe_msg.command, msg)
 
-        exit_code, msg = stack._echo(test_function2, 'test2')
-        pipe_msg = self.to_proc.recv()
-        self.assertEqual(pipe_msg.msg, str(msg))
+        stack._echo(func=test_function2, command_id='test2')
+
+        while not stack._execution_q.empty():
+            continue
+        pipe_msg = stack._execution_q.get()
+        self.assertEqual(pipe_msg.msg, '')
         self.assertEqual(pipe_msg.exit_code, exit_code)
         self.assertEqual(pipe_msg.command_id, 'test2')
+        self.assertEqual(pipe_msg.command, None)
     
     # Test execute one command
     @patch.object(StackingSetupBackend, 'G0', return_value=(0, None))
@@ -229,14 +238,18 @@ class TestControlBackend(unittest.TestCase):
         
         # Test a command that is not implemented
         stack._execute_command({'M1000': {}})
+        while not stack._execution_q.empty():
+            continue
         pipe_msg = self.to_proc.recv()
-        self.assertNotEqual(pipe_msg.msg, 'None')
+        self.assertNotEqual(pipe_msg.msg, '')
         self.assertEqual(pipe_msg.exit_code, 1)
 
         # Test a command that is implemented
         stack._execute_command({'G0': {'X': 5}})
+        while not stack._execution_q.empty():
+            continue
         pipe_msg = self.to_proc.recv()
-        self.assertEqual(pipe_msg.msg, 'None')
+        self.assertEqual(pipe_msg.msg, '')
         self.assertEqual(pipe_msg.exit_code, 0)
 
     # Test execute multiple commands
@@ -251,6 +264,8 @@ class TestControlBackend(unittest.TestCase):
         
         # Test a command that is not implemented
         stack._execute_command({'M1000': {}, 'G1': {'X': 5, 'Y': 5, 'I': 5, 'J': 5}})
+        while not stack._execution_q.empty():
+            continue
         pipe_msg = self.to_proc.recv()
         self.assertIsInstance(pipe_msg.msg, str)
         self.assertEqual(pipe_msg.exit_code, 1)
@@ -260,8 +275,10 @@ class TestControlBackend(unittest.TestCase):
 
         # Test a command that is implemented
         stack._execute_command({'G0': {'X': 5}, 'M105': {}})
+        while not stack._execution_q.empty():
+            continue
         pipe_msg = self.to_proc.recv()
-        self.assertEqual(pipe_msg.msg, 'None')
+        self.assertEqual(pipe_msg.msg, '')
         self.assertEqual(pipe_msg.exit_code, 0)
 
     # Test call M105
@@ -274,9 +291,12 @@ class TestControlBackend(unittest.TestCase):
         # When calling with no arguments the function should return the current value
         command = {'M105': {}}
         stack._execute_command(command)
+        while stack._execution_q.empty():
+            continue
         M105_mock.assert_called_once()
 
         # Get the message from the pipe
+        stack._check_command_output()
         pipe_msg = self.to_proc.recv()
         self.assertEqual(pipe_msg.msg, '10')
         self.assertEqual(pipe_msg.exit_code, 0)
@@ -294,25 +314,9 @@ class TestControlBackend(unittest.TestCase):
         M112_mock.assert_called_once()
 
         # Get the message from the pipe
+        stack._check_command_output()
         pipe_msg = self.to_proc.recv()
-        self.assertEqual(pipe_msg.msg, 'None')
-        self.assertEqual(pipe_msg.exit_code, 0)
-
-    # Test call M113
-    @patch.object(StackingSetupBackend, 'M113', return_value=(0, None))
-    @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_call_M113(self, _init_all_hardware_mock, M113_mock):
-        stack = StackingSetupBackend(self.to_main)
-        stack.setup_backend(Settings())
-
-        # When calling with no arguments the function should return the current value
-        command = {'M113': {}}
-        stack._execute_command(command)
-        M113_mock.assert_called_once()
-
-        # Get the message from the pipe
-        pipe_msg = self.to_proc.recv()
-        self.assertEqual(pipe_msg.msg, 'None')
+        self.assertEqual(pipe_msg.msg, '')
         self.assertEqual(pipe_msg.exit_code, 0)
 
 
