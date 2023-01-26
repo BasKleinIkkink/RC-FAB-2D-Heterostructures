@@ -6,6 +6,7 @@ import threading as tr
 from ..configs.settings import Settings
 import multiprocessing as mp
 from time import sleep
+from ..repeated_timer import RepeatedTimer
 
 
 class MainXYController:
@@ -84,8 +85,8 @@ class MainXYController:
             raise HardwareNotConnectedError(
                 "The Base stage controller is not connected."
             )
-        elif self._em_event.is_set():
-            return None  # Do nothing to give other classes a chance to stop the emergency stop
+        # elif self._em_event.is_set():
+        #     return None  # Do nothing to give other classes a chance to stop the emergency stop
 
         if "\r\n" not in command:
             command = command.strip()
@@ -136,32 +137,38 @@ class MainXYController:
                 )
 
     def start_check_error(self):
-        self.error_thread = tr.Thread(target=self._check_error, daemon=True)
+        self.error_thread = RepeatedTimer(interval=0.5, function=self._check_error)
         self.error_thread.start()
     
     def _check_error(self) -> ...:
         """Check if the controller has an error."""
+        
         self._lock.acquire()
-        res = self._send_and_receive("e", expect_response=True)
+        res = self._send_and_receive("ge", expect_response=True)
+        self._lock.release()
 
         # Check critical error codes
-        if res[0] != b"0":
-            self._em_event.set()
-            self.emergency_stop()
-        elif res[1] != b"0":
-            raise HardwareError(
-                "The stepper drivers on the base control box are not powered or switched off."
-            )
-        elif res[2] != b"0" or res[3] != b"0":
-            raise HardwareError("The heater respons timed out while the PID is active.")
-        elif res[4] != b"0":
-            raise HardwareError("The stepper response timed out while zero-ing.")
+        # if res[0] != b"0":
+        #     raise HardwareError(
+        #         "The stepper drivers on the base control box are not powered or switched off."
+        #     )
+        if not self._em_event.is_set():
+            if res[1] != b"0":
+                self._em_event.set()
+                self.emergency_stop()
+            # elif res[2] != b"0" or res[3] != b"0":
+            #     self._em_event.set()
+            #     self.emergency_stop()
+            #     raise HardwareError("The heater response timed out while the PID is active.")
+            # elif res[4] != b"0":
+            #     self._em_event.set()
+            #     self.emergency_stop()
+            #     raise HardwareError("The stepper response timed out while zero-ing.")
 
         # Get the non critical error codes
-        res = self._send_and_receive("gb", expect_response=True)
-        if res[14] != b"0" or res[1] != b"0":
-            raise HardwareError("One or both of the stepper motors have stalled.")
-        self._lock.release()
+        # res = self._send_and_receive("gb", expect_response=True)
+        # if res[14] != b"0" or res[1] != b"0":
+        #     raise HardwareError("One or both of the stepper motors have stalled.")
 
     # MOVEMENT ATTRIBUTES
     @property
@@ -242,8 +249,13 @@ class MainXYController:
 
         # Enter run mode so the controller can be used
         self._send_and_receive("n", expect_confirmation=True)
+        self._send_and_receive("ssx25600")
+        self._send_and_receive("ssy25600")
         self._is_connected = True
+        
         self._lock.release()
+
+        # self.start_check_error()
 
     def disconnect(self) -> ...:
         """Disconnect the hardware."""
@@ -418,12 +430,15 @@ class MainXYController:
         axis : str or None
             The axis to stop the jog on. If None, all axes will be stopped.
         """
+        self._lock.acquire()
         if axis is None:
             self.stop()
         elif axis.lower() == "x":
             self._send_and_receive("svx0")
         elif axis.lower() == "y":
             self._send_and_receive("svy0")
+
+        self._lock.release()
 
     def move_to(self, id: str, position: Union[float, int]) -> ...:
         """
@@ -477,7 +492,8 @@ class MainXYController:
             will check before executing any commands. This will prevent
             any commands from being executed until the flag is cleared.
         """
-        self._send_and_receive("x")
+        self._send_and_receive("x")  # Stop all motion
+        self._send_and_receive('fp0')  # Stop temp control
 
     def vacuum_on(self) -> ...:
         """Turn the vacuum on."""

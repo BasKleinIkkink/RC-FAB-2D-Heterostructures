@@ -18,27 +18,10 @@ from .widgets.control_widget import BaseControlWidget, MaskControlWidget
 from .widgets.focus_widget import FocusWidget
 from .widgets.temperature_widget import TemperatureWidget
 from .configs.settings import Settings
+import multiprocessing as mp
 
 
 VERBOSE_OUTPUT = True
-
-
-class EstopFlag(threading.Event):
-    """
-    This class is a wrapper around the threading.Event class.
-
-    The main purpose is to make sure the flag cannot be reset by calling clear
-    or pushing the button in the GUI again.
-    """
-
-    def __init__(self):
-        super().__init__()
-
-    def clear(self):
-        raise AttributeError("Cannot reset the estop flag, us M999 method.")
-
-    def M999(self):
-        super().clear()
 
 
 class MainWindow(QMainWindow):
@@ -51,7 +34,7 @@ class MainWindow(QMainWindow):
         self._connector = connector
         self._connector.__init_lock__()
         self._q = queue.Queue()
-        self._shutdown_event = EstopFlag()
+        self._shutdown_event = mp.Event()
         self._settings = Settings()
 
         # Resize to the screen resolution
@@ -65,11 +48,11 @@ class MainWindow(QMainWindow):
         self.load_widgets()  # Load the docks
         self.connect_actions()
 
-        # self._connect_backend()
+        self._connect_backend()
 
     def _connect_backend(self):
         # Handshake with the frondend
-        time.sleep(1)
+        time.sleep(0.5)
         self._connector.handshake()
         self._start_event_handeler()
         self._q.put("M154 S{}".format(self._settings.pos_auto_update_interval))
@@ -244,7 +227,6 @@ class MainWindow(QMainWindow):
             if self._connector.message_waiting():
                 msg = self._connector.receive()
                 self._update_gui(msg)
-
             else:
                 # Check if the gui send a message and pass it too the backend
                 if not q.empty():
@@ -257,7 +239,11 @@ class MainWindow(QMainWindow):
         """Get the content from the message and pass it to the correct widget."""
         for i in messages:
             self.systemMessagesWidget.add_message(i)
-            if i.command_id == "M154":
+            if i.command_id == "M112":
+                # Emergency stop was triggered
+                self.toolBar.actions()[1].setChecked(True)
+
+            elif i.command_id == "M154":
                 # Set all the positions to the correct values
                 try:
                     positions = dict(i.msg)
@@ -269,10 +255,10 @@ class MainWindow(QMainWindow):
             elif i.command_id == "M155":
                 # Set the temperature to the correct value
                 try:
-                    temps = dict(i.msg)
+                    temp = dict(i.msg)
                 except ValueError:
                     continue
-                self.temperatureWidget.update_temperatures(temps)
+                self.temperatureWidget.update_temperature(temp=temp)
 
 
 def main(connector=None):

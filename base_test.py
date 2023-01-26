@@ -1,5 +1,5 @@
-from src.stacking_setup.stacking_backend.hardware.main_xy_controller import MainXYController
-from src.stacking_setup.stacking_backend.configs.settings import Settings
+from src.stacking_setup.components.stacking_backend.hardware.main_xy_controller import MainXYController
+from src.stacking_setup.components.stacking_backend.configs.settings import Settings
 import multiprocessing as mp
 from time import sleep
 
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     controller.zero()
     controller.start_jog('x', velocity=400)
     controller.start_jog('y', velocity=400)
-    sleep(2)
+    sleep(0.5)
     controller.stop_jog()
     print('Moving')
     controller.move_to('X', 5000)

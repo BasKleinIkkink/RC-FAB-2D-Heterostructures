@@ -13,8 +13,8 @@ from src.stacking_setup.components.stacking_frondend.gui.main import main as ui_
 if __name__ == '__main__':
     # Create the chosen middleware method and start the backend
     par_con, ch_con = Pipe()
-    #backend = StackingSetupBackend(Connection(par_con, "BACKEND"))
-    #backend.start_backend()
+    backend = StackingSetupBackend(Connection(par_con, "BACKEND"))
+    backend.start_backend()
 
     # Run the ui main function
     ui_main(Connection(ch_con, "FRONDEND"))
