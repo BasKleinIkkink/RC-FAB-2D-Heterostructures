@@ -124,6 +124,42 @@ def mock_sample_holder(id) -> MagicMock:
     return mock_part
 
 
+def mock_base_stepper(id):
+    """
+    Create a mock class for the base stepper.
+
+    Parameters:
+    -----------
+    id: str
+        The axis id of the base stepper.
+
+    Returns:
+    --------
+    mock_part : MagicMock
+        A mock base stepper object (MagicMock).
+    """
+    mock_part = MagicMock(spec=Base)
+    mock_part.id = id
+    mock_part.type = 'BASE STEPPER'
+
+    # Add the functions that should not error
+    mock_part.is_connected.return_value = Mock(side_effect=True)
+    mock_part.move_by.return_value = Mock(side_effect=None)
+    mock_part.move_to.return_value = Mock(side_effect=None)
+    mock_part.rotate_by.side_effect = Mock(side_effect=NotSupportedError)
+    mock_part.rotate_to.side_effect = Mock(side_effect=NotSupportedError)
+    
+    # Set some attributes
+    mock_part.position = 0
+    mock_part.steps_per_um = 1
+    mock_part.speed = 2
+    mock_part.acceleration = 3
+    type(mock_part).temperature = PropertyMock(side_effect=NotSupportedError)
+    type(mock_part).target_temperature = PropertyMock(side_effect=NotSupportedError)
+    
+    return mock_part
+
+
 def _get_hardware_mocks() -> List[MagicMock]:
     """
     Create mock hardware for the backend to control.
@@ -137,7 +173,9 @@ def _get_hardware_mocks() -> List[MagicMock]:
             mock_pia13('Y'),
             mock_pia13('Z'),
             mock_prmtz8('L'),
-            mock_sample_holder('K'),]
+            mock_sample_holder('K'),
+            mock_base_stepper('H'),
+            mock_base_stepper('J')]
 
 
 class TestControlBackend(unittest.TestCase):
@@ -558,7 +596,7 @@ class TestMachineCommands(unittest.TestCase):
         stack._hardware[1].steps_per_um = 1
         exit_code, msg = stack.M92({})
         self.assertEqual(exit_code, 0)
-        self.assertEqual(msg, {'X': 1, 'Y': 1, 'Z': 1, 'L': 1})
+        self.assertEqual(msg, {'X': 1, 'Y': 1, 'Z': 1, 'L': 1, 'H': 1, 'J': 1})
 
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     def test_M105(self, _init_all_hardware_mock) -> ...:
@@ -571,7 +609,7 @@ class TestMachineCommands(unittest.TestCase):
         # Check if the return code is right
         self.assertEqual(exit_code, 0)
         self.assertNotEqual(msg, None)
-        self.assertEqual(msg, {'K': {'current' : 0, 'target' : 10}})
+        self.assertEqual(msg, {'K': 0})
 
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     def test_M112(self, _init_all_hardware_mock) -> ...:
@@ -618,7 +656,7 @@ class TestMachineCommands(unittest.TestCase):
         # Check if the return code is right
         self.assertEqual(exit_code, 0)
         self.assertNotEqual(msg, None)
-        self.assertEqual(msg, {'X': 0, 'Y': 0, 'Z': 0, 'L': 0})
+        self.assertEqual(msg, {'X': 0, 'Y': 0, 'Z': 0, 'L': 0, 'H': 0, 'J': 0})
 
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     def test_M154(self, _init_all_hardware_mock) -> ...:

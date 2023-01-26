@@ -24,13 +24,13 @@ class TestPipeLineConnection(unittest.TestCase):
     # Open the pipe
     @patch.object(PipelineConnection, 'handshake', return_value=True)
     def test_open_pipe(self, connector_mock):
-        parent_pipe = PipelineConnection(self.to_proc, 'FRONDEND', self.settings)
+        parent_pipe = PipelineConnection(self.to_proc, 'FRONTEND', self.settings)
         child_pipe = PipelineConnection(self.from_proc, 'BACKEND', self.settings)
 
     # Send and reiceive a message
     @patch.object(PipelineConnection, 'handshake', return_value=True)
     def test_send_and_receive_a_message(self, connector_mock):
-        parent_pipe = PipelineConnection(self.to_proc, 'FRONDEND', self.settings)
+        parent_pipe = PipelineConnection(self.to_proc, 'FRONTEND', self.settings)
         child_pipe = PipelineConnection(self.from_proc, 'BACKEND', self.settings)
         child_pipe.__init_lock__()
 
@@ -40,7 +40,7 @@ class TestPipeLineConnection(unittest.TestCase):
     # Test the message waiting function
     @patch.object(PipelineConnection, 'handshake', return_value=True)
     def test_message_waiting(self, connector_mock):
-        parent_pipe = PipelineConnection(self.to_proc, 'FRONDEND', self.settings)
+        parent_pipe = PipelineConnection(self.to_proc, 'FRONTEND', self.settings)
         child_pipe = PipelineConnection(self.from_proc, 'BACKEND', self.settings)
         child_pipe.__init_lock__()
 
@@ -56,7 +56,7 @@ class TestPipeLineConnection(unittest.TestCase):
     # Check if the pipe is open
     @patch.object(PipelineConnection, 'handshake', return_value=True)
     def test_is_connected(self, connector_mock):
-        parent_pipe = PipelineConnection(self.to_proc, 'FRONDEND', self.settings)
+        parent_pipe = PipelineConnection(self.to_proc, 'FRONTEND', self.settings)
         child_pipe = PipelineConnection(self.from_proc, 'BACKEND', self.settings)
         child_pipe.__init_lock__()
 

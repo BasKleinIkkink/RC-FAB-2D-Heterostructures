@@ -11,6 +11,7 @@ from .hardware.KDC101 import KDC101
 from .hardware.KIM101 import KIM101
 from .hardware.PIA13 import PIA13
 from .hardware.sample_bed import SampleBed
+from .hardware.base_stepper import BaseStepper
 from .hardware.main_xy_controller import MainXYController
 from .hardware.TangoDesktop import TangoDesktop
 from ..stacking_middleware.pipeline_connection import PipelineConnection
@@ -194,8 +195,13 @@ class StackingSetupBackend:
                                         em_event=self._emergency_stop_event, settings=settings))
 
             if self._settings.get('BASE.H', 'enabled'):
-                
+                _hardware.append(BaseStepper(id='H', controller=self._base_controller,
+                                        em_event=self._emergency_stop_event, settings=settings))
 
+            if self._settings.get('BASE.J', 'enabled'):
+                _hardware.append(BaseStepper(id='J', controller=self._base_controller,
+                                        em_event=self._emergency_stop_event, settings=settings))
+                
         # Initiate the focus stage
         if self._settings.get('TANGODESKTOP.K', 'enabled'):
             _hardware.append(TangoDesktop(id='K', em_event=self._emergency_stop_event, 

@@ -230,6 +230,8 @@ class MainXYController:
     # CONNECTION FUNCTIONS
     def connect(self, zero: bool = True) -> ...:
         """Connect the hardware."""
+        if self._connected:
+            return
         self._lock.acquire()
         # time.sleep(0.1)
         self._ser = serial.Serial(self._port, self._baud_rate, timeout=self._timeout)
@@ -261,6 +263,8 @@ class MainXYController:
 
     def disconnect(self) -> ...:
         """Disconnect the hardware."""
+        if not self._is_connected:
+            return
         self._send_and_receive("p", expect_confirmation=True)
         self._ser.close()
         self._is_connected = False
@@ -272,17 +276,17 @@ class MainXYController:
     # STATUS FUNCTIONS
     def is_heating(self) -> bool:
         """Check if the hardware is heating."""
-        raise NotImplementedError()
         self._lock.acquire()
         res = self._send_and_receive("ga", expect_response=True)
         self._lock.release()
+        return res
 
     def is_cooling(self) -> bool:
         """Check if the hardware is cooling."""
-        raise NotImplementedError()
         self._lock.acquire()
         res = self._send_and_receive("ga", expect_response=True)
         self._lock.release()
+        return res
 
     def is_moving(self, axis=Union[str, None]) -> bool:
         """Check if the hardware is moving."""
