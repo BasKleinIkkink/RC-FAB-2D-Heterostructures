@@ -432,7 +432,7 @@ class MainXYController:
         """
         self._lock.acquire()
         if axis is None:
-            self.stop()
+            self._send_and_receive("x")
         elif axis.lower() == "x":
             self._send_and_receive("svx0")
         elif axis.lower() == "y":
