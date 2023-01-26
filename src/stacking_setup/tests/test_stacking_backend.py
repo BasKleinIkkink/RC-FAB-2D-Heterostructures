@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch, PropertyMock, Mock
 import multiprocessing as mp
 import configparser
+from typing import List
 
 #Following lines are for assigning parent directory dynamically.
 import sys, os
@@ -17,7 +18,7 @@ from components.stacking_middleware.message import Message
 from components.stacking_backend.configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_LINEAR_AXES, ACCEPTED_ROTATIONAL_AXES
 
 
-def mock_pia13(id):
+def mock_pia13(id) -> MagicMock:
     """
     Create a mock class for the pia
 
@@ -30,7 +31,6 @@ def mock_pia13(id):
     --------
     mock_part : MagicMock
         A mock pia object (MagicMock).
-    
     """
     mock_part = MagicMock(spec=Base)
     mock_part.id = id
@@ -54,7 +54,7 @@ def mock_pia13(id):
     return mock_part
 
 
-def mock_prmtz8(id):
+def mock_prmtz8(id) -> MagicMock:
     """
     Create a mock class for the PRMTZ8.
 
@@ -67,7 +67,6 @@ def mock_prmtz8(id):
     --------
     mock_part : MagicMock
         A mock PRMTZ8 object (MagicMock).
-
     """
     mock_part = MagicMock(spec=Base)
     mock_part.id = id
@@ -91,7 +90,7 @@ def mock_prmtz8(id):
     return mock_part
 
 
-def mock_sample_holder(id):
+def mock_sample_holder(id) -> MagicMock:
     """
     Create a mock class for the sample holder.
 
@@ -104,7 +103,6 @@ def mock_sample_holder(id):
     --------
     mock_part : MagicMock
         A mock sample holder object (MagicMock).
-
     """
     mock_part = MagicMock(spec=Base)
     mock_part.id = id
@@ -126,15 +124,14 @@ def mock_sample_holder(id):
     return mock_part
 
 
-def _get_hardware_mocks():
+def _get_hardware_mocks() -> List[MagicMock]:
     """
     Create mock hardware for the backend to control.
 
     Returns:
     --------
-    hardware : dict
-        A tuple of mock hardware objects (MagicMocks).
-
+    hardware : list
+        A tuple of mock hardware objects (MagicMocks)
     """
     return [mock_pia13('X'),
             mock_pia13('Y'),
@@ -144,22 +141,52 @@ def _get_hardware_mocks():
 
 
 class TestControlBackend(unittest.TestCase):
+    """
+    This test class test the main functions of the backend.
 
-    def setUp(self):
-        self.to_main, self.to_proc = mp.Pipe()
-        self.settings = configparser.ConfigParser()
+    Individual functions (such as M and G commands) are not tested
+    here. This class tests the connection, execution and communication
+    functions.
+
+    .. attention::
+        The only command tested in this class is M112, this because this is
+        the emergency stop command.
+
+    .. note::
+        This class makes extensive use of mocking. This is done to
+        prevent the backend from connecting to the hardware and to
+        prevent the backend from executing the commands. This also
+        means all tests can be run without connecting to the hardware.
+    """
+
+    def setUp(self) -> ...:
+        """
+        Set up the backend for testing.
         
-    def tearDown(self):
+        .. note::
+            Because patching is used to prevent the backend from connecting
+            to the hardware the backend is not started in the setUp.
+        """
+        self.to_main, self.to_proc = mp.Pipe()
+        
+    def tearDown(self) -> ...:
+        """Clean up after the test."""
         # Close the pipes
         self.to_main.close()
         self.to_proc.close()
         
-    # Test initiate hardware
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_connect_hardware(self, _init_all_hardware_mock):
+    def test_connect_hardware(self, _init_all_hardware_mock) -> ...:
+        """
+        Test if all the hardware is called when connecting.
+
+        .. attention::
+            When a part is disabled in config it will not be called
+            and this method will fail. As disabling parts is only meant
+            for debugging all parts should be active during normal operation.
+        """
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
-
         # Check if the right functions were called.
         _init_all_hardware_mock.assert_called_once()
 
@@ -169,10 +196,16 @@ class TestControlBackend(unittest.TestCase):
             except AssertionError as e:
                 raise AssertionError('{} was not connected : {}'.format(i.id, e))
 
-    # Test disconnect hardware
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_disconnect_hardware(self, _init_all_hardware_mock):
-        # Test the initiate hardware function.
+    def test_disconnect_hardware(self, _init_all_hardware_mock) -> ...:
+        """
+        Test if all the hardware is called when disconnecting.
+
+        .. attention::
+            When a part is disabled in config it will not be called
+            and this method will fail. As disabling parts is only meant
+            for debugging all parts should be active during normal operation.
+        """
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
         stack._disconnect_all_hardware()
@@ -183,9 +216,12 @@ class TestControlBackend(unittest.TestCase):
             except AssertionError as e:
                 raise AssertionError('{} was not disconnected : {}'.format(i.id, e))
 
-    # Test emergency stop
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_emergency_stop(self, _init_all_hardware_mock):
+    def test_emergency_stop(self, _init_all_hardware_mock) -> ...:
+        """
+        Test if the emergency stop flag is set when the emergency stop
+        command is called.
+        """
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
         stack._emergency_stop()
@@ -193,12 +229,17 @@ class TestControlBackend(unittest.TestCase):
         # Check if the emergency stop flag was set.
         self.assertTrue(stack._emergency_stop_event.is_set())
 
-    # Test the echo function
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_echo(self, _init_all_hardware_mock):
+    def test_echo(self, _init_all_hardware_mock) -> ...:
+        """
+        Test if the echo function sends the right message.
+
+        The echo function is used to create the execution threads and 
+        relay the output message back to the frontend.
+        """
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
-        
+
         def test_function(dummy1):
             return 0, dummy1
 
@@ -229,13 +270,13 @@ class TestControlBackend(unittest.TestCase):
         self.assertEqual(pipe_msg.command_id, 'test2')
         self.assertEqual(pipe_msg.command, None)
     
-    # Test execute one command
     @patch.object(StackingSetupBackend, 'G0', return_value=(0, None))
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_execute_one_command(self, _init_all_hardware_mock, G0_mock):
+    def test_execute_one_command(self, _init_all_hardware_mock, G0_mock) -> ...:
+        """Test if the execute command function calls the right function."""
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
-        
+
         # Test a command that is not implemented
         stack._execute_command({'M1000': {}})
         while not stack._execution_q.empty():
@@ -258,10 +299,15 @@ class TestControlBackend(unittest.TestCase):
     @patch.object(StackingSetupBackend, 'M105', return_value=(0, None))
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     def test_execute_multiple_commands(self, _init_all_hardware_mock,
-                                        M105_mock, G1_mock, G0_mock):
+                                        M105_mock, G1_mock, G0_mock) -> ...:
+        """
+        Test if the execute command function calls the right function.
+        
+        The backend supports multiple commands in one message.
+        """
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
-        
+
         # Test a command that is not implemented
         stack._execute_command({'M1000': {}, 'G1': {'X': 5, 'Y': 5, 'I': 5, 'J': 5}})
         while not stack._execution_q.empty():
@@ -281,30 +327,11 @@ class TestControlBackend(unittest.TestCase):
         self.assertEqual(pipe_msg.msg, '')
         self.assertEqual(pipe_msg.exit_code, 0)
 
-    # Test call M105
-    @patch.object(StackingSetupBackend, 'M105', return_value=(0, 10))
-    @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_call_M105(self, _init_all_hardware_mock, M105_mock):
-        stack = StackingSetupBackend(self.to_main)
-        stack.setup_backend(Settings())
-
-        # When calling with no arguments the function should return the current value
-        command = {'M105': {}}
-        stack._execute_command(command)
-        while stack._execution_q.empty():
-            continue
-        M105_mock.assert_called_once()
-
-        # Get the message from the pipe
-        stack._check_command_output()
-        pipe_msg = self.to_proc.recv()
-        self.assertEqual(pipe_msg.msg, '10')
-        self.assertEqual(pipe_msg.exit_code, 0)
-
     # Test call M112
     @patch.object(StackingSetupBackend, 'M112', return_value=(0, None))
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_call_M112(self, _init_all_hardware_mock, M112_mock):
+    def test_call_M112(self, _init_all_hardware_mock, M112_mock) -> ...:
+        """Test the emergency stop command."""
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
 
@@ -321,22 +348,28 @@ class TestControlBackend(unittest.TestCase):
 
 
 class TestMovementCommands(unittest.TestCase):
+    """
+    Test the movement commands.
+    
+    Movement commands are commands starting with G.
+    """
 
-    def setUp(self):
+    def setUp(self) -> ...:
+        """Create the backend for testing."""
         self.to_main, self.to_proc = mp.Pipe()
-        self.settings = configparser.ConfigParser()
         
-    def tearDown(self):
+    def tearDown(self) -> ...:
+        """Clean up after testing."""
         # Close the pipes
         self.to_main.close()
         self.to_proc.close()
 
-    # Test G0
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_G0(self, _init_all_hardware_mock):
-        self.assertTrue('G0' in ACCEPTED_COMMANDS)
+    def test_G0(self, _init_all_hardware_mock) -> ...:
+        """Test the G0 command."""
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
+        self.assertTrue('G0' in ACCEPTED_COMMANDS)
         movement = {'X': 1, 'Y': 2, 'Z': 3}
         exit_code, msg = stack.G0(movement)
 
@@ -349,12 +382,12 @@ class TestMovementCommands(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(msg, None)
 
-    # Test G0 with a part that does not support it
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_G0_not_supported(self, _init_all_hardware_mock):
-        self.assertTrue('G0' in ACCEPTED_COMMANDS)
+    def test_G0_not_supported(self, _init_all_hardware_mock) -> ...:
+        """Test the G0 command for a non supported part."""
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
+        self.assertTrue('G0' in ACCEPTED_COMMANDS)
         movement = {'L': 1}
         exit_code, msg = stack.G0(movement)
 
@@ -365,9 +398,11 @@ class TestMovementCommands(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertNotEqual(msg, None)
 
-    # Test G0 non existing part
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_G0_non_existing_part(self, _init_all_hardware_mock):
+    def test_G0_non_existing_part(self, _init_all_hardware_mock) -> ...:
+        """Test the G0 command for a non existing part."""
+        stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend(Settings())
         self.assertTrue('G0' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -383,9 +418,11 @@ class TestMovementCommands(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertNotEqual(msg, None)
 
-    # Test G1
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_G1(self, _init_all_hardware_mock):
+    def test_G1(self, _init_all_hardware_mock) -> ...:
+        """Test the G1 command."""
+        stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend(Settings())
         self.assertTrue('G1' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -399,9 +436,11 @@ class TestMovementCommands(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(msg, None)
 
-    # Test G1 with a part that does not support it
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_G1_not_supported(self, _init_all_hardware_mock):
+    def test_G1_not_supported(self, _init_all_hardware_mock) -> ...:
+        """Test the G1 command for a non supported part."""
+        stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend(Settings())
         self.assertTrue('G1' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -415,9 +454,11 @@ class TestMovementCommands(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertNotEqual(msg, None)
 
-    # Test G1 non existing part
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_G1_non_existing_part(self, _init_all_hardware_mock):
+    def test_G1_non_existing_part(self, _init_all_hardware_mock) -> ...:
+        """Test the G1 command for a non existing part."""
+        stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend(Settings())
         self.assertTrue('G1' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -435,9 +476,11 @@ class TestMovementCommands(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertNotEqual(msg, None)
 
-    # Test G28
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_G28(self, _init_all_hardware_mock):
+    def test_G28(self, _init_all_hardware_mock) -> ...:
+        """Test the G28 command."""
+        stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend(Settings())
         self.assertTrue('G28' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -453,9 +496,11 @@ class TestMovementCommands(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(msg, None)
 
-    # Test G90
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_G90andG91(self, _init_all_hardware_mock):
+    def test_G90andG91(self, _init_all_hardware_mock) -> ...:
+        """Test the G90 and G91 commands."""
+        stack = StackingSetupBackend(self.to_main)
+        stack.setup_backend(Settings())
         self.assertTrue('G90' in ACCEPTED_COMMANDS)
         self.assertTrue('G91' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
@@ -475,19 +520,26 @@ class TestMovementCommands(unittest.TestCase):
 
 
 class TestMachineCommands(unittest.TestCase):
+    """
+    Test the machine commands.
+    
+    Machine commands are commands starting with M.
+    """
 
-    def setUp(self):
+    def setUp(self) -> ...:
+        """Set up the stacking backend."""
         self.to_main, self.to_proc = mp.Pipe()
         self.settings = configparser.ConfigParser()
         
-    def tearDown(self):
+    def tearDown(self) -> ...:
+        """Clean up after the tests."""
         # Close the pipes
         self.to_main.close()
         self.to_proc.close()
 
-    # Test M92
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_M92(self, _init_all_hardware_mock):
+    def test_M92(self, _init_all_hardware_mock) -> ...:
+        """Test the M92 command."""
         self.assertTrue('M92' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -508,10 +560,9 @@ class TestMachineCommands(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(msg, {'X': 1, 'Y': 1, 'Z': 1, 'L': 1})
 
-
-    # Test M105
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_M105(self, _init_all_hardware_mock):
+    def test_M105(self, _init_all_hardware_mock) -> ...:
+        """Test the M105 command."""
         self.assertTrue('M105' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -522,9 +573,9 @@ class TestMachineCommands(unittest.TestCase):
         self.assertNotEqual(msg, None)
         self.assertEqual(msg, {'K': {'current' : 0, 'target' : 10}})
 
-    # Test M112
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_M112(self, _init_all_hardware_mock):
+    def test_M112(self, _init_all_hardware_mock) -> ...:
+        """Test the M112 command."""
         self.assertTrue('M112' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -536,9 +587,9 @@ class TestMachineCommands(unittest.TestCase):
 
         self.assertTrue(stack._emergency_stop_event.is_set())
 
-    # Test M113
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_M113(self, _init_all_hardware_mock):
+    def test_M113(self, _init_all_hardware_mock) -> ...:
+        """Test the M113 command."""
         self.assertTrue('M113' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -555,15 +606,10 @@ class TestMachineCommands(unittest.TestCase):
         exit_code, msg = stack.M113({})
         self.assertEqual(exit_code, 0)
         self.assertEqual(msg, '1')
-
-        # Start the timer again and wait for the message to be sent
-        #exit_code, msg = stack.M113({'S': 0.01})  # 10ms
-        #in_waiting = self.to_proc.poll(timeout=1)
-        #self.assertTrue(in_waiting)
     
-    # Test M114	
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_M114(self, _init_all_hardware_mock):
+    def test_M114(self, _init_all_hardware_mock) -> ...:
+        """Test the M114 command."""
         self.assertTrue('M114' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -574,9 +620,9 @@ class TestMachineCommands(unittest.TestCase):
         self.assertNotEqual(msg, None)
         self.assertEqual(msg, {'X': 0, 'Y': 0, 'Z': 0, 'L': 0})
 
-    # Test M154
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_M154(self, _init_all_hardware_mock):
+    def test_M154(self, _init_all_hardware_mock) -> ...:
+        """Test the M154 command."""
         self.assertTrue('M154' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -594,9 +640,9 @@ class TestMachineCommands(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(msg, 1)
 
-    # Test M155
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
-    def test_M155(self, _init_all_hardware_mock):
+    def test_M155(self, _init_all_hardware_mock) -> ...:
+        """Test the M155 command."""
         self.assertTrue('M155' in ACCEPTED_COMMANDS)
         stack = StackingSetupBackend(self.to_main)
         stack.setup_backend(Settings())
@@ -616,74 +662,63 @@ class TestMachineCommands(unittest.TestCase):
 
 
 class TestSettings(unittest.TestCase):
+    """Test the Settings class."""
 
-    # Test initiating the class
-    def test_init(self):
-        settings = Settings()
-        
-        self.assertTrue(isinstance(settings._config, type(configparser.ConfigParser())))
+    def setUp(self) -> ...:
+        """Set up the test."""
+        self.settings = Settings()
 
-    # Test asking the attributes
-    def test_getattr(self):
-        settings = Settings()
-        accepted_commands = settings.accepted_commands
-        accepted_linear_axes = settings.accepted_linear_axes
-        accepted_rotational_axes = settings.accepted_rotational_axes
+    def test_getattr(self) -> ...:
+        """Test getting the attributes."""
+        accepted_commands = self.settings.accepted_commands
+        accepted_linear_axes = self.settings.accepted_linear_axes
+        accepted_rotational_axes = self.settings.accepted_rotational_axes
 
         self.assertEqual(accepted_commands, ACCEPTED_COMMANDS)
         self.assertEqual(accepted_linear_axes, ACCEPTED_LINEAR_AXES)
         self.assertEqual(accepted_rotational_axes, ACCEPTED_ROTATIONAL_AXES)
 
-    # Test setting an attribute
-    def test_setattr(self):
-        settings = Settings()
+    def test_setattr(self) -> ...:
+        """Test setting the attributes."""
         with self.assertRaises(AttributeError):
-            settings.accepted_commands = 'test'
+            self.settings.accepted_commands = 'test'
 
-    # Ask for existing key
-    def test_get_existing_key(self):
-        settings = Settings()
-        self.assertEqual(settings.get('PIA13.DEFAULT', 'steps_per_um'), 50)
+    def test_get_existing_key(self) -> ...:
+        """Test getting an existing key."""
+        self.assertEqual(self.settings.get('PIA13.DEFAULT', 'steps_per_um'), 50)
 
-    # Ask for non-existing key
-    def test_get_non_existing_key(self):
-        settings = Settings()
+    def test_get_non_existing_key(self) -> ...:
+        """Test getting a non-existing key."""
         with self.assertRaises(KeyError):
-            self.assertEqual(settings.get('PIA.Z', 'test'), None)
+            self.assertEqual(self.settings.get('PIA.Z', 'test'), None)
 
-    # Ask for existing key with default
-    def test_get_existing_key_with_default(self):
-        settings = Settings()
-        self.assertEqual(settings.get('SAMPLEHOLDER', 'max_vel'), 25e3)
+    def test_get_existing_key_with_default(self) -> ...:
+        """Test getting an existing key with a default value."""
+        self.assertEqual(self.settings.get('SAMPLEHOLDER', 'max_vel'), 25e3)
 
-    # Change a value
-    def test_set_existing_key(self):
-        settings = Settings()
-        settings.set('PIA13.Z', key='start_movement_mode', value='ABS')
-        self.assertEqual(settings.get('PIA13.Z', 'start_movement_mode'), 'ABS')
+    def test_set_existing_key(self) -> ...:
+        """Test setting an existing key."""
+        self.settings.set('PIA13.Z', key='start_movement_mode', value='ABS')
+        self.assertEqual(self.settings.get('PIA13.Z', 'start_movement_mode'), 'ABS')
 
-    # Change a value in a section that does not exist
-    def test_set_non_existing_key(self):
-        settings = Settings()
+    def test_set_non_existing_key(self) -> ...:
+        """Test setting a non-existing key."""
         with self.assertRaises(KeyError):
-            settings.set('PIA13.TEST', key='L', value=10)
+            self.settings.set('PIA13.TEST', key='L', value=10)
 
-    # Change a value in the default section
-    def test_set_existing_key_in_default(self):
-        settings = Settings()
+    def test_set_existing_key_in_default(self) -> ...:
+        """Test setting an existing key in the default section."""
         with self.assertRaises(KeyError):
-            settings.set('PIA13.DEFAULT', key='L', value=10)
+            self.settings.set('PIA13.DEFAULT', key='L', value=10)
 
-    # Test the save function
-    def test_save(self):
-        settings = Settings()
-        settings.set('PIA13.Z', key='l', value=1)
-        self.assertEqual(settings.get('PIA13.Z', 'l'), 1)
-        settings.save('test.ini')
+    def test_save(self) -> ...:
+        """Test saving the settings."""
+        self.settings.set('PIA13.Z', key='l', value=1)
+        self.assertEqual(self.settings.get('PIA13.Z', 'l'), 1)
+        self.settings.save('test.ini')
 
         # Check if the file exists
         self.assertTrue(os.path.isfile('.\\src\\stacking_setup\\components\\stacking_backend\\configs\\test.ini'))
-
         new_settings = Settings('test.ini')
 
         # Delete the file
@@ -692,8 +727,6 @@ class TestSettings(unittest.TestCase):
         # Check if the value is correct
         self.assertEqual(new_settings.get('PIA13.Z', 'l'), 1)
 
-
-        	
 
 if __name__ == '__main__':
     # Run all the tests in this file
