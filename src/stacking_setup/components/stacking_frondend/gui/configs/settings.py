@@ -4,6 +4,7 @@ from typing import Union
 from typeguard import typechecked
 import configparser
 from ast import literal_eval
+from typing import Tuple
 
 
 class Settings:
@@ -67,7 +68,8 @@ class Settings:
         self._known_units = literal_eval(config.get('BACKEND', 'known_units'))
 
         # Temp settings
-        self._max_temp = config.getfloat('WIDGET.TEMPERATURE', 'max_temp')	
+        self._max_temp = config.getfloat('WIDGET.TEMPERATURE', 'max_temp')
+        self._temp_presets = literal_eval(config.get('WIDGET.TEMPERATURE', 'temp_presets'))
 
         # Mask settings
         self._mask_vel_presets = literal_eval(config.get('WIDGET.MASK', 'vel_presets'))
@@ -189,7 +191,7 @@ class Settings:
 
     # SETTINGS FOR TEMPERATURE WIDGET
     @property
-    def temp_presets(self) -> list:
+    def temp_presets(self) -> Tuple[int]:
         """
         Get the temperature presets.
 
@@ -198,7 +200,7 @@ class Settings:
         list
             The temperature presets.
         """
-        return self._temp_preset
+        return self._temp_presets
 
     # SETTINGS FOR THE MASK WIDGET
     @property

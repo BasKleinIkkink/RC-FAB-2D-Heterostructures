@@ -12,26 +12,26 @@ if __name__ == '__main__':
 
     # Do some tests
     print('Is connected: {}'.format(controller.is_connected()))
-    controller.zero()
-    controller.start_jog('x', velocity=-400)
-    # controller.start_jog('y', velocity=400)
-    sleep(0.5)
-    controller.stop_jog()
-    print('Moving')
-    controller.move_to('X', 5000)
-    print('X position {}'.format(controller.get_position(axis='x')))
-    controller.move_by('X', 5000)
-    controller.move_to('Y', 5000)
-    print('Y position {}'.format(controller.get_position(axis='y')))
-    controller.move_by('Y', 5000)
-    controller.home()
-    #print('Current temp is {}'.format(controller.temperature))
-    #print('old target temp is {}'.format(controller.target_temperature))
-    #controller.target_temperature = 65
-    #print('Current target temp is {}'.format(controller.target_temperature))
-    #sleep(10)
-    #print('Current temp is {}'.format(controller.temperature))
-    #controller.target_temperature = 20
+    # controller.zero()
+    # controller.start_jog('x', velocity=-400)
+    # # controller.start_jog('y', velocity=400)
+    # sleep(0.5)
+    # controller.stop_jog()
+    # print('Moving')
+    # controller.move_to('X', 5000)
+    # print('X position {}'.format(controller.get_position(axis='x')))
+    # controller.move_by('X', 5000)
+    # controller.move_to('Y', 5000)
+    # print('Y position {}'.format(controller.get_position(axis='y')))
+    # controller.move_by('Y', 5000)
+    # controller.home()
+    print('Current temp is {}'.format(controller.temperature))
+    print('old target temp is {}'.format(controller.target_temperature))
+    controller.target_temperature = 65
+    print('Current target temp is {}'.format(controller.target_temperature))
+    sleep(10)
+    print('Current temp is {}'.format(controller.temperature))
+    controller.target_temperature = 20
 
     controller.disconnect()
     

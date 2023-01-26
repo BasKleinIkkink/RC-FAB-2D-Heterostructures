@@ -20,11 +20,9 @@ import random
 
 
 class TemperatureWidget(QGroupBox):
-    name = "Temperature Dock"
-    # min_size = QSize(450, 450)
-    # max_size = QSize(500, 450)
-    min_size = QSize(450, 200)
-    max_size = QSize(450, 200)
+    name = "Temperature Widget"
+    min_size = QSize(500, 200)
+    max_size = QSize(500, 200)
 
     def __init__(self, settings, q, parent=None):
         """
@@ -61,15 +59,15 @@ class TemperatureWidget(QGroupBox):
         self.mainVerticalLayout.addWidget(self._create_temp_params())
         self.mainFrame = self
 
-        # Add another divider
-        self.controlDiv = QFrame(self)
-        self.controlDiv.setFrameShape(QFrame.HLine)
-        self.controlDiv.setFrameShadow(QFrame.Sunken)
-        self.mainVerticalLayout.addWidget(self.controlDiv)
+        # # Add another divider
+        # self.controlDiv = QFrame(self)
+        # self.controlDiv.setFrameShape(QFrame.HLine)
+        # self.controlDiv.setFrameShadow(QFrame.Sunken)
+        # self.mainVerticalLayout.addWidget(self.controlDiv)
 
         # self.mainVerticalLayout.addWidget(self._create_custom_ramping())
 
-        self.add_temp_presets()
+        self.add_temp_presets(self.settings.temp_presets)
 
     def _create_save_and_reset(self):
         pass
@@ -166,7 +164,7 @@ class TemperatureWidget(QGroupBox):
     def add_temp_presets(self, presets=["0 °C", "50 °C", "100 °C", "150 °C", "200 °C"]):
         """Add the temperature presets to the combo box."""
         for i in presets:
-            self.tempPresetCombo.addItem(i)
+            self.tempPresetCombo.addItem(str(i))
 
     def connect_actions(self, menubar, toolbar):
         """
@@ -212,6 +210,8 @@ class TemperatureWidget(QGroupBox):
 
     def update_temperature(self, temp):
         """Update the current temperature of the indicator."""
+        if 'L' not in temp.keys():
+            return
         self.currentTempDisp.display(temp['L'])
 
     def estop(self, state=False):

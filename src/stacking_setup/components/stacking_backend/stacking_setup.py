@@ -193,6 +193,9 @@ class StackingSetupBackend:
                                         base_controller=self._base_controller,  
                                         em_event=self._emergency_stop_event, settings=settings))
 
+            if self._settings.get('BASE.H', 'enabled'):
+                
+
         # Initiate the focus stage
         if self._settings.get('TANGODESKTOP.K', 'enabled'):
             _hardware.append(TangoDesktop(id='K', em_event=self._emergency_stop_event, 
@@ -664,9 +667,7 @@ class StackingSetupBackend:
         temperatures = {}
         for axis in self._hardware:
             try:
-                part_temp = {'current' : axis.temperature,
-                             'target' : axis.target_temperature}
-                temperatures[axis.id] = part_temp
+                temperatures[axis.id] = axis.temperature
             except NotSupportedError:
                 self._logger.debug('Temperature not supported for axis {}'.format(axis.id))
         
@@ -843,7 +844,7 @@ class StackingSetupBackend:
 
     def _auto_position_report(self) -> ...:
         """Send a position update to the host. (support function for M154)"""
-        if not self._shutdown and not self._emergency_stop_event.is_set() and \
+        if not self._shutdown.is_set() and not self._emergency_stop_event.is_set() and \
                 self._con_to_main.is_connected:
             exit_code, positions = self.M114()
             if exit_code == 0:
@@ -906,7 +907,7 @@ class StackingSetupBackend:
 
     def _auto_temperature_report(self) -> ...:
         """Send a position update to the host. (support function for M154)"""
-        if not self._shutdown and not self._emergency_stop_event.is_set() and \
+        if not self._shutdown.is_set() and not self._emergency_stop_event.is_set() and \
                 self._con_to_main.is_connected:
             exit_code, temps = self.M105()
             if exit_code == 0:

@@ -5,6 +5,7 @@ from ..configs.settings import Settings
 import time
 import threading as tr
 import multiprocessing as mp
+from .base import NotSupportedError
 
 try:
     from .base import Base, HardwareNotConnectedError
@@ -116,14 +117,15 @@ class TangoDesktop(Base):
     @property
     def position(self) -> Union[float, int]:
         """Get the current position in um from 0."""
-        self._lock.acquire()
-        pos = float(
-            self._send_and_receive(
-                "?pos z", expect_response=True, expect_confirmation=False
-            )
-        )
-        self._lock.release()
-        return pos
+        raise NotSupportedError()
+        # self._lock.acquire()
+        # pos = float(
+        #     self._send_and_receive(
+        #         "?pos z", expect_response=True, expect_confirmation=False
+        #     )
+        # )
+        # self._lock.release()
+        # return pos
 
     @property
     def speed(self) -> Union[float, int]:

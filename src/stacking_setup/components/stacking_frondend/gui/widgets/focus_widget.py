@@ -48,13 +48,6 @@ class FocusWidget(QGroupBox):
         # Add the position display widget and params in a vertical layout
         frame = QFrame()
         vertLayout = QVBoxLayout(frame)
-        vertLayout.addWidget(self._create_position_display_widget())
-
-        # Add a horizontal divider
-        self.controlDiv = QFrame(frame)
-        self.controlDiv.setFrameShape(QFrame.HLine)
-        self.controlDiv.setFrameShadow(QFrame.Sunken)
-        vertLayout.addWidget(self.controlDiv)
 
         # Add the params
         vertLayout.addWidget(self._create_move_preset_widget())

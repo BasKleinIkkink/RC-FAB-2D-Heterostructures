@@ -61,13 +61,11 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         """Close the main window."""
         self._stop_event_handeler()
-        # self._q.join()
         self._connector.send_sentinel()
         self.close()
 
     def set_toolbar(self):
         """Add the toolbar and the options to it."""
-        # Add the toolbar
         self.toolBar = QToolBar(self)
         self.addToolBar(Qt.LeftToolBarArea, self.toolBar)
         self.toolBar.addAction("Home all", self._home_all)

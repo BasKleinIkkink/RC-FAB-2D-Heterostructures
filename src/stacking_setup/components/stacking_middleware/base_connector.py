@@ -80,7 +80,7 @@ class BaseConnector:
     def handshake(self):
         # Depending on the role of the connector decide
         # what to send and what to receive
-        if self._role == "FRONDEND":
+        if self._role == "FRONTEND":
             self._frondend_handshake()
             self._handshake_complete = True
 

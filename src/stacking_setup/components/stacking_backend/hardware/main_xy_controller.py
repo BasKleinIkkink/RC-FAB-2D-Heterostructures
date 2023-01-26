@@ -212,7 +212,7 @@ class MainXYController:
         self._lock.acquire()
         res = self._send_and_receive("l", expect_response=True)
         self._lock.release()
-        return float(res[3].decode()) / 10
+        return float(res[3].decode()) / 100
 
     @target_temperature.setter
     def target_temperature(self, temperature: Union[float, int]) -> ...:
@@ -249,6 +249,8 @@ class MainXYController:
 
         # Enter run mode so the controller can be used
         self._send_and_receive("n", expect_confirmation=True)
+
+        # Set the velocity to max to make zero faster
         self._send_and_receive("ssx25600")
         self._send_and_receive("ssy25600")
         self._is_connected = True
