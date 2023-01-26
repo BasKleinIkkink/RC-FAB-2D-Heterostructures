@@ -75,7 +75,6 @@ class TangoDesktop(Base):
         self._timeout = settings.get(self._type + ".DEFAULT", "timeout")
         self._serial_nr = settings.get(self._type + ".DEFAULT", "serial_nr")
         self._max_speed = settings.get(self._type + "." + self._id, "max_vel")
-        self._max_acceleration = settings.get(self._type + "." + self._id, "max_acc")
         self._current_speed = None  # Only used for jogging
 
         if self._controller is None:
@@ -118,14 +117,14 @@ class TangoDesktop(Base):
     def position(self) -> Union[float, int]:
         """Get the current position in um from 0."""
         raise NotSupportedError()
-        # self._lock.acquire()
-        # pos = float(
-        #     self._send_and_receive(
-        #         "?pos z", expect_response=True, expect_confirmation=False
-        #     )
-        # )
-        # self._lock.release()
-        # return pos
+        self._lock.acquire()
+        pos = float(
+            self._send_and_receive(
+                "?pos z", expect_response=True, expect_confirmation=False
+            )
+        )
+        self._lock.release()
+        return pos
 
     @property
     def speed(self) -> Union[float, int]:
@@ -167,9 +166,6 @@ class TangoDesktop(Base):
         self._current_speed = speed  # Only used for jogging
         self._lock.release()
 
-        print("Speed set to {} um/s".format(speed))
-        self.acceleration = speed * 2
-
     @property
     def acceleration(self) -> Union[float, int]:
         """Get the acceleration of the tango desktop (um/s^2)."""
@@ -185,29 +181,6 @@ class TangoDesktop(Base):
         )
         self._lock.release()
         return acc
-
-    @acceleration.setter
-    def acceleration(self, acceleration: Union[float, int]) -> ...:
-        """
-        Set the acceleration of the tango desktop.
-
-        .. note::
-            Because consistency was not a priority when writing the tango desktop
-            command set the acceleration is set in m/s^2 instead of um/s^2.
-        """
-        if self._em_event.is_set():
-            return None  # Do nothing to give other classes a chance to stop
-
-        if acceleration > self._max_acceleration:
-            acceleration = self._max_acceleration
-        acceleration /= 10e3
-        self._lock.acquire()
-        self._send_and_receive(
-            "!accel z {}".format(acceleration),
-            expect_confirmation=False,
-            expect_response=False,
-        )
-        self._lock.release()
 
     # CONNECTION FUNCTIONS
     def _message_waiting(self) -> bool:
@@ -444,7 +417,6 @@ class TangoDesktop(Base):
         Home the tango desktop.
 
         .. warning::
-
             This function assumes that there is only one snapshot position saved on the tango desktop.
             otherwise it will move to the first snapshot position in the snapshot array.
 

@@ -125,7 +125,6 @@ class KIM101:
         self,
         channel: int,
         velocity: Union[float, int, None] = None,
-        acceleration: Union[float, int, None] = None,
     ) -> ...:
         """
         Set the jog paramters of the piezo.
@@ -139,16 +138,12 @@ class KIM101:
         ----------
         velocity : float, int, None
             The velocity of the piezo in steps/s. If None, the velocity is not changed.
-        acceleration : float, int, None
-            The acceleration of the piezo in steps/s^2. If None, the acceleration is not changed.
         """
         if velocity is not None:
             velocity = int(round(velocity, 0))
-        if acceleration is not None:
-            acceleration = int(round(acceleration, 0))
         self._lock.acquire()
         self._controller.setup_jog(
-            velocity=velocity, acceleration=velocity, channel=channel
+            velocity=velocity, acceleration=10000, channel=channel
         )
         self._lock.release()
 
@@ -174,7 +169,6 @@ class KIM101:
         channel: int,
         max_voltage: Union[float, int, None] = None,
         velocity: Union[float, int, None] = None,
-        acceleration: Union[float, int, None] = None,
     ) -> ...:
         """
         Set the drive parameters of the piezo.
@@ -191,18 +185,14 @@ class KIM101:
             The maximum voltage of the piezo in V. If None, the max voltage is not changed.
         velocity : float, int, None
             The velocity of the piezo in steps/s. If None, the velocity is not changed.
-        acceleration : float, int, None
-            The acceleration of the piezo in steps/s^2. If None, the acceleration is not changed.
         """
         if velocity is not None:
             velocity = int(round(velocity, 0))
-        if acceleration is not None:
-            acceleration = int(round(acceleration, 0))
         self._lock.acquire()
         self._controller.setup_drive(
             max_voltage=max_voltage,
             velocity=velocity,
-            acceleration=acceleration,
+            acceleration=10000,
             channel=channel,
         )
         self._lock.release()

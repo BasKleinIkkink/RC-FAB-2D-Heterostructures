@@ -3,6 +3,7 @@ from ..configs.settings import Settings
 from .base import Base
 from typing import Union
 import multiprocessing as mp
+import threading as tr
 
 
 class BaseStepper(Base):
@@ -17,10 +18,8 @@ class BaseStepper(Base):
         self._em_event = em_event
 
         self._max_speed = settings.get(self._type + "." + self._id, "max_vel")
-        self._max_acceleration = settings.get(self._type + "." + self._id, "max_acc")
         self._steps_per_um = settings.get(self._type + "." + self._id, "steps_per_um")
-
-        self.acceleration = self._max_acceleration
+        self._lock = tr.Lock()
 
     # Attributes
     @property
@@ -59,19 +58,6 @@ class BaseStepper(Base):
         self._lock.release()
         return res
 
-    @acceleration.setter
-    def acceleration(self, acceleration) -> ...:
-        """Set the acceleration of the hardware."""
-        if acceleration > self._max_acceleration:
-            acceleration = self._max_acceleration
-        acceleration = self._convert_to_steps(acceleration)
-
-        self._lock.acquire()
-        # Set acceletration and deceleration to the same value
-        self._controller._send_and_receive("sa{}".format(acceleration))
-        self._controller._send_and_receive("sd{}".format(acceleration))
-        self._lock.release()
-
     # CONNECTION METHODS
     def connect(self) -> ...:
         """Connect the stepper."""
@@ -86,6 +72,12 @@ class BaseStepper(Base):
         self._lock.release()
 
     # METHODS
+    def home(self):
+        """Home the stepper."""
+        self._lock.acquire()
+        self._controller.home()
+        self._lock.release()
+
     def move_by(self, distance: float) -> ...:
         """Move the stepper by a certain distance."""
         distance = self._convert_to_steps(distance)

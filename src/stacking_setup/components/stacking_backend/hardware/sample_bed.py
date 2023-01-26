@@ -50,9 +50,6 @@ class SampleBed(Base):
             self._type + "." + self._id, "max_temperature"
         )
         self._max_speed = self._settings.get(self._type + "." + self._id, "max_vel")
-        self._max_acceleration = self._settings.get(
-            self._type + "." + self._id, "max_acc"
-        )
 
     # ATTRIBUTES
     @property
@@ -94,8 +91,6 @@ class SampleBed(Base):
         self._motor_controller.setup_jog(velocity=speed)
         self._lock.release()
 
-        self.acceleration = speed * 4 * 10e3
-
     @property
     def acceleration(self) -> Union[float, int]:
         """Get the acceleration of the motor (mdeg/s^2)."""
@@ -103,19 +98,6 @@ class SampleBed(Base):
         acceleration = self._motor_controller.get_drive_parameters()[0]
         self._lock.release()
         return acceleration * 10e3
-
-    @acceleration.setter
-    def acceleration(self, acceleration: Union[float, int]) -> None:
-        """Set the acceleration of the motor (mdeg/s^2)."""
-        if self._em_event.is_set():
-            return
-        if acceleration > self._max_acceleration:
-            acceleration = self._max_acceleration
-        # acceleration /= 10e3
-        self._lock.acquire()
-        self._motor_controller.setup_drive(acceleration=25)
-        self._motor_controller.setup_jog(acceleration=25)
-        self._lock.release()
 
     @property
     def temperature(self) -> float:
@@ -264,9 +246,7 @@ class SampleBed(Base):
         """
         if self._em_event.is_set():
             return None
-        self._lock.acquire()
         self._motor_controller.home(hold_until_done=hold_until_done)
-        self._lock.release()
 
     def rotate_to(
         self,

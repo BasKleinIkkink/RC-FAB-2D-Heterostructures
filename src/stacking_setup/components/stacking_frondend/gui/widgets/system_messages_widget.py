@@ -31,7 +31,7 @@ FIXED_STRING = 2
 class SystemMessageWidget(QWidget):
     name = "System Messages"
     commands_to_ignore = ["M114", "M154", "M155"]
-    min_size = QSize(700, 1000)
+    min_size = QSize(700, 500)
 
     def __init__(self, settings, parent=None):
         """

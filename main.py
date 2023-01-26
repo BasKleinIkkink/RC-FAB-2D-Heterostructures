@@ -6,8 +6,8 @@ from multiprocessing import Pipe  # Only needed for the pipe connection
 from src.stacking_setup.components.stacking_middleware.pipeline_connection import PipelineConnection as Connection
 
 # Import the ui
-from src.stacking_setup.components.stacking_frondend.gui.main import main as ui_main
-#from src.stacking_setup.components.stacking_frondend.tui.main import main as ui_main
+# from src.stacking_setup.components.stacking_frondend.gui.main import main as ui_main
+from src.stacking_setup.components.stacking_frondend.tui.main import main as ui_main
 
 
 if __name__ == '__main__':

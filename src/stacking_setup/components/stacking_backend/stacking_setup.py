@@ -194,11 +194,11 @@ class StackingSetupBackend:
                                         base_controller=self._base_controller,  
                                         em_event=self._emergency_stop_event, settings=settings))
 
-            if self._settings.get('BASE.H', 'enabled'):
+            if self._settings.get('BASESTEPPER.H', 'enabled'):
                 _hardware.append(BaseStepper(id='H', controller=self._base_controller,
                                         em_event=self._emergency_stop_event, settings=settings))
 
-            if self._settings.get('BASE.J', 'enabled'):
+            if self._settings.get('BASESTEPPER.J', 'enabled'):
                 _hardware.append(BaseStepper(id='J', controller=self._base_controller,
                                         em_event=self._emergency_stop_event, settings=settings))
                 

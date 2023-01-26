@@ -44,6 +44,7 @@ class MainXYController:
         self._homed = False
         self._zeroed = False
         self._vacuum_state = False
+        self._ser = None
 
     # COMMUNICATION
     def _send_and_receive(
@@ -103,29 +104,29 @@ class MainXYController:
                 # Check if a confirmation is expected
                 time.sleep(0.001)
 
-                if expect_confirmation or expect_response:
-                    if self._ser.in_waiting > 0:
-                        data_resp = self._ser.readlines()
-                        for i in range(len(data_resp)):
-                            data_resp[i] = data_resp[i].strip()
+                if self._ser.in_waiting > 0:
+                    data_resp = self._ser.readlines()
+                    for i in range(len(data_resp)):
+                        data_resp[i] = data_resp[i].strip()
 
-                        to_remove = []
-                        for cnt, i in enumerate(data_resp):
-                            if i == b"":
-                                to_remove.append(cnt)
-                        for i in to_remove[::-1]:
-                            data_resp.pop(i)
+                    to_remove = []
+                    # Remove empty lines
+                    for cnt, i in enumerate(data_resp):
+                        if i == b"":
+                            to_remove.append(cnt)
+                    for i in to_remove[::-1]:
+                        data_resp.pop(i)
 
-                        if expect_confirmation and not data_resp[0][-2:] == b"OK":
-                            raise ValueError(
-                                "Received an unexpected confirmation {}".format(
-                                    data_resp
-                                )
+                    if expect_confirmation and not data_resp[0][-2:] == b"OK":
+                        raise ValueError(
+                            "Received an unexpected confirmation {}".format(
+                                data_resp
                             )
-                        if not expect_response:
-                            return
-                        else:
-                            return data_resp[1:]  # Leave out the confirmation
+                        )
+                    if not expect_response:
+                        return
+                    else:
+                        return data_resp[1:]  # Leave out the confirmation
 
             if not got_response:
                 # Waiting for response timed out
@@ -230,7 +231,7 @@ class MainXYController:
     # CONNECTION FUNCTIONS
     def connect(self, zero: bool = True) -> ...:
         """Connect the hardware."""
-        if self._connected:
+        if self._is_connected:
             return
         self._lock.acquire()
         # time.sleep(0.1)
@@ -255,6 +256,8 @@ class MainXYController:
         # Set the velocity to max to make zero faster
         self._send_and_receive("ssx25600")
         self._send_and_receive("ssy25600")
+        self._send_and_receive('sa200')
+        self._send_and_receive('sd200')
         self._is_connected = True
         
         self._lock.release()
@@ -298,23 +301,18 @@ class MainXYController:
                 return True
             else:
                 return False
-        if axis.lower() not in ["x", "y", "z"]:
+        if axis.lower() not in ["j", "h"]:
             raise HardwareError(
                 "Unknown axis {}, could not determine if moving".format(axis)
             )
         else:
-            if axis.lower() == "x":
+            if axis.lower() == "h":
                 if res[15] == b"1":
                     return True
                 else:
                     return False
-            elif axis.lower() == "y":
+            elif axis.lower() == "j":
                 if res[31] == b"1":
-                    return True
-                else:
-                    return False
-            elif axis.lower() == "z":
-                if res[47] == b"1":
                     return True
                 else:
                     return False
@@ -398,9 +396,9 @@ class MainXYController:
         res2 = self._send_and_receive("gpy", expect_response=True)[0]
         self._lock.release()
 
-        if axis.lower() == "x":
+        if axis.lower() == "h":
             return int(res1)
-        elif axis.lower() == "y":
+        elif axis.lower() == "j":
             return int(res2)
         else:
             return int(res1), int(res2)
@@ -424,7 +422,8 @@ class MainXYController:
         if self._em_event.is_set():
             return
         self._lock.acquire()
-        self._send_and_receive("sv{}{}".format(axis, velocity))
+        # Jogging gives a different confirmation than other commands
+        self._send_and_receive("sv{}{}".format(axis, int(velocity)), expect_confirmation=False, expect_response=False)
         self._lock.release()
 
     def stop_jog(self, axis: Union[None, str] = None) -> ...:
@@ -439,9 +438,9 @@ class MainXYController:
         self._lock.acquire()
         if axis is None:
             self._send_and_receive("x")
-        elif axis.lower() == "x":
+        elif axis.lower() == "h":
             self._send_and_receive("svx0")
-        elif axis.lower() == "y":
+        elif axis.lower() == "j":
             self._send_and_receive("svy0")
 
         self._lock.release()
@@ -460,7 +459,7 @@ class MainXYController:
         if self._em_event.is_set():
             return
         self._lock.acquire()
-        self._send_and_receive("sp{}{}".format(id.lower(), position))
+        self._send_and_receive("sp{}{}".format(id.lower(), position), erxpect_confirmation=False)
         self._lock.release()
 
     def move_by(self, id: str, distance: Union[float, int]) -> ...:
@@ -476,7 +475,7 @@ class MainXYController:
         """
         pos = self.get_position(id)
         self._lock.acquire()
-        self._send_and_receive("sp{}{}".format(id.lower(), pos + distance))
+        self._send_and_receive("sp{}{}".format(id.lower(), pos + distance), expect_confirmation=False)
         self._lock.release()
 
     def stop(self) -> ...:

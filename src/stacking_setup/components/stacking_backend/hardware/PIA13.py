@@ -86,9 +86,9 @@ class PIA13(Base):
     def speed(self) -> Union[float, int]:
         """Get the speed of the hardware."""
         self._lock.acquire()
-        drive = self._hardware_controller.get_drive_parameters(self._channel)
+        drive = self._hardware_controller.get_drive_parameters()
         self._lock.release()
-        return drive[3]
+        return drive['vel']
 
     @speed.setter
     def speed(self, speed: Union[float, int]) -> ...:
@@ -111,9 +111,6 @@ class PIA13(Base):
         self._hardware_controller.setup_jog(channel=self._channel, velocity=speed)
         self._lock.release()
 
-        # Also change the acceleration
-        self.acceleration = speed * 4 / self._steps_per_um
-
     @property
     def acceleration(self) -> float:
         """
@@ -125,32 +122,9 @@ class PIA13(Base):
             The acceleration of the hardware.
         """
         self._lock.acquire()
-        drive = self._hardware_controller.get_drive_parameters(self._channel)
+        drive = self._hardware_controller.get_drive_parameters()
         self._lock.release()
-        return drive[4]
-
-    @acceleration.setter
-    def acceleration(self, acceleration: Union[float, int]) -> ...:
-        """
-        Set the acceleration of the hardware.
-
-        Parameters
-        ----------
-        acceleration: float or int
-            The acceleration to set the hardware to.
-        """
-        # First convert to steps/s^2
-        if acceleration > self._max_acceleration:
-            acceleration = self._max_acceleration
-        acceleration *= self._steps_per_um
-        self._lock.acquire()
-        self._hardware_controller.setup_drive(
-            channel=self._channel, acceleration=acceleration
-        )
-        self._hardware_controller.setup_jog(
-            channel=self._channel, acceleration=acceleration
-        )
-        self._lock.release()
+        return drive['acc']
 
     # CONNECTION FUNCTIONS
     def connect(self) -> ...:
@@ -211,6 +185,19 @@ class PIA13(Base):
         return status
 
     # MOVEMENT FUNCTIONS
+    def home(self) -> ...:
+        """
+        Home the hardware.
+        
+        Does not actually home but returns to the 0 position
+        """
+        cur_speed = self.speed
+        self.speed = self._max_speed
+        self._lock.acquire()
+        self._hardware_controller.move_to(self._channel, 0)
+        self._lock.release()
+        self.speed = cur_speed
+
     def start_jog(self, direction: str) -> ...:
         """
         Start a jog.

@@ -231,7 +231,6 @@ class KDC101:
     def setup_drive(
         self,
         velocity: Union[float, int] = None,
-        acceleration: Union[float, int] = None,
         scale: bool = True,
     ) -> ...:
         """
@@ -248,7 +247,7 @@ class KDC101:
         """
         self._lock.acquire()
         self._controller.setup_velocity(
-            max_velocity=velocity, acceleration=acceleration, scale=scale
+            max_velocity=velocity, acceleration=25, scale=scale
         )
         self._lock.release()
 
@@ -276,7 +275,6 @@ class KDC101:
     def setup_jog(
         self,
         velocity: Union[float, int, None] = None,
-        acceleration: Union[float, int, None] = None,
         scale: bool = True,
     ) -> ...:
         """
@@ -293,7 +291,7 @@ class KDC101:
         """
         self._lock.acquire()
         self._controller.setup_jog(
-            max_velocity=velocity, acceleration=acceleration, scale=scale
+            max_velocity=velocity, acceleration=25, scale=scale
         )
         self._lock.release()
 

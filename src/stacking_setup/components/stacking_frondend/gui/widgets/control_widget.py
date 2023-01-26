@@ -708,23 +708,23 @@ class BaseControlWidget(ControlWidget):
         )
         self.moveUp.pressed.connect(
             lambda: self.q.put(
-                "M811 K1"
+                "M811 H1"
                 if self.jogModeButton.isChecked()
-                else self.q.put("G0 K{}".format(self.driveScale))
+                else self.q.put("G0 H{}".format(self.driveScale))
             )
         )
         self.moveUp.released.connect(
-            lambda: self.q.put("M811 K0") if self.jogModeButton.isChecked() else None
+            lambda: self.q.put("M811 H0") if self.jogModeButton.isChecked() else None
         )
         self.moveDown.pressed.connect(
             lambda: self.q.put(
-                "M811 K-1"
+                "M811 H-1"
                 if self.jogModeButton.isChecked()
-                else self.q.put("G0 K-{}".format(self.driveScale))
+                else self.q.put("G0 H-{}".format(self.driveScale))
             )
         )
         self.moveDown.released.connect(
-            lambda: self.q.put("M811 K0") if self.jogModeButton.isChecked() else None
+            lambda: self.q.put("M811 H0") if self.jogModeButton.isChecked() else None
         )
         self.lockMoveButton.clicked.connect(self._lock_movement)
 
@@ -793,9 +793,9 @@ class BaseControlWidget(ControlWidget):
     def update_positions(self, dict):
         """Update the position labels."""
         if "H" in dict:
-            self.xPosDisplay.display(dict["H"])
+            self.xPosDisplay.display(str(dict["H"]))
         if "J" in dict:
-            self.yPosLabel.setText(dict["J"])
+            self.yPosDisplay.display(str(dict["J"]))
 
     def estop(self, state=False):
         """Disable all the buttons."""
