@@ -86,8 +86,6 @@ class MainXYController:
             raise HardwareNotConnectedError(
                 "The Base stage controller is not connected."
             )
-        # elif self._em_event.is_set():
-        #     return None  # Do nothing to give other classes a chance to stop the emergency stop
 
         if "\r\n" not in command:
             command = command.strip()
@@ -97,7 +95,6 @@ class MainXYController:
         self._ser.write(command.encode())  # Send the command
 
         got_response = False
-
         if expect_confirmation or expect_response:
             etime = time.time() + self._timeout
             while time.time() < etime and not got_response:
@@ -117,6 +114,8 @@ class MainXYController:
                     for i in to_remove[::-1]:
                         data_resp.pop(i)
 
+                    if len(data_resp) == 0:
+                        continue
                     if expect_confirmation and not data_resp[0][-2:] == b"OK":
                         raise ValueError(
                             "Received an unexpected confirmation {}".format(
@@ -268,7 +267,7 @@ class MainXYController:
         """Disconnect the hardware."""
         if not self._is_connected:
             return
-        self._send_and_receive("p", expect_confirmation=True)
+        self._send_and_receive("p")
         self._ser.close()
         self._is_connected = False
 
@@ -323,18 +322,17 @@ class MainXYController:
         Zero the connected stepper motors.
 
         .. note::
-            The axis will be homed seperately, first the x-axis and then the y-axis.
-            The stepper will move to home switch -> range_switxh -> home_switch.
+            The axis will be homed separately, first the x-axis and then the y-axis.
 
         Raises
         ------
         HardwareError
-            If the stepper motors do not succesfully zero.
+            If the stepper motors do not successfully zero.
         """
         if self._em_event.is_set():
             return
         self._lock.acquire()
-        self._send_and_receive("z", expect_confirmation=True)
+        self._send_and_receive("z")
 
         # Wait for the homing to finish
         x_homed = False
@@ -423,7 +421,7 @@ class MainXYController:
             return
         self._lock.acquire()
         # Jogging gives a different confirmation than other commands
-        self._send_and_receive("sv{}{}".format(axis, int(velocity)), expect_confirmation=False, expect_response=False)
+        _ = self._send_and_receive("sv{}{}".format(axis, int(velocity)), expect_response=True)
         self._lock.release()
 
     def stop_jog(self, axis: Union[None, str] = None) -> ...:
@@ -439,10 +437,9 @@ class MainXYController:
         if axis is None:
             self._send_and_receive("x")
         elif axis.lower() == "h":
-            self._send_and_receive("svx0")
+            _ = self._send_and_receive("svx0", expect_response=True)
         elif axis.lower() == "j":
-            self._send_and_receive("svy0")
-
+            _ = self._send_and_receive("svy0", expect_response=True)
         self._lock.release()
 
     def move_to(self, id: str, position: Union[float, int]) -> ...:
@@ -459,7 +456,7 @@ class MainXYController:
         if self._em_event.is_set():
             return
         self._lock.acquire()
-        self._send_and_receive("sp{}{}".format(id.lower(), position), erxpect_confirmation=False)
+        self._send_and_receive("sp{}{}".format(id.lower(), position))
         self._lock.release()
 
     def move_by(self, id: str, distance: Union[float, int]) -> ...:
@@ -475,7 +472,7 @@ class MainXYController:
         """
         pos = self.get_position(id)
         self._lock.acquire()
-        self._send_and_receive("sp{}{}".format(id.lower(), pos + distance), expect_confirmation=False)
+        self._send_and_receive("sp{}{}".format(id.lower(), pos + distance))
         self._lock.release()
 
     def stop(self) -> ...:

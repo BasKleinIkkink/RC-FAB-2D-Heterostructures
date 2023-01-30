@@ -673,7 +673,8 @@ class StackingSetupBackend:
         temperatures = {}
         for axis in self._hardware:
             try:
-                temperatures[axis.id] = axis.temperature
+                temperatures[axis.id] = {'current' : axis.temperature,
+                                        'target' : axis.target_temperature}
             except NotSupportedError:
                 self._logger.debug('Temperature not supported for axis {}'.format(axis.id))
         

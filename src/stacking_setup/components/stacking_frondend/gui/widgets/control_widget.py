@@ -22,9 +22,13 @@ class ControlWidget(QGroupBox):
     min_size = QSize(430, 380)
     max_size = min_size
 
-    def __init__(self, settings, q, parent=None):
+    def __init__(self, settings, q, parent=None) -> ...:
         """
-        Initialize the control dock widget.
+        Initialize the control widget.
+
+        .. attention::
+            This widget is not meant to be used directly. It is used by the
+            :class:`BaseControlWidget` and :class:`MaskControlWidget` classes.
 
         Parameters
         ----------
@@ -72,7 +76,7 @@ class ControlWidget(QGroupBox):
         self.mainVerticalLayout = mainVerticalLayout
         self.mainFrame = self
 
-    def add_vel_presets(self, presets=["50 um/s", "500 um/s", "1000 um/s"]):
+    def add_vel_presets(self, presets) -> ...:
         """
         Add velocity presets to the velocity preset combo box
 
@@ -80,7 +84,7 @@ class ControlWidget(QGroupBox):
         ----------
         presets : list
             List of velocity presets to add to the combo box. Each entry has to
-            follow the following syntax: <value> <unit> (seperated by a space).
+            follow the following syntax: <value> <unit> (separated by a space).
         """
         for preset in presets:
             self.movePresetCombo.addItem(preset)
@@ -96,13 +100,7 @@ class ControlWidget(QGroupBox):
         self.velocitySlider.setValue(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
 
-    def add_drive_step_presets(
-        self,
-        presets=[
-            "1 um",
-            "500 nm",
-        ],
-    ):
+    def add_drive_step_presets(self, presets) -> ...:
         """
         Add drive step presets to the drive step combo box
 
@@ -110,7 +108,7 @@ class ControlWidget(QGroupBox):
         ----------
         presets : list
             List of drive step presets to add to the combo box. Each entry has to
-            follow the following syntax: <value> <unit> (seperated by a space).
+            follow the following syntax: <value> <unit> (separated by a space).
         """
         for preset in presets:
             self.driveStepCombo.addItem(preset)
@@ -121,8 +119,12 @@ class ControlWidget(QGroupBox):
         self.driveUnit = new_scale.split(" ")[1]
         self.driveScale *= self.setting.known_units[self.driveUnit]
 
-    def _create_move_buttons_widget(self):
-        """Create the move buttons widget."""
+    def _create_move_buttons_widget(self) -> QFrame:
+        """
+        Create the move buttons widget.
+        
+        This widget contains the up, down, left, right and lock buttons.
+        """
         # Create the move buttons
         arrowFrame = QFrame()
         arrowFrame.setMinimumSize(QSize(220, 220))
@@ -214,8 +216,12 @@ class ControlWidget(QGroupBox):
         self.arrowGrid = grid_layout
         return arrowFrame
 
-    def _create_move_mode_buttons(self):
-        """Create the move mode buttons widget."""
+    def _create_move_mode_buttons(self) -> QFrame:
+        """
+        Create the move mode buttons widget.
+        
+        The move mode buttons are the jog and drive buttons
+        """
         # Add the drive and jog move mode frame and layout
         moveModeFrame = QFrame()
         moveModeFrame.setMinimumSize(QSize(80, 200))
@@ -238,7 +244,7 @@ class ControlWidget(QGroupBox):
 
         return moveModeFrame
 
-    def _create_position_display_widget(self):
+    def _create_position_display_widget(self) -> QFrame:
         """Create the position display widget."""
         # Add the position display frame and layout
         positionDisplayFrame = QFrame()
@@ -269,7 +275,7 @@ class ControlWidget(QGroupBox):
         self.positionDisplayGrid = gridLayout
         return positionDisplayFrame
 
-    def _create_move_preset_widget(self):
+    def _create_move_preset_widget(self) -> QFrame:
         """Create the move preset widget."""
         ## Create the parameters frame and layout
         moveParamFrame = QFrame()
@@ -327,7 +333,7 @@ class MaskControlWidget(ControlWidget):
     max_size = QSize(430, 450)
     min_size = max_size
 
-    def __init__(self, settings, q, parent=None):
+    def __init__(self, settings, q, parent=None) -> ...:
         """Create the mask control widget."""
         super().__init__(settings, q, parent)
         self._add_extra_buttons()
@@ -346,8 +352,12 @@ class MaskControlWidget(ControlWidget):
 
         self.mainVerticalLayout.addWidget(self._create_vacuum_settings())
 
-    def _add_extra_buttons(self):
-        """Add the extra buttons to the widget."""
+    def _add_extra_buttons(self) -> ...:
+        """
+        Add the extra buttons to the widget.
+        
+        The rotation, and z buttons are added here.
+        """
 
         # Add the rotation buttons to the linear move frame
         self.rotateLeft = QPushButton(
@@ -414,8 +424,8 @@ class MaskControlWidget(ControlWidget):
         self.arrowGrid.addWidget(self.moveZUp, 2, 0, 1, 1)
         self.arrowGrid.addWidget(self.moveZDown, 2, 2, 1, 1)
 
-    def _add_extra_positions(self):
-        """Add the extra positions to the widget."""
+    def _add_extra_positions(self) -> ...:
+        """Add the extra positions displays to the widget."""
         # Add the rotation buttons to the linear move frame
         self.zPosLabel = QLabel()
         self.zPosLabel.setText(QCoreApplication.translate("MainWindow", "Z:", None))
@@ -439,7 +449,7 @@ class MaskControlWidget(ControlWidget):
         self.rPosDisplay.setFixedSize(self.setting.lcd_size)
         self.positionDisplayGrid.addWidget(self.rPosDisplay, 4, 1, 1, 1)
 
-    def _create_vacuum_settings(self):
+    def _create_vacuum_settings(self) -> QFrame:
         """Create the vacuum settings frame."""
         # Add the divider between the presets and vacuum settings
         vacFrame = QFrame()
@@ -460,17 +470,8 @@ class MaskControlWidget(ControlWidget):
         horizontalLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         return vacFrame
 
-    def connect_actions(self, menubar, toolbar):
-        """
-        Connect the actions to the buttons.
-
-        Parameters
-        ----------
-        menubar : QMenuBar
-            The menu bar to connect the actions to.
-        toolbar : QToolBar
-            The toolbar to connect the actions to.
-        """
+    def connect_actions(self) -> ...:
+        """Connect the actions to the buttons."""
         # Connect the buttons to the actions
         self.moveLeft.pressed.connect(
             lambda: self.q.put(
@@ -573,7 +574,7 @@ class MaskControlWidget(ControlWidget):
 
         self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)
 
-    def _slider_changed(self):
+    def _slider_changed(self) -> ...:
         """Update the velocity display when the slider is changed."""
         self.velDisp.setValue(self.velocitySlider.value())
 
@@ -584,7 +585,7 @@ class MaskControlWidget(ControlWidget):
         )
         self.q.put("M812 X{} Y{} Z{} L{}".format(value, value, value, value))
 
-    def _update_drive_step_scale(self):
+    def _update_drive_step_scale(self) -> ...:
         """Update the drive step scale."""
         # Get the current selected
         new_scale = self.driveStepCombo.currentText()
@@ -593,12 +594,12 @@ class MaskControlWidget(ControlWidget):
 
         self.driveScale *= self.setting.known_units[self.driveUnit]
 
-    def _connect_movement_scale(self):
+    def _connect_movement_scale(self) -> ...:
         """Connect the movement scale to the movement buttons."""
         # Connect a change the move preset combo box to the movement scale
         self.movePresetCombo.currentIndexChanged.connect(self._change_movement_scale)
 
-    def _change_movement_scale(self):
+    def _change_movement_scale(self) -> ...:
         """Change the movement scale based on the move preset combo box."""
         # The new scale is between 0 and the given value in the given unit
         new_scale = self.movePresetCombo.currentText()
@@ -610,17 +611,24 @@ class MaskControlWidget(ControlWidget):
         self.velocitySlider.setMaximum(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
 
-    def _turn_on_vacuum(self):
-        """Turn on the vacuum pump."""
+    def _turn_on_vacuum(self) -> ...:
+        """
+        Turn on the vacuum pump.
+        
+        In the current backend the vacuum toggle is not yet implemented.
+        """
         print("Turn on vacuum")
 
-    def _turn_off_vacuum(self):
-        """Turn off the vacuum pump."""
+    def _turn_off_vacuum(self) -> ...:
+        """
+        Turn off the vacuum pump.
+        
+        In the current backend the vacuum toggle is not yet implemented.
+        """
         print("Turn off vacuum")
 
-    def _lock_movement(self):
+    def _lock_movement(self) -> ...:
         """Lock the movement of the stage."""
-        print("Lock movement")
         button_state = self.lockMoveButton.isChecked()
         self.moveUp.setEnabled(not button_state)
         self.moveDown.setEnabled(not button_state)
@@ -631,8 +639,8 @@ class MaskControlWidget(ControlWidget):
         self.moveZUp.setEnabled(not button_state)
         self.moveZDown.setEnabled(not button_state)
 
-    def update_positions(self, dict):
-        """Update the position labels."""
+    def update_positions(self, dict) -> ...:
+        """Update the position displays."""
         if "X" in dict:
             self.xPosDisplay.display(dict["X"])
         if "Y" in dict:
@@ -642,7 +650,7 @@ class MaskControlWidget(ControlWidget):
         if "L" in dict:
             self.rPosDisplay.display(dict["L"])
 
-    def estop(self, state=False):
+    def estop(self, state=False) -> ...:
         """Disable all buttons."""
         self.moveUp.setEnabled(state)
         self.moveDown.setEnabled(state)
@@ -667,24 +675,15 @@ class MaskControlWidget(ControlWidget):
 class BaseControlWidget(ControlWidget):
     name = "Base Control"
 
-    def __init__(self, settings, q, parent=None):
+    def __init__(self, settings, q, parent=None) -> ...:
         """Initialize the base control widget."""
         super().__init__(settings, q, parent)
         self.add_vel_presets(self.setting.base_vel_presets)
         self._slider_changed()
         self.add_drive_step_presets(self.setting.base_drive_step_presets)
 
-    def connect_actions(self, menubar, toolbar):
-        """
-        Connect the actions to the buttons.
-
-        Parameters
-        ----------
-        menubar : QMenuBar
-            The menu bar to add the menu to.
-        toolbar : QToolBar
-            The toolbar to add the buttons to.
-        """
+    def connect_actions(self) -> ...:
+        """Connect the actions to the buttons."""
         # Connect the buttons to the actions
         self.moveLeft.pressed.connect(
             lambda: self.q.put(
@@ -734,12 +733,10 @@ class BaseControlWidget(ControlWidget):
         self.velDisp.valueChanged.connect(
             lambda: self.velocitySlider.setValue(self.velDisp.value())
         )
-
         self._connect_movement_scale()
-
         self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)
 
-    def _update_drive_step_scale(self):
+    def _update_drive_step_scale(self) -> ...:
         """Update the drive step scale."""
         # Get the current selected
         new_scale = self.driveStepCombo.currentText()
@@ -748,7 +745,7 @@ class BaseControlWidget(ControlWidget):
 
         self.driveScale *= self.setting.known_units[self.driveUnit]
 
-    def _slider_changed(self):
+    def _slider_changed(self) -> ...:
         """Update the velocity display when the slider is changed."""
         self.velDisp.setValue(self.velocitySlider.value())
 
@@ -756,12 +753,12 @@ class BaseControlWidget(ControlWidget):
         value = self.velocitySlider.value()
         self.q.put("M812 X{} Y{} Z{} L{}".format(value, value, value, value))
 
-    def _connect_movement_scale(self):
+    def _connect_movement_scale(self) -> ...:
         """Connect the movement scale to the movement buttons."""
         # Connect a change the move preset combo box to the movement scale
         self.movePresetCombo.currentIndexChanged.connect(self._change_movement_scale)
 
-    def _change_movement_scale(self):
+    def _change_movement_scale(self) -> ...:
         """Change the movement scale based on the move preset combo box."""
         # The new scale is between 0 and the given value in the given unit
         new_scale = self.movePresetCombo.currentText()
@@ -773,31 +770,22 @@ class BaseControlWidget(ControlWidget):
         self.velocitySlider.setMaximum(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
 
-    def _lock_movement(self):
+    def _lock_movement(self) -> ...:
         """Lock the movement of the stage."""
-        print("Lock movement")
         button_state = self.lockMoveButton.isChecked()
         self.moveUp.setEnabled(not button_state)
         self.moveDown.setEnabled(not button_state)
         self.moveLeft.setEnabled(not button_state)
         self.moveRight.setEnabled(not button_state)
 
-    def _turn_on_drive_mode(self):
-        """Turn on drive mode."""
-        print("Turn on drive mode")
-
-    def _turn_on_jog_mode(self):
-        """Turn on jog mode."""
-        print("Turn on jog mode")
-
-    def update_positions(self, dict):
+    def update_positions(self, dict) -> ...:
         """Update the position labels."""
         if "H" in dict:
             self.xPosDisplay.display(str(dict["H"]))
         if "J" in dict:
             self.yPosDisplay.display(str(dict["J"]))
 
-    def estop(self, state=False):
+    def estop(self, state=False) -> ...:
         """Disable all the buttons."""
         self.moveLeft.setEnabled(state)
         self.moveRight.setEnabled(state)

@@ -609,7 +609,10 @@ class TestMachineCommands(unittest.TestCase):
         # Check if the return code is right
         self.assertEqual(exit_code, 0)
         self.assertNotEqual(msg, None)
-        self.assertEqual(msg, {'K': 0})
+        self.assertEqual(msg, {'K': {
+            'current' : 0,
+            'target' : 10,
+        }})
 
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     def test_M112(self, _init_all_hardware_mock) -> ...:

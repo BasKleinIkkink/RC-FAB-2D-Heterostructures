@@ -178,7 +178,7 @@ class TemperatureWidget(QGroupBox):
             The toolbar of the main window.
         """
         # Connect the spinbox to the target temp indicator
-        self.target_spin_box.valueChanged.connect(self._change_target_indicator)
+        self.target_spin_box.valueChanged.connect(self._change_target_temp)
         # self.target_spin_box.valueChanged.connect(self._set_custom_preset)
 
         # Connect the target spinbox to the combobox change
@@ -187,20 +187,16 @@ class TemperatureWidget(QGroupBox):
         # Set the indicator to the current spinbox value
         self.targetTempDisp.display(self.target_spin_box.value())
 
-    def _change_target_indicator(self):
+    def _change_target_temp(self):
         """Change the target temperature of the indicator."""
-        print("Change target indicator")
-        self.targetTempDisp.display(self.target_spin_box.value())
         self.q.put('M140 S{}'.format(self.target_spin_box.value()))
 
     def _change_spinbox_value(self):
         """Change the value of the spinbox depending on the selected preset."""
-        print("Lock spinbox value")
-
         if self.tempPresetCombo.currentIndex() == 0:
-            # Set the max value to 250
+            # Set the max value to 220
             self.target_spin_box.setDisabled(False)
-            self.target_spin_box.setMaximum(250)
+            self.target_spin_box.setMaximum(220)
         else:
             # Set the spinbox to the selected value and disable
             value = int(self.tempPresetCombo.currentText().split(" ")[0])
@@ -208,11 +204,15 @@ class TemperatureWidget(QGroupBox):
             self.target_spin_box.setValue(value)
             self.target_spin_box.setDisabled(True)
 
+        # Send the updated target to the backend
+        self._change_target_temp()
+
     def update_temperature(self, temp):
         """Update the current temperature of the indicator."""
         if 'L' not in temp.keys():
             return
-        self.currentTempDisp.display(temp['L'])
+        self.currentTempDisp.display(temp['L']['current'])
+        self.targetTempDisp.display(temp['L']['target'])
 
     def estop(self, state=False):
         # Disable the sliders and spinboxes
