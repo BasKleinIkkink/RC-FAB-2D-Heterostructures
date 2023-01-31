@@ -19,18 +19,18 @@ Getting started
    :maxdepth: 1
 
    getting_started/getting_started
-   gewtting_started/gotchas
+   getting_started/gotchas
    getting_started/troubleshooting
+   changelog
+   apidoc_generated/modules
    LICENSE
 
 Library contents
 ----------------
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
-   apidoc_generated/stacking_setup.stacking_frondend
-   apidoc_generated/stacking_setup.stacking_middleware
-   apidoc_generated/stacking_setup.stacking_backend
+   apidoc_generated/stacking_setup.components
 
 
 Indices and tables

@@ -84,4 +84,14 @@ Added
 - Added the Ffirst version of the GUI made in PySide6 (QT)
 - Added the :class:`MainXYController` class for controlling the main XY stage, sample heater and cooling.
 
+V0.0.6
+----------
 
+Changed
+^^^^^^^^^
+- Resturctured the package so the tests can be included in the package
+- Fixed some annoying bugs
+
+Added
+^^^^^^^^
+- Added support for the base stage stepper motors (:class:`MainXYController`)

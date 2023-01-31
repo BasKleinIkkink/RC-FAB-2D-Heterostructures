@@ -37,5 +37,4 @@ Next steps
 
    configuration
    installation
-   usage
    programming_guidelines

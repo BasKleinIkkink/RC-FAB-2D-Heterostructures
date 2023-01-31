@@ -5,11 +5,10 @@ Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
-   stacking_setup.stacking_backend
-   stacking_setup.stacking_frondend
-   stacking_setup.stacking_middleware
+   stacking_setup.components
+   stacking_setup.tests
 
 Module contents
 ---------------
