@@ -18,7 +18,6 @@ from ..stacking_middleware.pipeline_connection import PipelineConnection
 from ..stacking_middleware.serial_connection import SerialConnection
 from .configs.settings import Settings
 from queue import Queue
-from .repeated_timer import RepeatedTimer
 from .catch_remote_exceptions import catch_remote_exceptions
 
 
@@ -105,11 +104,11 @@ class StackingSetupBackend:
         """
         Echo the command response (error code and msg) to the main process.
 
-        The goal of this function is to excecute actions in a seperate thread and pass the status
+        The goal of this function is to execute actions in a separate thread and pass the status
         messages to the main process.
 
         .. attention::
-            Actions have to be done in a seperate thread so the backend stays responsive and can 
+            Actions have to be done in a separate thread so the backend stays responsive and can 
             respond to the emergency stop command (M112)
 
         Parameters
@@ -142,7 +141,11 @@ class StackingSetupBackend:
         elif not isinstance(msg, (str, dict),):
             msg = str(msg)
 
+        message = Message(exit_code=exit_code, msg=msg, command_id=command_id, command=command)
+
+        # Send to the main process and execution loop
         q.put(Message(exit_code=exit_code, msg=msg, command_id=command_id, command=command))
+        self._con_to_main.send(message)
         return
 
 
@@ -260,14 +263,22 @@ class StackingSetupBackend:
         self._controller_process.set_deamon=True
         self._controller_process.start()
 
-    def _check_command_output(self):
-        """Check if the command output queue is not empty and send the output to the main process."""
+    def _check_command_output(self) -> bool:
+        """
+        Check if the command output queue is not empty
+        
+        Checks if there were any errors when executing commands in the threaded executors.
+
+        Returns
+        -------
+        got_error : bool
+            True if there was an error, False otherwise.
+        """
         got_error = False
         while not self._execution_q.empty():
             message = self._execution_q.get()
             if message.exit_code != 0:
                 got_error = True
-            self._con_to_main.send(message)
         return got_error
 
     @catch_remote_exceptions
@@ -404,6 +415,10 @@ class StackingSetupBackend:
             elif command_id == 'M812':
                 # Use jogging
                 self._echo(func=self.M812, command_id='M812',
+                        command=parsed_command[command_id])
+            elif command_id == 'M813':
+                # Toggle the vacuum pump
+                self._echo(func=self.M813, command_id='M813',
                         command=parsed_command[command_id])
             else:
                 exit_code = 1
@@ -709,7 +724,7 @@ class StackingSetupBackend:
         if 'S' not in interval.keys():
             # Return the current interval
             try:
-                interval = self._keep_host_alive_timer.interval
+                return 0, self._keep_host_alive_interval
             except AttributeError:
                 msg = 'The keep alive timer interval was asked but no timer is set'
                 self._logger.debug(msg)
@@ -719,24 +734,45 @@ class StackingSetupBackend:
         elif interval['S'] == 0:
             # Disable the keep alive timer
             try:
-                self._keep_host_alive_timer.stop()
+                self._keep_host_alive_flag.set()
+                del self._keep_host_alive_flag
+                del self._keep_host_alive_interval
             except AttributeError:
                 msg = 'Tried to stop the keep alive timer but no timer is set'
                 self._logger.debug(msg)
                 return 1, msg
             return 0, None
         else:
-            self._keep_host_alive_timer = RepeatedTimer(interval=interval['S'], 
-                                                   function=self._keep_host_alive)
+            # try stop the current thread and start a new one
+            try:
+                self._keep_host_alive_flag.set()
+            except AttributeError:
+                pass
+            self._keep_host_alive_flag = tr.Event()
+            self._keep_host_alive_interval = interval['S']
+            self._keep_host_alive_timer = tr.Thread(target=self._keep_host_alive, args=(interval, self._keep_host_alive_flag))
             self._keep_host_alive_timer.start()
             return 0, None
 
-    def _keep_host_alive(self) -> ...:
-        """Send a keep alive message to the host. (support function for M113)"""
-        if self._con_to_main.is_connected:
-            self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!', command_id='M113'))
-        else:
-            self._keep_host_alive_timer.stop()
+    def _keep_host_alive(self, interval : int, stop_flag : tr.Event) -> ...:
+        """
+        Send a keep alive message to the host. (support function for M113)
+
+        This method is not meant to be called directly. It is called by the
+        :meth:`M113` command.
+        
+        .. note::
+            This method attempts to send a message to the host every interval
+            seconds. While the interval will be followed approximately, it is
+            not guaranteed that the interval will be followed exactly. 
+        """
+        while not stop_flag.is_set():
+            if self._con_to_main.is_connected:
+                self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!', command_id='M113'))
+            else:
+                stop_flag.set()
+                return
+            time.sleep(interval)
 
     def M114(self) -> tuple:
         """
@@ -801,7 +837,7 @@ class StackingSetupBackend:
         self._initiate_all_hardware()  # Reconnect all the hardware.
         return 0, None
 
-    def M154(self, interval) -> tuple:
+    def M154(self, interval : dict) -> tuple:
         """
         Auto position report.
 
@@ -827,43 +863,64 @@ class StackingSetupBackend:
         if 'S' not in interval.keys():
             # Return the current interval
             try:
-                interval = self._auto_position_timer.interval
+                return 0, self._auto_position_report_interval
             except AttributeError:
-                msg = 'The auto position update interval was asked but no timer is set'
+                msg = 'The keep alive timer interval was asked but no timer is set'
                 self._logger.debug(msg)
                 return 1, msg
 
-            return 0, interval
+            return 0, str(interval)
         elif interval['S'] == 0:
+            # Disable the keep alive timer
             try:
-                # Disable the keep alive timer
-                self._auto_position_timer.stop()
-                return 0, None
+                self._auto_position_report_flag.set()
+                del self._auto_position_report_flag
+                del self._auto_position_report_interval
             except AttributeError:
-                msg = 'Tried to stop the auto position update timer but no timer was set'
+                msg = 'Tried to stop the keep alive timer but no timer is set'
                 self._logger.debug(msg)
                 return 1, msg
+            return 0, None
         else:
-            self._auto_position_timer = RepeatedTimer(interval=interval['S'], 
-                                                function=self._auto_position_report)
-            self._auto_position_timer.start()
+            # try stop the current thread and start a new one
+            try:
+                self._auto_position_report_flag.set()
+            except AttributeError:
+                pass
+            self._auto_position_report_flag = tr.Event()
+            self._auto_position_report_interval = interval['S']
+            self._auto_position_report_timer = tr.Thread(target=self._keep_host_alive, args=(interval, self._auto_position_report_flag))
+            self._auto_position_report_timer.start()
             return 0, None
 
-    def _auto_position_report(self) -> ...:
-        """Send a position update to the host. (support function for M154)"""
-        if not self._shutdown.is_set() and not self._emergency_stop_event.is_set() and \
-                self._con_to_main.is_connected:
-            exit_code, positions = self.M114()
-            if exit_code == 0:
-                self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M154', 
-                                    command=''))
+    def _auto_position_report(self, interval : int, stop_flag : tr.Event()) -> ...:
+        """
+        Send a position update to the host. (support function for M154)
+        
+        Parameters
+        ----------
+        interval : int
+            The interval in seconds to send the position update.
+        stop_flag : threading.Event
+            A threading event that can be set to stop the thread.
+        """
+        while not stop_flag.is_set():
+            if not self._shutdown.is_set() and not self._emergency_stop_event.is_set() and \
+                    self._con_to_main.is_connected:
+                exit_code, positions = self.M114()
+                if exit_code == 0:
+                    self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M154', 
+                                        command='M114'))
+                else:
+                    self._con_to_main.send(Message(exit_code=1, msg='Could not get all positions, got {}'.format(positions), 
+                                        command_id='M154', command='M114'))                         
             else:
-                self._con_to_main.send(Message(exit_code=1, msg='Could not get all positions, got {}'.format(positions), 
-                                    command_id='M154', command=''))
-        else:
-            self._auto_position_timer.stop()
+                stop_flag.set()
+                return
+            
+            time.sleep(interval)
 
-    def M155(self, interval) -> tuple:
+    def M155(self, interval : dict) -> tuple:
         """
         Auto temperature report.
 
@@ -890,39 +947,60 @@ class StackingSetupBackend:
         if 'S' not in interval.keys():
             # Return the current interval
             try:
-                interval = self._auto_temperature_timer.interval
+                return 0, self._auto_temperature_report_interval
             except AttributeError:
-                msg = 'The auto temperature update interval was asked but no timer is set'
+                msg = 'The keep alive timer interval was asked but no timer is set'
                 self._logger.debug(msg)
                 return 1, msg
 
-            return 0, interval
+            return 0, str(interval)
         elif interval['S'] == 0:
+            # Disable the keep alive timer
             try:
-                # Disable the keep alive timer
-                self._auto_temperature_timer.stop()
-                return 0, None
+                self._auto_temperature_report_flag.set()
+                del self._auto_temperature_report_flag
+                del self._auto_temperature_report_interval
             except AttributeError:
-                msg = 'Tried to stop the auto temperature update timer but no timer was set'
+                msg = 'Tried to stop the keep alive timer but no timer is set'
                 self._logger.debug(msg)
                 return 1, msg
+            return 0, None
         else:
-            self._auto_temperature_timer = RepeatedTimer(interval=interval['S'], 
-                                                function=self._auto_temperature_report)
-            self._auto_temperature_timer.start()
+            # try stop the current thread and start a new one
+            try:
+                self._auto_temperature_report_flag.set()
+            except AttributeError:
+                pass
+            self._auto_temperature_report_flag = tr.Event()
+            self._auto_temperature_report_interval = interval['S']
+            self._auto_temperature_report_timer = tr.Thread(target=self._keep_host_alive, args=(interval, self._auto_temperature_report_flag))
+            self._auto_temperature_report_timer.start()
             return 0, None
 
-    def _auto_temperature_report(self) -> ...:
-        """Send a position update to the host. (support function for M154)"""
-        if not self._shutdown.is_set() and not self._emergency_stop_event.is_set() and \
-                self._con_to_main.is_connected:
-            exit_code, temps = self.M105()
-            if exit_code == 0:
-                self._con_to_main.send(Message(exit_code=0, msg=temps, command_id='M155', command=''))
+    def _auto_temperature_report(self, interval : int, stop_flag : tr.Event()) -> ...:
+        """
+        Send a position update to the host. (support function for M154)
+        
+        Parameters
+        ----------
+        interval : int
+            The interval in seconds to send the position update.
+        stop_flag : threading.Event
+            A threading event that can be set to stop the thread.
+        """
+        while not stop_flag.is_set():
+            if not self._shutdown.is_set() and not self._emergency_stop_event.is_set() and \
+                    self._con_to_main.is_connected:
+                exit_code, temps = self.M105()
+                if exit_code == 0:
+                    self._con_to_main.send(Message(exit_code=0, msg=temps, command_id='M155', command='M105'))
+                else:
+                    self._con_to_main.send(Message(exit_code=1, msg='Could not get temperatures.', command_id='M155', command='M105'))
             else:
-                self._con_to_main.send(Message(exit_code=1, msg='Could not get temperatures.', command_id='M155', command=''))
-        else:
-            self._auto_temperature_timer.stop()
+                stop_flag.set()
+                return
+
+            time.sleep(interval)
 
     # JOGGING AND DRIVING FUNCTIONS
     def M811(self, command : dict) -> tuple:
@@ -1002,3 +1080,32 @@ class StackingSetupBackend:
         for axis in self._hardware:
             axis.stop()
         return 0, None
+
+    def M814(self, command : dict) -> tuple:
+        """
+        Toggle the vacuum pump.
+
+        Parameters
+        ----------
+        command : dict
+            A dict with the vacuum state to set under key 'S'. The value should be 0 or 1.
+        """
+        if 'S' in command.keys():
+            if command['S'] == 0:
+                state = False
+            elif command['S'] == 1:
+                state = True
+            else:
+                return 1, 'Invalid vacuum state given'
+
+            for axis in self._hardware:
+                try:
+                    axis.toggle_vacuum(state)
+                except NotSupportedError:
+                    pass
+
+            return 0, None
+        else:
+            return 1, 'No vacuum state given'
+        
+        

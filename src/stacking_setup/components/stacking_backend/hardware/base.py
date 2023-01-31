@@ -1,3 +1,6 @@
+from typing import Union
+
+
 class NotSupportedError(Exception):
     """Exception raised when a method is not supported."""
 
@@ -193,17 +196,42 @@ class Base:
         """Home the hardware."""
         raise NotSupportedError()
 
+    def toggle_vacuum(self, state : bool):
+        """
+        Toggle the vacuum on or off.
+        
+        Parameters
+        ----------
+        state : bool
+            True for on, False for off.
+        """
+        raise NotSupportedError()
+
     # MOVING FUNCTIONS
-    def start_jog(self, direction):
-        """Start a jog in a direction."""
+    def start_jog(self, direction : str):
+        """
+        Start a jog in a direction.
+        
+        Parameters
+        ----------
+        direction : str
+            The direction to jog in. The direction can be either + or -.
+        """
         raise NotSupportedError()
 
     def stop_jog(self):
-        """Stop a jog."""
+        """Stop an active jog."""
         raise NotSupportedError()
 
-    def move_to(self, position):
-        """Move the hardware to a position."""
+    def move_to(self, position : Union[float, int]):
+        """
+        Move the hardware to a position.
+        
+        Parameters
+        ----------
+        position : float or int
+            The position to move to. The position can be either in um or udeg.
+        """
         raise NotSupportedError()
 
     def move_by(self, position):
