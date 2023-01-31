@@ -23,12 +23,11 @@ Getting started
    getting_started/troubleshooting
    changelog
    apidoc_generated/modules
-   LICENSE
 
 Library contents
 ----------------
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
    apidoc_generated/stacking_setup.components
 

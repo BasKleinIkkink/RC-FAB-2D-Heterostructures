@@ -1,10 +1,7 @@
 stacking\_setup.tests package
 =============================
 
-Submodules
-----------
-
-stacking\_setup.tests.run\_all\_tests module
+tests.run\_all\_tests module
 --------------------------------------------
 
 .. automodule:: stacking_setup.tests.run_all_tests
@@ -12,7 +9,7 @@ stacking\_setup.tests.run\_all\_tests module
    :undoc-members:
    :show-inheritance:
 
-stacking\_setup.tests.test\_gcode\_parser module
+tests.test\_gcode\_parser module
 ------------------------------------------------
 
 .. automodule:: stacking_setup.tests.test_gcode_parser
@@ -20,7 +17,7 @@ stacking\_setup.tests.test\_gcode\_parser module
    :undoc-members:
    :show-inheritance:
 
-stacking\_setup.tests.test\_middleware module
+tests.test\_middleware module
 ---------------------------------------------
 
 .. automodule:: stacking_setup.tests.test_middleware
@@ -28,7 +25,7 @@ stacking\_setup.tests.test\_middleware module
    :undoc-members:
    :show-inheritance:
 
-stacking\_setup.tests.test\_stacking\_backend module
+tests.test\_stacking\_backend module
 ----------------------------------------------------
 
 .. automodule:: stacking_setup.tests.test_stacking_backend

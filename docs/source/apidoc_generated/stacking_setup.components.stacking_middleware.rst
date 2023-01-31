@@ -1,12 +1,7 @@
-stacking\_setup.components.stacking\_middleware package
+stacking\_middleware package
 =======================================================
 
-.. _middleware:
-
-Submodules
-----------
-
-components.stacking\_middleware.base\_connector module
+stacking\_middleware.base\_connector module
 ----------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_middleware.base_connector
@@ -14,7 +9,7 @@ components.stacking\_middleware.base\_connector module
    :undoc-members:
    :show-inheritance:
 
-components.stacking\_middleware.message module
+stacking\_middleware.message module
 --------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_middleware.message
@@ -22,7 +17,7 @@ components.stacking\_middleware.message module
    :undoc-members:
    :show-inheritance:
 
-components.stacking\_middleware.pipeline\_connection module
+stacking\_middleware.pipeline\_connection module
 ---------------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_middleware.pipeline_connection
@@ -30,7 +25,7 @@ components.stacking\_middleware.pipeline\_connection module
    :undoc-members:
    :show-inheritance:
 
-components.stacking\_middleware.serial\_connection module
+stacking\_middleware.serial\_connection module
 -------------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_middleware.serial_connection

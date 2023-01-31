@@ -1,4 +1,4 @@
-stacking\_setup.components.stacking\_backend package
+stacking\_backend package
 ====================================================
 
 The backend contains all the needed modules to controll the connected hardware in a 
@@ -11,15 +11,15 @@ chosen :ref:`Middleware` method.
    :class:`StackingSetup` object and is given an instance of a :ref:`middleware` object.
    All the communication to the backend should be send over the :ref:`middleware` object.
 
-
 Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
+   stacking_setup.components.stacking_backend.components
    stacking_setup.components.stacking_backend.configs
-   stacking_setup.components.stacking_backend.hardware
+   stacking_setup.components.stacking_backend.controllers
 
 Submodules
 ----------
@@ -29,23 +29,32 @@ classes. These classes form the backbone of the system. Every piece of harware i
 and controlled from the StackingSetupBackend class and all commands are parsed by the 
 GcodeParser class.
 
-components.stacking\_backend.catch\_remote\_exceptions module
------------------------------------------------------------------------------
+
+stacking\_backend.catch\_remote\_exceptions module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: stacking_setup.components.stacking_backend.catch_remote_exceptions
    :members:
    :undoc-members:
    :show-inheritance:
 
-components.stacking\_backend.gcode\_parser module
------------------------------------------------------------------
+stacking\_backend.exceptions module
+--------------------------------------------------------------
+
+.. automodule:: stacking_setup.components.stacking_backend.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+stacking\_backend.gcode\_parser module
+----------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_backend.gcode_parser
    :members:
    :undoc-members:
    :show-inheritance:
 
-components.stacking\_backend.repeated\_timer module
+stacking\_backend.repeated\_timer module
 -------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_backend.repeated_timer
@@ -53,7 +62,7 @@ components.stacking\_backend.repeated\_timer module
    :undoc-members:
    :show-inheritance:
 
-components.stacking\_backend.stacking\_setup module
+stacking\_backend.stacking\_setup module
 -------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_backend.stacking_setup

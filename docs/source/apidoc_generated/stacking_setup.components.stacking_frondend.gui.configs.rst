@@ -1,7 +1,7 @@
-stacking\_setup.components.stacking\_frondend.gui.configs package
+stacking\_frondend.gui.configs package
 =================================================================
 
-components.stacking\_frondend.gui.configs.settings module
+stacking\_frondend.gui.configs.settings module
 -------------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_frondend.gui.configs.settings

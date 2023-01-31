@@ -1,10 +1,7 @@
-stacking\_setup.components.stacking\_frondend.gui.widgets package
+stacking\_frondend.gui.widgets package
 =================================================================
 
-Submodules
-----------
-
-components.stacking\_frondend.gui.widgets.control\_widget module
+stacking\_frondend.gui.widgets.control\_widget module
 --------------------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_frondend.gui.widgets.control_widget
@@ -12,7 +9,7 @@ components.stacking\_frondend.gui.widgets.control\_widget module
    :undoc-members:
    :show-inheritance:
 
-components.stacking\_frondend.gui.widgets.focus\_widget module
+stacking\_frondend.gui.widgets.focus\_widget module
 ------------------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_frondend.gui.widgets.focus_widget
@@ -20,7 +17,7 @@ components.stacking\_frondend.gui.widgets.focus\_widget module
    :undoc-members:
    :show-inheritance:
 
-components.stacking\_frondend.gui.widgets.system\_messages\_widget module
+stacking\_frondend.gui.widgets.system\_messages\_widget module
 -----------------------------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_frondend.gui.widgets.system_messages_widget
@@ -28,7 +25,7 @@ components.stacking\_frondend.gui.widgets.system\_messages\_widget module
    :undoc-members:
    :show-inheritance:
 
-components.stacking\_frondend.gui.widgets.temperature\_widget module
+stacking\_frondend.gui.widgets.temperature\_widget module
 ------------------------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_frondend.gui.widgets.temperature_widget

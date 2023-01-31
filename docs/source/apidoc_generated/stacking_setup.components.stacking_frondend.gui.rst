@@ -1,11 +1,11 @@
-stacking\_setup.components.stacking\_frondend.gui package
+stacking\_frondend.gui package
 =========================================================
 
 Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    stacking_setup.components.stacking_frondend.gui.configs
    stacking_setup.components.stacking_frondend.gui.widgets
@@ -13,7 +13,7 @@ Subpackages
 Submodules
 ----------
 
-components.stacking\_frondend.gui.main module
+stacking\_frondend.gui.main module
 -------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_frondend.gui.main

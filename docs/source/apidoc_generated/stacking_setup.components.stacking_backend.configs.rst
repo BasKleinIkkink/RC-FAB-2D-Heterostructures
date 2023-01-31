@@ -1,10 +1,8 @@
-stacking\_setup.components.stacking\_backend.configs package
+stacking\_backend.configs package
 ============================================================
 
-Submodules
-----------
 
-stacking\_setup.components.stacking\_backend.configs.accepted\_commands module
+stacking\_backend.configs.accepted\_commands module
 ------------------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_backend.configs.accepted_commands
@@ -12,7 +10,7 @@ stacking\_setup.components.stacking\_backend.configs.accepted\_commands module
    :undoc-members:
    :show-inheritance:
 
-stacking\_setup.components.stacking\_backend.configs.settings module
+stacking\_backend.configs.settings module
 --------------------------------------------------------------------
 
 .. automodule:: stacking_setup.components.stacking_backend.configs.settings
