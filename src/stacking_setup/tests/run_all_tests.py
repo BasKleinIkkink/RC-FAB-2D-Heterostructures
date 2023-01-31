@@ -1,5 +1,5 @@
 from .test_gcode_parser import TestGcodeParser
-from test_middleware import TestPipeLineConnection
+from .test_middleware import TestPipeLineConnection
 from .test_stacking_backend import TestControlBackend
 import unittest
 

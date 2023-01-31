@@ -41,6 +41,7 @@ class MainXYController:
         self._zero_timeout = settings.get(self._type + ".DEFAULT", "zero_timeout")
         self._temp_control_active = False
         self._lock = tr.Lock()
+        self._ser_lock = tr.Lock()
         self._homed = False
         self._zeroed = False
         self._vacuum_state = False
@@ -87,6 +88,7 @@ class MainXYController:
                 "The Base stage controller is not connected."
             )
 
+        self._ser_lock.acquire()
         if "\r\n" not in command:
             command = command.strip()
             command += "\r\n"
@@ -99,7 +101,7 @@ class MainXYController:
             etime = time.time() + self._timeout
             while time.time() < etime and not got_response:
                 # Check if a confirmation is expected
-                time.sleep(0.001)
+                time.sleep(0.01)
 
                 if self._ser.in_waiting > 0:
                     data_resp = self._ser.readlines()
@@ -107,6 +109,7 @@ class MainXYController:
                         data_resp[i] = data_resp[i].strip()
 
                     to_remove = []
+
                     # Remove empty lines
                     for cnt, i in enumerate(data_resp):
                         if i == b"":
@@ -123,8 +126,10 @@ class MainXYController:
                             )
                         )
                     if not expect_response:
+                        self._ser_lock.release()
                         return
                     else:
+                        self._ser_lock.release()
                         return data_resp[1:]  # Leave out the confirmation
 
             if not got_response:
@@ -135,6 +140,28 @@ class MainXYController:
                         command
                     )
                 )
+            self._ser_lock.release()
+
+    def _get_axis_id(self, axis: str) -> str:
+        """
+        Get the axis id from the axis name.
+
+        Parameters
+        ----------
+        axis: str
+            The axis name.
+
+        Returns
+        -------
+        axis_id: str
+            The axis id.
+        """
+        if axis.lower() == "h":
+            return "x"
+        elif axis.lower() == "j":
+            return "y"
+        else:
+            raise ValueError("The axis {} is not supported.".format(axis))
 
     def start_check_error(self):
         self.error_thread = RepeatedTimer(interval=0.5, function=self._check_error)
@@ -212,7 +239,7 @@ class MainXYController:
         self._lock.acquire()
         res = self._send_and_receive("l", expect_response=True)
         self._lock.release()
-        return float(res[3].decode()) / 100
+        return float(res[5].decode())
 
     @target_temperature.setter
     def target_temperature(self, temperature: Union[float, int]) -> ...:
@@ -253,10 +280,10 @@ class MainXYController:
         self._send_and_receive("n", expect_confirmation=True)
 
         # Set the velocity to max to make zero faster
-        self._send_and_receive("ssx25600")
-        self._send_and_receive("ssy25600")
-        self._send_and_receive('sa200')
-        self._send_and_receive('sd200')
+        self._send_and_receive("ssx25600", expect_response=True)
+        self._send_and_receive("ssy25600", expect_response=True)
+        self._send_and_receive('sa200', expect_response=True)
+        self._send_and_receive('sd200, expect_response=True')
         self._is_connected = True
         
         self._lock.release()
@@ -389,17 +416,11 @@ class MainXYController:
         """
         if self._em_event.is_set():
             return
+        id = self._get_axis_id(axis)
         self._lock.acquire()
-        res1 = self._send_and_receive("gpx", expect_response=True)[0]
-        res2 = self._send_and_receive("gpy", expect_response=True)[0]
+        res1 = self._send_and_receive("gp{}".format(id), expect_response=True)[0]
         self._lock.release()
-
-        if axis.lower() == "h":
-            return int(res1)
-        elif axis.lower() == "j":
-            return int(res2)
-        else:
-            return int(res1), int(res2)
+        return res1
 
     def start_jog(self, axis: str, velocity: Union[float, int]) -> ...:
         """
@@ -419,9 +440,10 @@ class MainXYController:
         """
         if self._em_event.is_set():
             return
+        id = self._get_axis_id(axis)
         self._lock.acquire()
         # Jogging gives a different confirmation than other commands
-        _ = self._send_and_receive("sv{}{}".format(axis, int(velocity)), expect_response=True)
+        _ = self._send_and_receive("sv{}{}".format(id, int(velocity)), expect_response=True)
         self._lock.release()
 
     def stop_jog(self, axis: Union[None, str] = None) -> ...:
@@ -436,10 +458,9 @@ class MainXYController:
         self._lock.acquire()
         if axis is None:
             self._send_and_receive("x")
-        elif axis.lower() == "h":
-            _ = self._send_and_receive("svx0", expect_response=True)
-        elif axis.lower() == "j":
-            _ = self._send_and_receive("svy0", expect_response=True)
+        else:
+            id = self._get_axis_id(axis)
+            self._send_and_receive("sv{}0".format(id), expect_response=True)
         self._lock.release()
 
     def move_to(self, id: str, position: Union[float, int]) -> ...:
@@ -455,6 +476,7 @@ class MainXYController:
         """
         if self._em_event.is_set():
             return
+        id = self._get_axis_id(id)
         self._lock.acquire()
         self._send_and_receive("sp{}{}".format(id.lower(), position))
         self._lock.release()
@@ -470,8 +492,10 @@ class MainXYController:
         distance : float or int
             The distance to move by.
         """
-        pos = self.get_position(id)
+        pos = int(self.get_position(id))
+        id = self._get_axis_id(id)
         self._lock.acquire()
+        print(pos, distance)
         self._send_and_receive("sp{}{}".format(id.lower(), pos + distance))
         self._lock.release()
 
