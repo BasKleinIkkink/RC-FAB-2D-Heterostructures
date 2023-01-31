@@ -987,8 +987,6 @@ class StackingSetupBackend:
         """
         Unconditionally stop all movement without triggering the emergency event
 
-        
-
         Parameters
         ----------
         command : dict

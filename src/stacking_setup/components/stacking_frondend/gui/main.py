@@ -139,9 +139,9 @@ class MainWindow(QMainWindow):
 
         # Load the main control widgets
         self.baseControlWidget = BaseControlWidget(self._settings, self._q, self)
-        self.baseControlWidget.connect_actions(self._viewMenu, self.toolBar)
+        self.baseControlWidget.connect_actions()
         self.maskControlWidget = MaskControlWidget(self._settings, self._q, self)
-        self.maskControlWidget.connect_actions(self._viewMenu, self.toolBar)
+        self.maskControlWidget.connect_actions()
         # self.maskControlWidget.connect_actions(self._viewMenu, self.toolBar)
         verticalLayout = QVBoxLayout()
         verticalLayout.addWidget(self.maskControlWidget)

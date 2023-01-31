@@ -687,43 +687,43 @@ class BaseControlWidget(ControlWidget):
         # Connect the buttons to the actions
         self.moveLeft.pressed.connect(
             lambda: self.q.put(
-                "M811 J-1"
+                "M811 H-1"
                 if self.jogModeButton.isChecked()
-                else self.q.put("G0 J-{}".format(self.driveScale))
+                else self.q.put("G0 H-{}".format(self.driveScale))
             )
         )
         self.moveLeft.released.connect(
-            lambda: self.q.put("M811 J0") if self.jogModeButton.isChecked() else None
+            lambda: self.q.put("M811 H0") if self.jogModeButton.isChecked() else None
         )
         self.moveRight.pressed.connect(
-            lambda: self.q.put(
-                "M811 J1"
-                if self.jogModeButton.isChecked()
-                else self.q.put("G0 J{}".format(self.driveScale))
-            )
-        )
-        self.moveRight.released.connect(
-            lambda: self.q.put("M811 J0") if self.jogModeButton.isChecked() else None
-        )
-        self.moveUp.pressed.connect(
             lambda: self.q.put(
                 "M811 H1"
                 if self.jogModeButton.isChecked()
                 else self.q.put("G0 H{}".format(self.driveScale))
             )
         )
-        self.moveUp.released.connect(
+        self.moveRight.released.connect(
             lambda: self.q.put("M811 H0") if self.jogModeButton.isChecked() else None
+        )
+        self.moveUp.pressed.connect(
+            lambda: self.q.put(
+                "M811 J1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 J{}".format(self.driveScale))
+            )
+        )
+        self.moveUp.released.connect(
+            lambda: self.q.put("M811 J0") if self.jogModeButton.isChecked() else None
         )
         self.moveDown.pressed.connect(
             lambda: self.q.put(
-                "M811 H-1"
+                "M811 J-1"
                 if self.jogModeButton.isChecked()
-                else self.q.put("G0 H-{}".format(self.driveScale))
+                else self.q.put("G0 J-{}".format(self.driveScale))
             )
         )
         self.moveDown.released.connect(
-            lambda: self.q.put("M811 H0") if self.jogModeButton.isChecked() else None
+            lambda: self.q.put("M811 J0") if self.jogModeButton.isChecked() else None
         )
         self.lockMoveButton.clicked.connect(self._lock_movement)
 
@@ -751,7 +751,7 @@ class BaseControlWidget(ControlWidget):
 
         # Send the new velocity to the backend parts
         value = self.velocitySlider.value()
-        self.q.put("M812 X{} Y{} Z{} L{}".format(value, value, value, value))
+        self.q.put("M812 H{} J{}".format(value, value))
 
     def _connect_movement_scale(self) -> ...:
         """Connect the movement scale to the movement buttons."""
@@ -781,9 +781,9 @@ class BaseControlWidget(ControlWidget):
     def update_positions(self, dict) -> ...:
         """Update the position labels."""
         if "H" in dict:
-            self.xPosDisplay.display(str(dict["H"]))
+            self.xPosDisplay.display(str(dict["J"]))
         if "J" in dict:
-            self.yPosDisplay.display(str(dict["J"]))
+            self.yPosDisplay.display(str(dict["H"]))
 
     def estop(self, state=False) -> ...:
         """Disable all the buttons."""

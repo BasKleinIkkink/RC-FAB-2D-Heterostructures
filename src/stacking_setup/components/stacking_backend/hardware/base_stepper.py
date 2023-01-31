@@ -28,7 +28,7 @@ class BaseStepper(Base):
         self._lock.acquire()
         res = self._controller.get_position(self._id)
         self._lock.release()
-        return res
+        return self._convert_to_um(int(res))
 
     @property
     def speed(self) -> Union[int, float]:
@@ -36,7 +36,7 @@ class BaseStepper(Base):
         self._lock.acquire()
         res = self._controller.speed
         self._lock.release()
-        return res
+        return self._convert_to_um(float(res))
 
     @speed.setter
     def speed(self, speed) -> ...:
@@ -59,6 +59,11 @@ class BaseStepper(Base):
         return res
 
     # CONNECTION METHODS
+    @property
+    def is_connected(self) -> bool:
+        """Get the connection status of the stepper."""
+        return self._controller.is_connected
+
     def connect(self) -> ...:
         """Connect the stepper."""
         self._lock.acquire()
@@ -78,26 +83,31 @@ class BaseStepper(Base):
         self._controller.home()
         self._lock.release()
 
-    def move_by(self, distance: float) -> ...:
+    def move_by(self, distance: float, convert=True) -> ...:
         """Move the stepper by a certain distance."""
-        distance = self._convert_to_steps(distance)
+        if convert:
+            distance = self._convert_to_steps(distance)
 
         self._lock.acquire()
         self._controller.move_by(self._id, distance)
         self._lock.release()
 
-    def move_to(self, position: float) -> ...:
+    def move_to(self, position: float, convert=True) -> ...:
         """Move the stepper to a certain position."""
-        position = self._convert_to_steps(position)
+        if convert:
+            position = self._convert_to_steps(position)
 
         self._lock.acquire()
         self._controller.move_to(self._id, position)
         self._lock.release()
 
-    def start_jog(self, direction: str) -> ...:
+    def start_jog(self, direction: str, convert=True) -> ...:
         """Start jogging the stepper."""
+        if convert:
+            speed = self._convert_to_steps(self.speed)
+        dir = -1 if direction == '-' else 1
         self._lock.acquire()
-        self._controller.start_jog(self._id, direction)
+        self._controller.start_jog(self._id, dir*speed)
         self._lock.release()
 
     def stop_jog(self) -> ...:

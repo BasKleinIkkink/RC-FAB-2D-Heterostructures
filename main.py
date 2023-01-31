@@ -17,4 +17,4 @@ if __name__ == '__main__':
     backend.start_backend()
 
     # Run the ui main function
-    ui_main(Connection(ch_con, "FRONTEND"))
+    ui_main(Connection(ch_con, "FRONTEND")) 
