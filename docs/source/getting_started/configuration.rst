@@ -4,7 +4,7 @@ Configuration
 .. _configuration:
 The project can be configured in two ways: local and remote. The main difference is if an
 external IO controller is used or not. These examples are the most basic ways to configure the 
-setup, but there are many more options available by creating a custom :ref:`Middleware` method (see 
+setup, but there are many more options available by creating a custom :class:`Middleware` method (see 
 :ref:`programming_guidelines`).
 
 .. _local_hardware_configuration:

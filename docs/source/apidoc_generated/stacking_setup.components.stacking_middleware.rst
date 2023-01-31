@@ -1,6 +1,8 @@
 stacking\_setup.components.stacking\_middleware package
 =======================================================
 
+.. _middleware:
+
 Submodules
 ----------
 

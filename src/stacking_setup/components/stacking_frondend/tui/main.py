@@ -1,11 +1,9 @@
 import os
 from threading import Thread, Lock, Event
 from time import sleep
-from typeguard import typechecked
 
 
-@typechecked
-def check_for_response(con, lock: Lock, event: Event) -> None:
+def check_for_response(con, lock: Lock, event: Event) -> ...:
     """
     Check for a response from the pipe connection.
 
@@ -48,7 +46,7 @@ def check_for_response(con, lock: Lock, event: Event) -> None:
             print("\n >>>")
 
 
-def main(connector) -> None:
+def main(connector) -> ...:
     """
     Start the TUI and the backend.
 
@@ -91,9 +89,12 @@ def main(connector) -> None:
         if response.lower() == "help()":
             print("\nhelp() - Print this help dialog")
             print("exit() - Exit the program")
-            print("G0 - Make a linaer move")
+            print("G0 - Make a linear move")
             print("G1 - Make a rotational move")
             print("G28 - Home all axes")
+            print("G90 - Set absolute positioning")
+            print("G91 - Set relative positioning")
+            print("M0 - Stop all motion")
         elif response.lower() == "exit()":
             # Send the sentinel command to the backend to close the program
             connector.send_sentinel()

@@ -12,9 +12,9 @@ sys.path.insert(0, parent_dir_path)
 
 # The code to be tested
 from components.stacking_backend.stacking_setup import StackingSetupBackend
-from components.stacking_backend.hardware.base import Base, NotSupportedError
+from components.stacking_backend.components.base import Base
 from components.stacking_backend.configs.settings import Settings
-from components.stacking_middleware.message import Message
+from components.stacking_backend.exceptions import NotSupportedError
 from components.stacking_backend.configs.accepted_commands import ACCEPTED_COMMANDS, ACCEPTED_LINEAR_AXES, ACCEPTED_ROTATIONAL_AXES
 
 
@@ -317,7 +317,7 @@ class TestControlBackend(unittest.TestCase):
 
         # Test a command that is not implemented
         stack._execute_command({'M1000': {}})
-        while not stack._execution_q.empty():
+        while not self.to_proc.poll():
             continue
         pipe_msg = self.to_proc.recv()
         self.assertNotEqual(pipe_msg.msg, '')
@@ -327,7 +327,7 @@ class TestControlBackend(unittest.TestCase):
         stack._execute_command({'G0': {'X': 5}})
         while not stack._execution_q.empty():
             continue
-        pipe_msg = self.to_proc.recv()
+        pipe_msg = stack._execution_q.get()
         self.assertEqual(pipe_msg.msg, '')
         self.assertEqual(pipe_msg.exit_code, 0)
 

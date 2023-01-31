@@ -1,2 +1,0 @@
-# Hardware folder
-This folder contains all the classes for controlling connected hardware. All classes should inherit from the base class and raise NotImplementedError() for functions that are not supported

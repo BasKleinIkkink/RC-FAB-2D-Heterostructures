@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath('..\..\src'))
 project = 'LION Van der Waals Stacking Facility: Stacking setup'
 copyright = '2022, Nynra'
 author = 'Nynra'
-release = '0.0.2'
+release = '0.0.7'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
