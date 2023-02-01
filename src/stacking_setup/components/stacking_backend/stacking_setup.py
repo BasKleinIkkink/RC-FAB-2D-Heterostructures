@@ -1394,7 +1394,7 @@ class StackingSetupBackend:
 
             for axis in self._hardware:
                 try:
-                    axis.toggle_temperature_control(state)
+                    axis.toggle_temp_control(state)
                 except NotSupportedError:
                     pass
 

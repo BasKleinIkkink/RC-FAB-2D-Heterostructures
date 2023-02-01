@@ -225,10 +225,10 @@ class Base:
         """
         raise NotImplementedError()
 
-    def toggle_vacuum(self):
+    def toggle_vacuum(self, state):
         """Toggle the vacuum on/off."""
         raise NotSupportedError()
 
-    def toggle_temp_control(self):
+    def toggle_temp_control(self, state):
         """Toggle the temperature control on/off."""
         raise NotSupportedError()

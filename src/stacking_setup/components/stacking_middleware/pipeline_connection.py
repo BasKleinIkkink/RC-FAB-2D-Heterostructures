@@ -92,16 +92,21 @@ class PipeCom:
         None.
 
         """
-        if isinstance(data, str) and isinstance(data, bytes):
-            raise TypeError(
-                "The data to write to the pipe must be a list, str or bytes."
-            )
-        elif isinstance(data, list):
-            for item in data:
-                conn.send(item)
-        else:
-            conn.send(data)
-        conn.send(EOM_CHAR)
+        try:
+            if isinstance(data, str) and isinstance(data, bytes):
+                raise TypeError(
+                    "The data to write to the pipe must be a list, str or bytes."
+                )
+            elif isinstance(data, list):
+                for item in data:
+                    conn.send(item)
+            else:
+                conn.send(data)
+            conn.send(EOM_CHAR)
+        except (OSError, BrokenPipeError):
+            print("Pipe closed unexpectedly.")
+            conn.close()
+            
 
     @staticmethod
     def pipe_is_open(conn):

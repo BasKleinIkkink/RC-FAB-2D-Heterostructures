@@ -246,10 +246,6 @@ class MainXYController:
         if self._em_event.is_set():
             return
         self._lock.acquire()
-        if not self._temp_control_active:
-            # Activate the temp control
-            self._send_and_receive("fp1")
-
         self._send_and_receive("st{}".format(temperature * 100))
         self._lock.release()
 
@@ -401,7 +397,7 @@ class MainXYController:
             self.zero()
         else:
             self._lock.acquire()
-            self._send_and_receive("h")
+            self._send_and_receive("h", expect_confirmation=False)
             self._lock.release()
             self._homed = True
 

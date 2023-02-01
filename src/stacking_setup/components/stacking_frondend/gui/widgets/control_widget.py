@@ -557,6 +557,10 @@ class MaskControlWidget(ControlWidget):
                 else self.q.put("G0 Z-{}".format(self.driveScale))
             )
         )
+        self.moveZDown.released.connect(
+            lambda: self.q.put("M811 Z0") if self.jogModeButton.isChecked() else None
+        )
+
         self.lockMoveButton.clicked.connect(self._lock_movement())
 
         # Connect vacuum pump buttons
@@ -689,7 +693,7 @@ class BaseControlWidget(ControlWidget):
             lambda: self.q.put(
                 "M811 H-1"
                 if self.jogModeButton.isChecked()
-                else self.q.put("G0 H-{}".format(self.driveScale))
+                else self.q.put("G0 H{}".format(self.driveScale))
             )
         )
         self.moveLeft.released.connect(
@@ -699,7 +703,7 @@ class BaseControlWidget(ControlWidget):
             lambda: self.q.put(
                 "M811 H1"
                 if self.jogModeButton.isChecked()
-                else self.q.put("G0 H{}".format(self.driveScale))
+                else self.q.put("G0 H-{}".format(self.driveScale))
             )
         )
         self.moveRight.released.connect(
@@ -727,14 +731,27 @@ class BaseControlWidget(ControlWidget):
         )
         self.lockMoveButton.clicked.connect(self._lock_movement)
 
+        # Connect the move mode buttons
+        self._connect_movement_scale()
+
         # Connect the disp to the slider
-        self.velocitySlider.sliderReleased.connect(self._slider_changed())
-        # Connect the spinbox to the slider
+        self.velocitySlider.sliderReleased.connect(self._slider_changed)
         self.velDisp.valueChanged.connect(
             lambda: self.velocitySlider.setValue(self.velDisp.value())
         )
-        self._connect_movement_scale()
+
         self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)
+
+    def _slider_changed(self) -> ...:
+        """Update the velocity display when the slider is changed."""
+        self.velDisp.setValue(self.velocitySlider.value())
+
+        # Send the new velocity to the backend parts
+        value = (
+            self.velocitySlider.value()
+            * self.setting.known_units[self.moveUnit.split("/")[0]]
+        )
+        self.q.put("M812 H{} J{}".format(value, value))
 
     def _update_drive_step_scale(self) -> ...:
         """Update the drive step scale."""
@@ -744,14 +761,6 @@ class BaseControlWidget(ControlWidget):
         self.driveUnit = new_scale.split(" ")[1]
 
         self.driveScale *= self.setting.known_units[self.driveUnit]
-
-    def _slider_changed(self) -> ...:
-        """Update the velocity display when the slider is changed."""
-        self.velDisp.setValue(self.velocitySlider.value())
-
-        # Send the new velocity to the backend parts
-        value = self.velocitySlider.value()
-        self.q.put("M812 H{} J{}".format(value, value))
 
     def _connect_movement_scale(self) -> ...:
         """Connect the movement scale to the movement buttons."""
@@ -765,7 +774,7 @@ class BaseControlWidget(ControlWidget):
         self.moveScale = float(new_scale.split(" ")[0])
         self.moveUnit = new_scale.split(" ")[1]
 
-        # Set the units on the sliders
+        # Set the units and scale on the sliders
         self.velDispLabel.setText(self.moveUnit)
         self.velocitySlider.setMaximum(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)

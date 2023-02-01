@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QDockWidget,
     QApplication,
+    QLabel
 )
 from .widgets.system_messages_widget import SystemMessageWidget
 from .widgets.control_widget import BaseControlWidget, MaskControlWidget
@@ -52,11 +53,12 @@ class MainWindow(QMainWindow):
 
     def _connect_backend(self):
         # Handshake with the frondend
-        time.sleep(0.5)
+        time.sleep(0.2)
         self._connector.handshake()
         self._start_event_handeler()
         self._q.put("M154 S{}".format(self._settings.pos_auto_update_interval))
         self._q.put("M155 S{}".format(self._settings.temp_auto_update_interval))
+        # self._show_popup_window()
 
     def closeEvent(self, event):
         """Close the main window."""
@@ -76,6 +78,36 @@ class MainWindow(QMainWindow):
     def _home_all(self):
         """Home all the axes."""
         self._q.put("G28")
+
+    def _show_popup_window(self):
+        # Create the window
+        self.popup = QMainWindow(self)
+        self.popup.setWindowTitle("Startup")
+        self.popup.setWindowModality(Qt.ApplicationModal)
+        self.popup.setWindowFlag(Qt.WindowStaysOnTopHint, True)
+        self.popup.setFixedSize(400, 200)
+
+        # Set the text in the window
+        self.popup_text = QLabel(self.popup)
+        self.popup_text.setText("The UI is waiting for the backend to start, \n this can take around 20seconds.")
+        self.popup_text.setAlignment(Qt.AlignCenter)
+        
+        # Add the text to the window
+        self.popup.setCentralWidget(self.popup_text)
+
+        # disable the closw, minimize and maximize buttons
+        self.popup.setWindowFlag(Qt.WindowCloseButtonHint, False)
+        self.popup.setWindowFlag(Qt.WindowMinimizeButtonHint, False)
+        self.popup.setWindowFlag(Qt.WindowMaximizeButtonHint, False)
+        
+        # Show the window for 20 seconds
+        self.popup.show()
+        self._window_visible = True
+        threading.Timer(10, self._hide_popup_window).start()
+
+    def _hide_popup_window(self):
+        self.popup.close()
+        self._window_visible = False
 
     def _trigger_estop(self):
         """Trigger the emergency stop."""
