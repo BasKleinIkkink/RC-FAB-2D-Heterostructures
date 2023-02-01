@@ -219,6 +219,12 @@ class SampleBed(Base):
         self._base_controller.toggle_vacuum(state)
         self._lock.release()
 
+    def toggle_temp_control(self, state: bool):
+        """Toggle the temperature control on or off."""
+        self._lock.acquire()
+        self._base_controller.toggle_temp_control(state)
+        self._lock.release()
+
     def start_jog(self, direction: str, kind: str = "continuous") -> tuple:
         """
         Start a continuous movement in a given direction.

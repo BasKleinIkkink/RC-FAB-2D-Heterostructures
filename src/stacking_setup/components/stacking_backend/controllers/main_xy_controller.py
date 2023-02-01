@@ -522,10 +522,18 @@ class MainXYController:
         self._send_and_receive('fp0')  # Stop temp control
         self._em_event.set()
 
-    def toggle_vacuum(self, state):
+    def toggle_vacuum(self, state: bool):
         self._lock.acquire()
         if state:
             self._send_and_receive("su1")
         else:
             self._send_and_receive("su0")
+        self._lock.release()
+
+    def toggle_temp_control(self, state: bool):
+        self._lock.acquire()
+        if state:
+            self._send_and_receive("fp1")
+        else:
+            self._send_and_receive("fp0")
         self._lock.release()

@@ -612,8 +612,16 @@ class StackingSetupBackend:
                 self._echo(func=self.M812, command_id='M812',
                         command=parsed_command[command_id])
             elif command_id == 'M813':
-                # Toggle the vacuum pump
+                # Unconditional stop
                 self._echo(func=self.M813, command_id='M813',
+                        command=parsed_command[command_id])
+            elif command_id == 'M814':
+                # Toggle the vacuum pump
+                self._echo(func=self.M814, command_id='M814',
+                        command=parsed_command[command_id])
+            elif command_id == 'M815':
+                # Toggle the temp control
+                self._echo(func=self.M815, command_id='M815',
                         command=parsed_command[command_id])
             else:
                 exit_code = 1
@@ -1366,5 +1374,32 @@ class StackingSetupBackend:
             return 0, None
         else:
             return 1, 'No vacuum state given'
+
+    def M815(self, command : dict) -> tuple:
+        """
+        Toggle the temperature control PID.
+
+        Parameters
+        ----------
+        command : dict
+            A dict with the vacuum state to set under key 'S'. The value should be 0 or 1.
+        """
+        if 'S' in command.keys():
+            if command['S'] == 0:
+                state = False
+            elif command['S'] == 1:
+                state = True
+            else:
+                return 1, 'Invalid PID state given'
+
+            for axis in self._hardware:
+                try:
+                    axis.toggle_temperature_control(state)
+                except NotSupportedError:
+                    pass
+
+            return 0, None
+        else:
+            return 1, 'No PID state given'
         
         

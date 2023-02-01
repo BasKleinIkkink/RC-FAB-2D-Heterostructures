@@ -37,8 +37,8 @@ ACCEPTED_COMMANDS = {
     'M811' : {'ACCEPTED_AXES': ACCEPTED_AXES},
     'M812' : {'ACCEPTED_AXES': ACCEPTED_AXES},
     'M813' : {'ACCEPTED_AXES': ACCEPTED_AXES},
-    'M814' : {},
-    # 'M815' : {},  # Free for new macro commands
+    'M814' : {'S': {int}},
+    'M815' : {'S': {int}},  # Free for new macro commands
     # 'M816' : {},
     # 'M817' : {},
     # 'M818' : {},

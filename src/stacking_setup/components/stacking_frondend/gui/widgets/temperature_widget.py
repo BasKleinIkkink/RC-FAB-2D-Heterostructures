@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QGroupBox,
     QComboBox,
-    QCheckBox,
+    QRadioButton,
     QSpinBox,
     QLCDNumber,
     QGridLayout,
@@ -59,14 +59,6 @@ class TemperatureWidget(QGroupBox):
         self.mainVerticalLayout.addWidget(self._create_temp_params())
         self.mainFrame = self
 
-        # # Add another divider
-        # self.controlDiv = QFrame(self)
-        # self.controlDiv.setFrameShape(QFrame.HLine)
-        # self.controlDiv.setFrameShadow(QFrame.Sunken)
-        # self.mainVerticalLayout.addWidget(self.controlDiv)
-
-        # self.mainVerticalLayout.addWidget(self._create_custom_ramping())
-
         self.add_temp_presets(self.settings.temp_presets)
 
     def _create_save_and_reset(self):
@@ -106,6 +98,11 @@ class TemperatureWidget(QGroupBox):
         paramFrame = QFrame()
         gridLayout = QGridLayout(paramFrame)
 
+        # Add the on off toggle
+        self.pid_toggle = QRadioButton()
+        self.pid_toggle_label = QLabel()
+        self.pid_toggle_label.setText("PID on/off:")
+
         # Add the presets and spinbox
         self.target_spin_box = QSpinBox()
         self.target_spin_box.setValue(0)
@@ -123,11 +120,13 @@ class TemperatureWidget(QGroupBox):
         self.presetLabel.setText("Presets :")
 
         # Add the params to the grid
-        gridLayout.addWidget(self.tempSpinLabel, 1, 0, 1, 1)
-        gridLayout.addWidget(self.target_spin_box, 1, 1, 1, 1)
-        gridLayout.addWidget(self.tempSpinUnit, 1, 2, 1, 1)
-        gridLayout.addWidget(self.presetLabel, 0, 0, 1, 1)
-        gridLayout.addWidget(self.tempPresetCombo, 0, 1, 1, 1)
+        gridLayout.addWidget(self.tempSpinLabel, 2, 0, 1, 1)
+        gridLayout.addWidget(self.target_spin_box, 2, 1, 1, 1)
+        gridLayout.addWidget(self.tempSpinUnit, 2, 2, 2, 1)
+        gridLayout.addWidget(self.presetLabel, 1, 0, 1, 1)
+        gridLayout.addWidget(self.tempPresetCombo, 1, 1, 1, 1)
+        gridLayout.addWidget(self.pid_toggle_label, 0, 0, 1, 1)
+        gridLayout.addWidget(self.pid_toggle, 0, 1, 1, 1)
 
         return paramFrame
 
@@ -151,16 +150,6 @@ class TemperatureWidget(QGroupBox):
     #     grid.addWidget(self.heatRampCombo, 1, 1, 1, 2)
     #     return frame
 
-    # def _create_chart(self):
-    #     """Add the chart to the main frame."""
-    #     chart = self.Chart()
-    #     chart.legend().hide()
-    #     chart.setAnimationOptions(QChart.AllAnimations)
-    #     self.chart_view = QChartView(chart)
-    #     self.chart_view.setRenderHint(QPainter.Antialiasing)
-    #     self.chart = chart
-    #     return self.chart_view
-
     def add_temp_presets(self, presets=["0 °C", "50 °C", "100 °C", "150 °C", "200 °C"]):
         """Add the temperature presets to the combo box."""
         for i in presets:
@@ -179,13 +168,17 @@ class TemperatureWidget(QGroupBox):
         """
         # Connect the spinbox to the target temp indicator
         self.target_spin_box.valueChanged.connect(self._change_target_temp)
-        # self.target_spin_box.valueChanged.connect(self._set_custom_preset)
+        self.pid_toggle.clicked.connect(self._toggle_pid)
 
         # Connect the target spinbox to the combobox change
         self.tempPresetCombo.currentIndexChanged.connect(self._change_spinbox_value)
 
         # Set the indicator to the current spinbox value
         self.targetTempDisp.display(self.target_spin_box.value())
+
+    def _toggle_pid(self):
+        state = 1 if self.pid_toggle.isChecked() else 0
+        self.q.put('M815 S{}'.format(state))
 
     def _change_target_temp(self):
         """Change the target temperature of the indicator."""
@@ -219,84 +212,3 @@ class TemperatureWidget(QGroupBox):
         self.target_spin_box.setEnabled(state)
         self.tempPresetCombo.setEnabled(state)
         self.target_spin_box.setValue(23)
-
-
-    # class Chart(QChart):
-    #     def __init__(self, parent=None):
-    #         super().__init__(QChart.ChartTypeCartesian, parent, Qt.WindowFlags())
-    #         self._timer = QTimer()
-    #         self._series = QLineSeries(self)
-    #         self._set_temp = QLineSeries(self)
-    #         self._titles = []
-    #         self._axisX = QValueAxis()
-    #         self._axisY = QValueAxis()
-    #         self._step = 0
-    #         self._x = 0
-    #         self._y = 0
-    #         self._target_temp = 0
-    #         self.step_size = 1
-
-    #         # self._timer.timeout.connect(self.handleTimeout)
-    #         # self._timer.setInterval(1000)
-
-    #         green = QPen(Qt.green)
-    #         green.setWidth(3)
-    #         self._series.setPen(green)
-    #         self._series.append(self._x, self._y)
-
-    #         red = QPen(Qt.red)
-    #         red.setWidth(3)
-    #         self._set_temp.setPen(red)
-    #         self._set_temp.append(self._x, self._target_temp)
-
-    #         self.addSeries(self._series)
-    #         self.addSeries(self._set_temp)
-    #         self.addAxis(self._axisX, Qt.AlignBottom)
-    #         self.addAxis(self._axisY, Qt.AlignLeft)
-
-    #         self._series.attachAxis(self._axisX)
-    #         self._series.attachAxis(self._axisY)
-    #         self._set_temp.attachAxis(self._axisX)
-    #         self._set_temp.attachAxis(self._axisY)
-    #         self._axisX.setTickCount(10)
-    #         self._axisX.setRange(0, 60)
-    #         self._axisY.setRange(0, 50)
-
-    #         # Change the background to transparent
-    #         brush = QBrush(Qt.transparent)
-    #         self.setBackgroundBrush(brush)
-
-    #         # Set the ylasbel as the temperature unit
-    #         self._axisY.setTitleText("Temp (°C)")
-    #         self._axisX.setTitleText("Time (s)")
-
-    #         self._timer.start()
-
-    #     @property
-    #     def target_temp(self):
-    #         return self._target_temp
-
-    #     @target_temp.setter
-    #     def target_temp(self, value):
-    #         self._target_temp = value
-
-    #     @Slot()
-    #     def handleTimeout(self):
-    #         x = self.plotArea().width() / self._axisX.tickCount()
-    #         y = (self._axisX.max() - self._axisX.min()) / self._axisX.tickCount()
-    #         self._x += y
-    #         self._y = random.uniform(0, 50) - 2.5
-    #         self._series.append(self._x, self._y)
-    #         self._set_temp.append(self._x, self._target_temp)
-
-    #         # Update the y axis mx to 10% above the max value
-    #         if self._y > self._target_temp:
-    #             self._axisY.setRange(0, y)
-    #         else:
-    #             self._axisY.setRange(0, self._target_temp)
-
-    #         self.scroll(x, 0)
-    #         # if self._x == 100:
-    #         #    self._timer.stop()
-
-    #         # Always plot the target temp in red
