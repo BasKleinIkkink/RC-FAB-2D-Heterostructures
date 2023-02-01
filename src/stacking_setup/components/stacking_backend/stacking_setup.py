@@ -250,6 +250,7 @@ class StackingSetupBackend:
         self._execution_q = mp.Queue()
         self._hardware = self._init_all_hardware(settings)
         self._connect_all_hardware()
+        self._start_check_emergency_state()
         self._logger.info('Stacking setup initiated with connected hardware: {}'.format(self._hardware))
 
     def start_backend(self) -> ...:
@@ -262,6 +263,32 @@ class StackingSetupBackend:
                                                                         self._shutdown, self._con_to_main, self._settings,))    
         self._controller_process.set_deamon=True
         self._controller_process.start()
+
+    def _start_check_emergency_state(self) -> ...:
+        """
+        Start the emergency stop check loop.
+        
+        Start a new thread that checks if the emergency stop event is set.
+        """
+        self._emergency_stop_thread = tr.Thread(target=self._check_emergency_state)
+        self._emergency_stop_thread.start()
+
+    def _check_emergency_state(self) -> bool:
+        """
+        Check if the emergency stop event is set.
+        
+        Returns
+        -------
+        emergency_stop : bool
+            True if the emergency stop event is set, False otherwise.
+        """
+        while not self._shutdown.is_set():
+            if self._emergency_stop_event.is_set():
+                msg = Message(exit_code=1, msg='Emergency stop initiated', command_id='M112')
+                self._con_to_main.send(msg)
+                self._emergency_stop()
+                break
+            time.sleep(0.1)
 
     def _check_command_output(self) -> bool:
         """
@@ -341,14 +368,9 @@ class StackingSetupBackend:
                 time.sleep(0.01)
 
 
-        if self._emergency_stop_event.is_set():
-            self._con_to_main.send(Message(exit_code=1, msg='Emergency stop triggered', command_id='M112'))
-            self._emergency_stop()
-            self._logger.critical('Emergency stop triggered')
-        else:
-            self._disconnect_all_hardware()
-            self._logger.critical('Stacking process stopped.')
-            self._con_to_main.disconnect()
+        self._disconnect_all_hardware()
+        self._logger.critical('Stacking process stopped.')
+        self._con_to_main.disconnect()
         
     @typechecked        
     def _execute_command(self, parsed_command : dict) -> ...:
@@ -889,7 +911,7 @@ class StackingSetupBackend:
                 pass
             self._auto_position_report_flag = tr.Event()
             self._auto_position_report_interval = interval['S']
-            self._auto_position_report_timer = tr.Thread(target=self._keep_host_alive, args=(interval, self._auto_position_report_flag))
+            self._auto_position_report_timer = tr.Thread(target=self._auto_position_report, args=(interval['S'], self._auto_position_report_flag))
             self._auto_position_report_timer.start()
             return 0, None
 
@@ -973,7 +995,7 @@ class StackingSetupBackend:
                 pass
             self._auto_temperature_report_flag = tr.Event()
             self._auto_temperature_report_interval = interval['S']
-            self._auto_temperature_report_timer = tr.Thread(target=self._keep_host_alive, args=(interval, self._auto_temperature_report_flag))
+            self._auto_temperature_report_timer = tr.Thread(target=self._auto_temperature_report, args=(interval['S'], self._auto_temperature_report_flag))
             self._auto_temperature_report_timer.start()
             return 0, None
 

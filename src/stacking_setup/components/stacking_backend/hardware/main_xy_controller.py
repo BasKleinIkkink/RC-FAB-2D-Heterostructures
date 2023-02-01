@@ -159,7 +159,8 @@ class MainXYController:
 
     def start_check_error(self):
         self._check_error_flag = tr.Event()
-        self.error_thread = tr.Tread(target=self._check_error, args=(0.2, self._check_error_flag))
+        self.error_thread = tr.Thread(target=self._check_error, args=(0.2, self._check_error_flag))
+        self.error_thread.setDaemon(True)
         self.error_thread.start()
 
     def stop_check_error(self):
@@ -181,13 +182,14 @@ class MainXYController:
             if not self._em_event.is_set():
                 if res[1] != b"0":
                     self.emergency_stop()
-                    raise HardwareError("The emergency stop button was triggered.")
-                elif res[3] != b"0" or res[4] != b"0" or res[5] != b"0":
-                    self.emergency_stop()
-                    raise HardwareError("The heater response timed out while the PID is active.")
-                elif res[6] != b"0":
-                    self.emergency_stop()
-                    raise HardwareError("The stepper response timed out while zero-ing.")
+                    # Do not raise an error so the orther parts can also stop
+                    # raise HardwareError("The emergency stop button was triggered.")
+                # elif res[3] != b"0" or res[4] != b"0" or res[5] != b"0":
+                #     self.emergency_stop()
+                #     raise HardwareError("The heater response timed out while the PID is active.")
+                # elif res[6] != b"0":
+                #     self.emergency_stop()
+                #     raise HardwareError("The stepper response timed out while zero-ing.")
 
             time.sleep(interval)
 
@@ -262,7 +264,7 @@ class MainXYController:
         m3 = b"Base Stage Controller10\r\n"
 
         # Reset the input buffer
-        time.sleep(0.5)
+        time.sleep(2)
         self._ser_lock.acquire()
         self._ser.reset_input_buffer()
         self._ser.write(b"gid\r\n")
@@ -494,7 +496,6 @@ class MainXYController:
         pos = int(self.get_position(id))
         id = self._get_axis_id(id)
         self._lock.acquire()
-        print(pos, distance)
         self._send_and_receive("sp{}{}".format(id.lower(), pos + distance))
         self._lock.release()
 

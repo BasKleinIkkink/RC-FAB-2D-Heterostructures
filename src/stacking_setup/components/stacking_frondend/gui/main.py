@@ -48,7 +48,7 @@ class MainWindow(QMainWindow):
         self.load_widgets()  # Load the docks
         self.connect_actions()
 
-        # self._connect_backend()
+        self._connect_backend()
 
     def _connect_backend(self):
         # Handshake with the frondend
@@ -80,14 +80,13 @@ class MainWindow(QMainWindow):
     def _trigger_estop(self):
         """Trigger the emergency stop."""
         if VERBOSE_OUTPUT:
-            print("Triggered estop!")
-        self._q.put("M112")
-
+            print('GUI triggered estop!')
         # If the flag is set disable all the widget buttons
         self.baseControlWidget.estop()
         self.maskControlWidget.estop()
         self.microscopeWidget.estop()
         self.temperatureWidget.estop()
+        self._q.put("M112")
 
     def _reset_estop(self):
         if VERBOSE_OUTPUT:
@@ -236,10 +235,14 @@ class MainWindow(QMainWindow):
     def _update_gui(self, messages: list):
         """Get the content from the message and pass it to the correct widget."""
         for i in messages:
+            if i.command_id == 'M113':
+                continue
             self.systemMessagesWidget.add_message(i)
             if i.command_id == "M112":
                 # Emergency stop was triggered
-                self.toolBar.actions()[1].setChecked(True)
+                if VERBOSE_OUTPUT:
+                    print("Emergency stop was triggered")
+                self._trigger_estop()
 
             elif i.command_id == "M154":
                 # Set all the positions to the correct values
