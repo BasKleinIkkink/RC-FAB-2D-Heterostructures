@@ -646,7 +646,7 @@ class TestMachineCommands(unittest.TestCase):
         self.assertEqual(msg, None)
         exit_code, msg = stack.M113({})
         self.assertEqual(exit_code, 0)
-        self.assertEqual(msg, '1')
+        self.assertEqual(msg, 1)
     
     @patch.object(StackingSetupBackend, '_init_all_hardware', return_value=_get_hardware_mocks())
     def test_M114(self, _init_all_hardware_mock) -> ...:

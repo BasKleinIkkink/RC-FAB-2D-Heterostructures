@@ -69,8 +69,8 @@ class TestGcodeParser(unittest.TestCase):
 
     # Test add multiple attribute commands
     def test_add_multiple_attribute_commands(self):
-        expected = {'M190': {'S': 0.6, 'R': 5, 'I':-2}}
-        gcode_line = 'M190 R5 I-2 S0.6'
+        expected = {'M140': {'S': 0.6, 'I':-2}}
+        gcode_line = 'M140 S0.6 I-2'
         parsed_commands = GcodeParser().parse_gcode_line(gcode_line)
         self.assertEqual(parsed_commands, expected)
 

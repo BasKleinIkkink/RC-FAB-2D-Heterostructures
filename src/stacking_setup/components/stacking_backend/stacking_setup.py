@@ -936,19 +936,19 @@ class StackingSetupBackend:
         return 0, None
 
     @typechecked
-    def M113(self, interval: dict) -> tuple:
+    def M113(self, interval : dict) -> tuple:
         """
         Keep the host alive
 
-        If the interval None is given the current settings will be returned if a
+        If the interval None is given the current settings will be returned if a 
         keep alive timer has been set. Otherwise the keep alive timer will be
         set to the given amount of seconds. If 0 is given the timer is disabled.
-
+        
         Parameters
         ----------
         interval : dict
             A dict with the interval to set under key 'S'.
-
+        
         Returns
         -------
         exit_code : int
@@ -956,33 +956,58 @@ class StackingSetupBackend:
         msg : str
             If no error the set interval in seconds, otherwise an error message.
         """
-        if "S" not in interval.keys():
+        if 'S' not in interval.keys():
             # Return the current interval
             try:
                 return 0, self._keep_host_alive_interval
             except AttributeError:
-                msg = "The keep alive timer interval was asked but no timer is set"
+                msg = 'The keep alive timer interval was asked but no timer is set'
                 self._logger.debug(msg)
                 return 1, msg
 
             return 0, str(interval)
-        elif interval["S"] == 0:
+        elif interval['S'] == 0:
             # Disable the keep alive timer
             try:
                 self._keep_host_alive_flag.set()
                 del self._keep_host_alive_flag
                 del self._keep_host_alive_interval
             except AttributeError:
-                msg = "Tried to stop the keep alive timer but no timer is set"
+                msg = 'Tried to stop the keep alive timer but no timer is set'
                 self._logger.debug(msg)
                 return 1, msg
             return 0, None
         else:
-            self._keep_host_alive_timer = RepeatedTimer(
-                interval=interval["S"], function=self._keep_host_alive
-            )
+            # try stop the current thread and start a new one
+            try:
+                self._keep_host_alive_flag.set()
+            except AttributeError:
+                pass
+            self._keep_host_alive_flag = tr.Event()
+            self._keep_host_alive_interval = interval['S']
+            self._keep_host_alive_timer = tr.Thread(target=self._keep_host_alive, args=(interval, self._keep_host_alive_flag))
             self._keep_host_alive_timer.start()
             return 0, None
+
+    def _keep_host_alive(self, interval : int, stop_flag : tr.Event) -> ...:
+        """
+        Send a keep alive message to the host. (support function for M113)
+
+        This method is not meant to be called directly. It is called by the
+        :meth:`M113` command.
+        
+        .. note::
+            This method attempts to send a message to the host every interval
+            seconds. While the interval will be followed approximately, it is
+            not guaranteed that the interval will be followed exactly. 
+        """
+        while not stop_flag.is_set():
+            if self._con_to_main.is_connected:
+                self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!', command_id='M113'))
+            else:
+                stop_flag.set()
+                return
+            time.sleep(interval)
 
     def _keep_host_alive(self, interval : int, stop_flag : tr.Event) -> ...:
         """
@@ -1076,15 +1101,15 @@ class StackingSetupBackend:
         The data is returned in the msg variable in the following format:
         {<axis_id> : <position>, ...}
 
-        If the interval None is given the current settings will be returned if a
+        If the interval None is given the current settings will be returned if a 
         auto position update has been set. Otherwise the auto position timer will be
         set to the given amount of seconds. If 0 is given the timer is disabled.
 
         Parameters
         ----------
         interval : dict
-            A dict with the interval as {'S': <interval>}
-
+            A dict with the interval to set under key 'S'.
+        
         Returns
         -------
         exit_code : int
@@ -1092,15 +1117,16 @@ class StackingSetupBackend:
         msg : str
             If no error the set interval in seconds, otherwise an error message.
         """
-        if "S" not in interval.keys():
+        if 'S' not in interval.keys():
             # Return the current interval
             try:
                 return 0, self._auto_position_report_interval
             except AttributeError:
-                msg = "The auto position update interval was asked but no timer is set"
+                msg = 'The auto position timer interval was asked but no timer is set'
                 self._logger.debug(msg)
                 return 1, msg
-            return 0, interval
+
+            return 0, str(interval)
         elif interval['S'] == 0:
             # Disable the keep alive timer
             try:
@@ -1108,38 +1134,10 @@ class StackingSetupBackend:
                 del self._auto_position_report_flag
                 del self._auto_position_report_interval
             except AttributeError:
-                msg = 'Tried to stop the keep alive timer but no timer is set'
+                msg = 'Tried to stop the auto position timer but no timer is set'
                 self._logger.debug(msg)
                 return 1, msg
             return 0, None
-        else:
-            self._auto_position_timer = RepeatedTimer(
-                interval=interval["S"], function=self._auto_position_report
-            )
-            self._auto_position_timer.start()
-            return 0, None
-
-    def _auto_position_report(self) -> ...:
-        """Send a position update to the host. (support function for M154)"""
-        if (
-            not self._shutdown.is_set()
-            and not self._emergency_stop_event.is_set()
-            and self._con_to_main.is_connected
-        ):
-            exit_code, positions = self.M114()
-            if exit_code == 0:
-                self._con_to_main.send(
-                    Message(exit_code=0, msg=positions, command_id="M154", command="")
-                )
-            else:
-                self._con_to_main.send(
-                    Message(
-                        exit_code=1,
-                        msg="Could not get all positions, got {}".format(positions),
-                        command_id="M154",
-                        command="",
-                    )
-                )
         else:
             # try stop the current thread and start a new one
             try:
@@ -1183,19 +1181,19 @@ class StackingSetupBackend:
         """
         Auto temperature report.
 
-        If the interval None is given the current settings will be returned if a
+        If the interval None is given the current settings will be returned if a 
         auto temperature update has been set. Otherwise the auto temperature timer will be
         set to the given amount of seconds. If 0 is given the timer is disabled.
 
         .. note::
             The data is returned in the msg variable in the following format:
             {<axis_id> : {'current' : <current_temperature>, 'target' : <target_temperature>}, ...}
-
+        
         Parameters
         ----------
         interval : dict
-            A dict with the interval as {'S': <interval>}
-
+            A dict with the interval to set under key 'S'.
+        
         Returns
         -------
         exit_code : int
@@ -1203,53 +1201,27 @@ class StackingSetupBackend:
         msg : str
             If no error the set interval in seconds, otherwise an error message.
         """
-        if "S" not in interval.keys():
+        if 'S' not in interval.keys():
             # Return the current interval
             try:
                 return 0, self._auto_temperature_report_interval
             except AttributeError:
-                msg = (
-                    "The auto temperature update interval was asked but no timer is set"
-                )
+                msg = 'The auto temperature report timer interval was asked but no timer is set'
                 self._logger.debug(msg)
                 return 1, msg
 
-            return 0, interval
-        elif interval["S"] == 0:
+            return 0, str(interval)
+        elif interval['S'] == 0:
             # Disable the keep alive timer
             try:
                 self._auto_temperature_report_flag.set()
                 del self._auto_temperature_report_flag
                 del self._auto_temperature_report_interval
             except AttributeError:
-                msg = "Tried to stop the auto temperature update timer but no timer was set"
-            self._auto_temperature_timer = RepeatedTimer(
-                interval=interval["S"], function=self._auto_temperature_report
-            )
-            self._auto_temperature_timer.start()
+                msg = 'Tried to stop the auto temperature report timer but no timer is set'
+                self._logger.debug(msg)
+                return 1, msg
             return 0, None
-
-    def _auto_temperature_report(self) -> ...:
-        """Send a position update to the host. (support function for M154)"""
-        if (
-            not self._shutdown.is_set()
-            and not self._emergency_stop_event.is_set()
-            and self._con_to_main.is_connected
-        ):
-            exit_code, temps = self.M105()
-            if exit_code == 0:
-                self._con_to_main.send(
-                    Message(exit_code=0, msg=temps, command_id="M155", command="")
-                )
-            else:
-                self._con_to_main.send(
-                    Message(
-                        exit_code=1,
-                        msg="Could not get temperatures.",
-                        command_id="M155",
-                        command="",
-                    )
-                )
         else:
             # try stop the current thread and start a new one
             try:

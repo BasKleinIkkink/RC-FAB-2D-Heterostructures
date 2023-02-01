@@ -289,7 +289,7 @@ class MainXYController:
         
         self._lock.release()
 
-        self.start_check_error()
+        # self.start_check_error()
 
     def disconnect(self) -> ...:
         """Disconnect the hardware."""
