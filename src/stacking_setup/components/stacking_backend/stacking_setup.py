@@ -18,7 +18,6 @@ from ..stacking_middleware.pipeline_connection import PipelineConnection
 from ..stacking_middleware.serial_connection import SerialConnection
 from .configs.settings import Settings
 from queue import Queue
-from .repeated_timer import RepeatedTimer
 from .catch_remote_exceptions import catch_remote_exceptions
 
 
@@ -102,7 +101,57 @@ class StackingSetupBackend:
         )
         return logging.getLogger(__name__)
 
-    def _init_all_hardware(self, settings: Settings) -> list:
+    @typechecked
+    def _echo(self, func : callable, command_id : str, command : Union[dict, None]=None) -> ...:
+        """
+        Echo the command response (error code and msg) to the main process.
+
+        The goal of this function is to execute actions in a separate thread and pass the status
+        messages to the main process.
+
+        .. attention::
+            Actions have to be done in a separate thread so the backend stays responsive and can 
+            respond to the emergency stop command (M112)
+
+        Parameters
+        ----------
+        func : function
+            The function to execute.
+        command_id : str
+            The command id.
+        command : dict, None
+            The command.
+        """
+        if self._emergency_stop_event.is_set():
+            self._logger.critical('Cannot execute command {} when the estop is set'.format(command_id))
+            return
+
+        # Send the exit code and msg over the pipe to main
+        thread = tr.Thread(target=self._threaded_excecution, args=(self._execution_q, func, command_id, command,),
+                            daemon=True)
+        thread.start()
+        return
+
+    def _threaded_excecution(self, q : Queue, func : callable, command_id : str, command : Union[dict, None]=None) -> ...:
+        if command is not None:
+            exit_code, msg = func(command)
+        else:
+            exit_code, msg = func()
+
+        if msg is None:
+            msg = ''
+        elif not isinstance(msg, (str, dict),):
+            msg = str(msg)
+
+        message = Message(exit_code=exit_code, msg=msg, command_id=command_id, command=command)
+
+        # Send to the main process and execution loop
+        q.put(Message(exit_code=exit_code, msg=msg, command_id=command_id, command=command))
+        self._con_to_main.send(message)
+        return
+
+
+    def _init_all_hardware(self, settings : Settings) -> list:
         """
         Initiate the hardware.
 
@@ -316,11 +365,8 @@ class StackingSetupBackend:
         self._execution_q = mp.Queue()
         self._hardware = self._init_all_hardware(settings)
         self._connect_all_hardware()
-        self._logger.info(
-            "Stacking setup initiated with connected hardware: {}".format(
-                self._hardware
-            )
-        )
+        self._start_check_emergency_state()
+        self._logger.info('Stacking setup initiated with connected hardware: {}'.format(self._hardware))
 
     def start_backend(self) -> ...:
         """
@@ -340,14 +386,48 @@ class StackingSetupBackend:
         self._controller_process.set_deamon = True
         self._controller_process.start()
 
+    def _start_check_emergency_state(self) -> ...:
+        """
+        Start the emergency stop check loop.
+        
+        Start a new thread that checks if the emergency stop event is set.
+        """
+        self._emergency_stop_thread = tr.Thread(target=self._check_emergency_state)
+        self._emergency_stop_thread.start()
+
+    def _check_emergency_state(self) -> bool:
+        """
+        Check if the emergency stop event is set.
+        
+        Returns
+        -------
+        emergency_stop : bool
+            True if the emergency stop event is set, False otherwise.
+        """
+        while not self._shutdown.is_set():
+            if self._emergency_stop_event.is_set():
+                msg = Message(exit_code=1, msg='Emergency stop initiated', command_id='M112')
+                self._con_to_main.send(msg)
+                self._emergency_stop()
+                break
+            time.sleep(0.1)
+
     def _check_command_output(self) -> bool:
-        """Check if the command output queue is not empty and send the output to the main process."""
+        """
+        Check if the command output queue is not empty
+        
+        Checks if there were any errors when executing commands in the threaded executors.
+
+        Returns
+        -------
+        got_error : bool
+            True if there was an error, False otherwise.
+        """
         got_error = False
         while not self._execution_q.empty():
             message = self._execution_q.get()
             if message.exit_code != 0:
                 got_error = True
-            self._con_to_main.send(message)
         return got_error
 
     @catch_remote_exceptions
@@ -425,19 +505,12 @@ class StackingSetupBackend:
             else:
                 time.sleep(0.01)
 
-        if self._emergency_stop_event.is_set():
-            self._con_to_main.send(
-                Message(exit_code=1, msg="Emergency stop triggered", command_id="M112")
-            )
-            self._emergency_stop()
-            self._logger.critical("Emergency stop triggered")
-        else:
-            self._disconnect_all_hardware()
-            self._logger.critical("Stacking process stopped.")
-            self._con_to_main.disconnect()
-
-    @typechecked
-    def _execute_command(self, parsed_command: dict) -> ...:
+        self._disconnect_all_hardware()
+        self._logger.critical('Stacking process stopped.')
+        self._con_to_main.disconnect()
+        
+    @typechecked        
+    def _execute_command(self, parsed_command : dict) -> ...:
         """
         Execute the parsed command dict.
 
@@ -536,11 +609,12 @@ class StackingSetupBackend:
                 )
             elif command_id == "M812":
                 # Use jogging
-                self._echo(
-                    func=self.M812,
-                    command_id="M812",
-                    command=parsed_command[command_id],
-                )
+                self._echo(func=self.M812, command_id='M812',
+                        command=parsed_command[command_id])
+            elif command_id == 'M813':
+                # Toggle the vacuum pump
+                self._echo(func=self.M813, command_id='M813',
+                        command=parsed_command[command_id])
             else:
                 exit_code = 1
                 self._con_to_main.send(
@@ -885,7 +959,7 @@ class StackingSetupBackend:
         if "S" not in interval.keys():
             # Return the current interval
             try:
-                interval = self._keep_host_alive_timer.interval
+                return 0, self._keep_host_alive_interval
             except AttributeError:
                 msg = "The keep alive timer interval was asked but no timer is set"
                 self._logger.debug(msg)
@@ -895,7 +969,9 @@ class StackingSetupBackend:
         elif interval["S"] == 0:
             # Disable the keep alive timer
             try:
-                self._keep_host_alive_timer.stop()
+                self._keep_host_alive_flag.set()
+                del self._keep_host_alive_flag
+                del self._keep_host_alive_interval
             except AttributeError:
                 msg = "Tried to stop the keep alive timer but no timer is set"
                 self._logger.debug(msg)
@@ -908,16 +984,25 @@ class StackingSetupBackend:
             self._keep_host_alive_timer.start()
             return 0, None
 
-    def _keep_host_alive(self) -> ...:
-        """Send a keep alive message to the host. (support function for M113)"""
-        if self._con_to_main.is_connected:
-            self._con_to_main.send(
-                Message(
-                    exit_code=0, msg="The backend is still alive!!", command_id="M113"
-                )
-            )
-        else:
-            self._keep_host_alive_timer.stop()
+    def _keep_host_alive(self, interval : int, stop_flag : tr.Event) -> ...:
+        """
+        Send a keep alive message to the host. (support function for M113)
+
+        This method is not meant to be called directly. It is called by the
+        :meth:`M113` command.
+        
+        .. note::
+            This method attempts to send a message to the host every interval
+            seconds. While the interval will be followed approximately, it is
+            not guaranteed that the interval will be followed exactly. 
+        """
+        while not stop_flag.is_set():
+            if self._con_to_main.is_connected:
+                self._con_to_main.send(Message(exit_code=0, msg='The backend is still alive!!', command_id='M113'))
+            else:
+                stop_flag.set()
+                return
+            time.sleep(interval)
 
     def M114(self) -> tuple:
         """
@@ -984,7 +1069,7 @@ class StackingSetupBackend:
         self._initiate_all_hardware()  # Reconnect all the hardware.
         return 0, None
 
-    def M154(self, interval) -> tuple:
+    def M154(self, interval : dict) -> tuple:
         """
         Auto position report.
 
@@ -1010,24 +1095,23 @@ class StackingSetupBackend:
         if "S" not in interval.keys():
             # Return the current interval
             try:
-                interval = self._auto_position_timer.interval
+                return 0, self._auto_position_report_interval
             except AttributeError:
                 msg = "The auto position update interval was asked but no timer is set"
                 self._logger.debug(msg)
                 return 1, msg
-
             return 0, interval
-        elif interval["S"] == 0:
+        elif interval['S'] == 0:
+            # Disable the keep alive timer
             try:
-                # Disable the keep alive timer
-                self._auto_position_timer.stop()
-                return 0, None
+                self._auto_position_report_flag.set()
+                del self._auto_position_report_flag
+                del self._auto_position_report_interval
             except AttributeError:
-                msg = (
-                    "Tried to stop the auto position update timer but no timer was set"
-                )
+                msg = 'Tried to stop the keep alive timer but no timer is set'
                 self._logger.debug(msg)
                 return 1, msg
+            return 0, None
         else:
             self._auto_position_timer = RepeatedTimer(
                 interval=interval["S"], function=self._auto_position_report
@@ -1057,9 +1141,45 @@ class StackingSetupBackend:
                     )
                 )
         else:
-            self._auto_position_timer.stop()
+            # try stop the current thread and start a new one
+            try:
+                self._auto_position_report_flag.set()
+            except AttributeError:
+                pass
+            self._auto_position_report_flag = tr.Event()
+            self._auto_position_report_interval = interval['S']
+            self._auto_position_report_timer = tr.Thread(target=self._auto_position_report, args=(interval['S'], self._auto_position_report_flag))
+            self._auto_position_report_timer.start()
+            return 0, None
 
-    def M155(self, interval) -> tuple:
+    def _auto_position_report(self, interval : int, stop_flag : tr.Event()) -> ...:
+        """
+        Send a position update to the host. (support function for M154)
+        
+        Parameters
+        ----------
+        interval : int
+            The interval in seconds to send the position update.
+        stop_flag : threading.Event
+            A threading event that can be set to stop the thread.
+        """
+        while not stop_flag.is_set():
+            if not self._shutdown.is_set() and not self._emergency_stop_event.is_set() and \
+                    self._con_to_main.is_connected:
+                exit_code, positions = self.M114()
+                if exit_code == 0:
+                    self._con_to_main.send(Message(exit_code=0, msg=positions, command_id='M154', 
+                                        command='M114'))
+                else:
+                    self._con_to_main.send(Message(exit_code=1, msg='Could not get all positions, got {}'.format(positions), 
+                                        command_id='M154', command='M114'))                         
+            else:
+                stop_flag.set()
+                return
+            
+            time.sleep(interval)
+
+    def M155(self, interval : dict) -> tuple:
         """
         Auto temperature report.
 
@@ -1086,7 +1206,7 @@ class StackingSetupBackend:
         if "S" not in interval.keys():
             # Return the current interval
             try:
-                interval = self._auto_temperature_timer.interval
+                return 0, self._auto_temperature_report_interval
             except AttributeError:
                 msg = (
                     "The auto temperature update interval was asked but no timer is set"
@@ -1096,15 +1216,13 @@ class StackingSetupBackend:
 
             return 0, interval
         elif interval["S"] == 0:
+            # Disable the keep alive timer
             try:
-                # Disable the keep alive timer
-                self._auto_temperature_timer.stop()
-                return 0, None
+                self._auto_temperature_report_flag.set()
+                del self._auto_temperature_report_flag
+                del self._auto_temperature_report_interval
             except AttributeError:
                 msg = "Tried to stop the auto temperature update timer but no timer was set"
-                self._logger.debug(msg)
-                return 1, msg
-        else:
             self._auto_temperature_timer = RepeatedTimer(
                 interval=interval["S"], function=self._auto_temperature_report
             )
@@ -1133,7 +1251,41 @@ class StackingSetupBackend:
                     )
                 )
         else:
-            self._auto_temperature_timer.stop()
+            # try stop the current thread and start a new one
+            try:
+                self._auto_temperature_report_flag.set()
+            except AttributeError:
+                pass
+            self._auto_temperature_report_flag = tr.Event()
+            self._auto_temperature_report_interval = interval['S']
+            self._auto_temperature_report_timer = tr.Thread(target=self._auto_temperature_report, args=(interval['S'], self._auto_temperature_report_flag))
+            self._auto_temperature_report_timer.start()
+            return 0, None
+
+    def _auto_temperature_report(self, interval : int, stop_flag : tr.Event()) -> ...:
+        """
+        Send a position update to the host. (support function for M154)
+        
+        Parameters
+        ----------
+        interval : int
+            The interval in seconds to send the position update.
+        stop_flag : threading.Event
+            A threading event that can be set to stop the thread.
+        """
+        while not stop_flag.is_set():
+            if not self._shutdown.is_set() and not self._emergency_stop_event.is_set() and \
+                    self._con_to_main.is_connected:
+                exit_code, temps = self.M105()
+                if exit_code == 0:
+                    self._con_to_main.send(Message(exit_code=0, msg=temps, command_id='M155', command='M105'))
+                else:
+                    self._con_to_main.send(Message(exit_code=1, msg='Could not get temperatures.', command_id='M155', command='M105'))
+            else:
+                stop_flag.set()
+                return
+
+            time.sleep(interval)
 
     # JOGGING AND DRIVING FUNCTIONS
     def M811(self, command: dict) -> tuple:
@@ -1215,3 +1367,32 @@ class StackingSetupBackend:
         for axis in self._hardware:
             axis.stop()
         return 0, None
+
+    def M814(self, command : dict) -> tuple:
+        """
+        Toggle the vacuum pump.
+
+        Parameters
+        ----------
+        command : dict
+            A dict with the vacuum state to set under key 'S'. The value should be 0 or 1.
+        """
+        if 'S' in command.keys():
+            if command['S'] == 0:
+                state = False
+            elif command['S'] == 1:
+                state = True
+            else:
+                return 1, 'Invalid vacuum state given'
+
+            for axis in self._hardware:
+                try:
+                    axis.toggle_vacuum(state)
+                except NotSupportedError:
+                    pass
+
+            return 0, None
+        else:
+            return 1, 'No vacuum state given'
+        
+        

@@ -206,8 +206,18 @@ class SampleBed(Base):
         return state
 
     # MOVEMENT AND OTHER FUNCTIONS
-    def toggle_vacuum_pump(self) -> ...:
-        raise NotImplementedError()
+    def toggle_vacuum(self, state : bool) -> ...:
+        """
+        Toggle the vacuum on or off.
+        
+        Parameters
+        ----------
+        state: bool
+            True to turn the vacuum on, False to turn it off.
+        """
+        self._lock.acquire()
+        self._base_controller.toggle_vacuum(state)
+        self._lock.release()
 
     def start_jog(self, direction: str, kind: str = "continuous") -> tuple:
         """

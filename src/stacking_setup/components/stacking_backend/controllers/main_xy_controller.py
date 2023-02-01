@@ -6,7 +6,6 @@ import threading as tr
 from ..configs.settings import Settings
 import multiprocessing as mp
 from time import sleep
-from ..repeated_timer import RepeatedTimer
 
 
 class MainXYController:
@@ -56,11 +55,6 @@ class MainXYController:
     ) -> Union[None, list]:
         """
         Send a command to the base controller and receive the response.
-
-        .. important::
-            Most functions acquire a lock before sending a command to the the controller, this is to prevent
-            multiple threads from sending commands at the same time. This function is an exception to this rule,
-            it is the responsibility of the calling function to acquire the lock before calling this function.
 
         Parameters:
         -----------
@@ -164,38 +158,43 @@ class MainXYController:
             raise ValueError("The axis {} is not supported.".format(axis))
 
     def start_check_error(self):
-        self.error_thread = RepeatedTimer(interval=0.5, function=self._check_error)
+        self._check_error_flag = tr.Event()
+        self.error_thread = tr.Thread(target=self._check_error, args=(0.2, self._check_error_flag))
+        self.error_thread.setDaemon(True)
         self.error_thread.start()
+
+    def stop_check_error(self):
+        self._check_error_flag.set()
+        self.error_thread.join()
     
-    def _check_error(self) -> ...:
+    def _check_error(self, interval : Union[float, int], stop_flag : tr.Event()) -> ...:
         """Check if the controller has an error."""
-        
-        self._lock.acquire()
-        res = self._send_and_receive("ge", expect_response=True)
-        self._lock.release()
+        while not stop_flag.is_set() or self._em_event.is_set():
+            # Does not capture the serial lock because there is no further interaction with the class
+            res = self._send_and_receive("ge", expect_response=True)
 
-        # Check critical error codes
-        # if res[0] != b"0":
-        #     raise HardwareError(
-        #         "The stepper drivers on the base control box are not powered or switched off."
-        #     )
-        if not self._em_event.is_set():
-            if res[1] != b"0":
-                self._em_event.set()
+            # Check critical error codes
+            if res[0] != b"0":
                 self.emergency_stop()
-            # elif res[2] != b"0" or res[3] != b"0":
-            #     self._em_event.set()
-            #     self.emergency_stop()
-            #     raise HardwareError("The heater response timed out while the PID is active.")
-            # elif res[4] != b"0":
-            #     self._em_event.set()
-            #     self.emergency_stop()
-            #     raise HardwareError("The stepper response timed out while zero-ing.")
+                raise HardwareError(
+                    "The base control box is not powered."
+                )
+            if not self._em_event.is_set():
+                if res[1] != b"0":
+                    self.emergency_stop()
+                    # Do not raise an error so the orther parts can also stop
+                    # raise HardwareError("The emergency stop button was triggered.")
+                # elif res[3] != b"0" or res[4] != b"0" or res[5] != b"0":
+                #     self.emergency_stop()
+                #     raise HardwareError("The heater response timed out while the PID is active.")
+                # elif res[6] != b"0":
+                #     self.emergency_stop()
+                #     raise HardwareError("The stepper response timed out while zero-ing.")
 
-        # Get the non critical error codes
-        # res = self._send_and_receive("gb", expect_response=True)
-        # if res[14] != b"0" or res[1] != b"0":
-        #     raise HardwareError("One or both of the stepper motors have stalled.")
+            time.sleep(interval)
+
+        if self._em_event.is_set():
+            stop_flag.set()
 
     # MOVEMENT ATTRIBUTES
     @property
@@ -255,7 +254,7 @@ class MainXYController:
         self._lock.release()
 
     # CONNECTION FUNCTIONS
-    def connect(self, zero: bool = True) -> ...:
+    def connect(self) -> ...:
         """Connect the hardware."""
         if self._is_connected:
             return
@@ -266,9 +265,11 @@ class MainXYController:
 
         # Reset the input buffer
         time.sleep(2)
+        self._ser_lock.acquire()
         self._ser.reset_input_buffer()
         self._ser.write(b"gid\r\n")
         msg_list = self._ser.readlines()
+        self._ser_lock.release()
         if not m3 in msg_list:
             raise HardwareError(
                 "The base controller did not respond with the correct id. {}".format(
@@ -288,7 +289,7 @@ class MainXYController:
         
         self._lock.release()
 
-        # self.start_check_error()
+        self.start_check_error()
 
     def disconnect(self) -> ...:
         """Disconnect the hardware."""
@@ -495,7 +496,6 @@ class MainXYController:
         pos = int(self.get_position(id))
         id = self._get_axis_id(id)
         self._lock.acquire()
-        print(pos, distance)
         self._send_and_receive("sp{}{}".format(id.lower(), pos + distance))
         self._lock.release()
 
@@ -520,15 +520,12 @@ class MainXYController:
         """
         self._send_and_receive("x")  # Stop all motion
         self._send_and_receive('fp0')  # Stop temp control
+        self._em_event.set()
 
-    def vacuum_on(self) -> ...:
-        """Turn the vacuum on."""
+    def toggle_vacuum(self, state):
         self._lock.acquire()
-        self._send_and_receive("su1")
-        self._lock.release()
-
-    def vacuum_off(self) -> ...:
-        """Turn the vacuum off."""
-        self._lock.acquire()
-        self._send_and_receive("su0")
+        if state:
+            self._send_and_receive("su1")
+        else:
+            self._send_and_receive("su0")
         self._lock.release()
