@@ -51,7 +51,7 @@ class TangoDesktop(Base):
         """
         Initialize the tango desktop.
 
-        Parameters:
+        Parameters
         -----------
         id: str
             The id of the tango desktop.
@@ -209,7 +209,7 @@ class TangoDesktop(Base):
             multiple threads from sending commands at the same time. This function is an exception to this rule,
             it is the responsibility of the calling function to acquire the lock before calling this function.
 
-        Parameters:
+        Parameters
         -----------
         command: str
             The command to send to the tango desktop.
@@ -218,7 +218,7 @@ class TangoDesktop(Base):
         expect_response: bool
             If the command should expect a response.
 
-        Returns:
+        Returns
         --------
         response: str or None
             The response of the tango desktop.

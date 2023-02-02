@@ -14,7 +14,17 @@ except ImportError:
 class SerialConnection(BaseConnector):
     _connection_method = "SERIAL"
 
-    def __init__(self, settings: Settings, role: str) -> None:
+    def __init__(self, settings: Settings, role: str) -> ...:
+        """
+        Initialize the connection.
+
+        Parameters
+        ----------
+        settings : Settings
+            The settings to use.
+        role : str
+            The role of the connection. Either "frontend" or "backend".
+        """
         self._role = role
         self._settings = settings
 
@@ -27,33 +37,48 @@ class SerialConnection(BaseConnector):
         self._ser = serial.Serial(port, baudrate, timeout=timeout)
         self.connect()
 
-    def connect(self) -> None:
+    def connect(self) -> ...:
+        """Connect to the serial port."""
         if not self._serial.is_open:
             self._serial.open()
 
-    def disconnect(self) -> None:
+    def disconnect(self) -> ...:
+        """Disconnect from the serial port."""
         if self._serial.is_open:
             self._serial.close()
 
     def is_connected(self) -> bool:
+        """Check if the serial port is connected."""
         return self._serial.is_open
 
-    def send_sentinel(self):
+    def send_sentinel(self) -> ...:
+        """Send the sentinel command to the other side."""
         self.send(self.SENTINEL)
 
-    def send(self, command):
+    def send(self, command) -> ...:
+        """
+        Send the command to the serial port.
+
+        Parameters
+        ----------
+        command : str
+            The command to send.
+        """
         # Check if the command is a string otherwise convert to str
         if not isinstance(command, str):
             command = str(command)
         self._serial.write(command.encode())
 
-    def message_waiting(self):
+    def message_waiting(self) -> bool:
+        """Check if a message is waiting."""
         return True if self._serial.in_waiting > 0 else False
 
     def receive(self) -> Union[str, None]:
+        """Receive a message from the serial port."""
         return self._serial.read().decode()
 
     def handshake(self):
+        """Perform the handshake."""
         # Depending on the role of the connector decide
         # what to send and what to receive
         if self._role == "FRONDEND":
@@ -71,7 +96,8 @@ class SerialConnection(BaseConnector):
         else:
             raise HandshakeError("Unknown role {}".format(self._role))
 
-    def _frondend_handshake(self):
+    def _frondend_handshake(self) -> bool:
+        """Perform the frontend handshake."""
         if not self.is_connected:
             return False
 
@@ -90,6 +116,7 @@ class SerialConnection(BaseConnector):
                 return True
 
     def _backend_handshake(self):
+        """Perform the backend handshake."""
         # Wait for the hello message
         attempts = 0
         max_attempts = 5

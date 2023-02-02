@@ -1,4 +1,4 @@
-import configparser
+from typing import Union
 import time
 
 SENTINEL = "SENTINEL"  # Sentinel command to close the pipe
@@ -28,56 +28,64 @@ class BaseConnector:
 
     # ATTRIBUTES
     @property
-    def connection_method(self):
+    def connection_method(self) -> str:
         """Return the connection method."""
         return self._connection_method
 
     @property
-    def role(self):
+    def role(self) -> str:
         """Return the role of the connection."""
         return self._role
 
     @property
-    def handshake_complete(self):
+    def handshake_complete(self) -> bool:
         """Return the handshake status."""
         return self._handshake_complete
 
     @property
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Check if the device is connected."""
         raise NotImplementedError()
 
     @property
-    def SENTINEL(self):
+    def SENTINEL(self) -> str:
         """Return the sentinel command."""
         return self._SENTINEL
 
     # METHODS
-    def connect(self):
+    def connect(self) -> ...:
         """Connect to the device."""
         raise NotImplementedError()
 
-    def disconnect(self):
+    def disconnect(self) -> ...:
         """Disconnect from the device."""
         raise NotImplementedError()
 
-    def send_sentinel(self):
+    def send_sentinel(self) -> ...:
         """Send a sentinel to the IO controller (RPI)."""
         raise NotImplementedError()
 
-    def send(self, command):
-        """Send a command to the device."""
+    def send(self, command: bytes) -> ...:
+        """
+        Send a command to the device.
+        
+        Parameters
+        ----------
+        command : bytes
+            The command to send to the device.
+        """
         raise NotImplementedError()
 
-    def message_waiting(self):
+    def message_waiting(self) -> bool:
         """Check if a message is waiting."""
         raise NotImplementedError()
 
-    def receive(self):
+    def receive(self) -> Union[bytes, str]:
         """Receive data from the device."""
         raise NotImplementedError()
 
-    def handshake(self):
+    def handshake(self) -> ...:
+        """Perform the handshake with the device."""
         # Depending on the role of the connector decide
         # what to send and what to receive
         if self._role == "FRONTEND":
@@ -99,7 +107,8 @@ class BaseConnector:
         else:
             raise HandshakeError("Unknown role {}".format(self._role))
 
-    def _frondend_handshake(self):
+    def _frondend_handshake(self) -> bool:
+        """Frontend handshake."""
         if not self.is_connected:
             return False
         # Wait for the response
@@ -119,7 +128,8 @@ class BaseConnector:
 
         raise ValueError("frondend Handshake failed")
 
-    def _backend_handshake(self):
+    def _backend_handshake(self) -> bool:
+        """Backend handshake."""
         # Wait for the hello message
         while True:
             time.sleep(0.1)

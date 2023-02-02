@@ -184,37 +184,49 @@ class PipelineConnection(BaseConnector):
             # The lock cannot be pickled, so it is created on the backend
             self._lock = None
 
-    def __init_lock__(self):
+    def __init_lock__(self) -> tr.Lock:
+        """Initialize the lock."""
         self._lock = tr.Lock()
 
     @property
-    def is_connected(self):
+    def is_connected(self) -> bool:
+        """Check if the connection is open."""
         self._lock.acquire()
         state = PipeCom.pipe_is_open(self._connection)
         self._lock.release()
         return state
 
-    def connect(self):
+    def connect(self) -> ...:
         # The pipe is connected on init and cannot reconnect
         pass
 
-    def send_sentinel(self):
+    def send_sentinel(self) -> ...:
+        """Send the sentinel command to the other side."""
         print("Sending sentinel")
         self._lock.acquire()
         PipeCom.write_pipe(self._connection, self.SENTINEL)
         self._lock.release()
 
-    def disconnect(self):
+    def disconnect(self) -> ...:
+        """Close the connection."""
         self._lock.acquire()
         PipeCom.close_pipe(self._connection)
         self._lock.release()
 
-    def send(self, data):
+    def send(self, data) -> ...:
+        """
+        Send the data to the pipe.
+
+        Parameters
+        ----------
+        data : list, str or bytes
+            The data to send.
+        """
         self._lock.acquire()
         PipeCom.write_pipe(self._connection, data)
         self._lock.release()
 
-    def message_waiting(self):
+    def message_waiting(self) -> bool:
         """
         Check if a message is waiting.
 
@@ -229,7 +241,7 @@ class PipelineConnection(BaseConnector):
         self._lock.release()
         return state
 
-    def receive(self):
+    def receive(self) -> list:
         """
         Receive the data from the pipe.
 

@@ -14,20 +14,34 @@ class Message:
         command_id: str,
         msg: Union[str, dict],
         command: Union[str, dict, None] = None,
-    ):
+    ) -> ...:
+        """
+        Initialize the message object.
+        
+        Parameters
+        ----------
+        exit_code : int
+            The exit code of the command.
+        command_id : str
+            The command ID.
+        msg : Union[str, dict]
+            The message to send.
+        command : Union[str, dict, None], optional
+            The command to send, by default None
+        """
         self.exit_code = exit_code
         self.command = command
         self.command_id = command_id
         self.msg = msg
         self.timestamp = str(datetime.datetime.now())
 
-    def items(self):
+    def items(self) -> list:
         return self.__dict__.items()
 
-    def keys(self):
+    def keys(self) -> list:
         return self.__dict__.keys()
 
-    def values(self):
+    def values(self) -> list:
         return self.__dict__.values()
 
 

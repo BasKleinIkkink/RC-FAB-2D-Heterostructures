@@ -320,7 +320,14 @@ class FocusWidget(QGroupBox):
         self.downButton.setEnabled(not button_state)
 
     def update_positions(self, dict):
-        """Update the position labels."""
+        """
+        Update the position labels.
+        
+        Parameters
+        ----------
+        dict : dict
+            The dictionary containing the positions
+        """
         if "K" in dict:
             self.zPosDisplay.display(dict["K"])
 
@@ -333,7 +340,14 @@ class FocusWidget(QGroupBox):
         print(self.driveScale)
 
     def estop(self, state=False):
-        """Disable all the buttons"""
+        """
+        Disable all the buttons
+        
+        Parameters
+        ----------
+        state : bool
+            The state of the buttons
+        """
         self.upButton.setEnabled(state)
         self.downButton.setEnabled(state)
         self.lockButton.setEnabled(state)

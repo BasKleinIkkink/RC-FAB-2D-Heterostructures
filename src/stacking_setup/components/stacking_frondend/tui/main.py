@@ -10,7 +10,7 @@ def check_for_response(con, lock: Lock, event: Event) -> ...:
     This function is used in a thread to print responses from the pipe connection
     without having to wait for a loop to finish.
 
-    Parameters:
+    Parameters
     -----------
     con : Child class of BaseConnector
         The connection to check for a response from.
@@ -19,7 +19,7 @@ def check_for_response(con, lock: Lock, event: Event) -> ...:
     event : threading.Event
         The event to check if the thread should be closed.
 
-    Returns:
+    Returns
     --------
     None.
 
@@ -50,12 +50,12 @@ def main(connector) -> ...:
     """
     Start the TUI and the backend.
 
-    Parameters:
+    Parameters
     -----------
     connector : Child class of BaseConnector
         The connector to use to communicate with the backend.
 
-    Returns:
+    Returns
     --------
     None
 

@@ -29,7 +29,14 @@ class MainWindow(QMainWindow):
     window_size = (1280, 720)
 
     def __init__(self, connector):
-        """Initialize the main window."""
+        """
+        Initialize the main window.
+        
+        Parameters
+        ----------
+        connector : Connector
+            The connector object.
+        """
         super().__init__()
         # Connect to the backend
         self._connector = connector
@@ -52,6 +59,7 @@ class MainWindow(QMainWindow):
         self._connect_backend()
 
     def _connect_backend(self):
+        """Connect to the backend."""
         # Handshake with the frondend
         time.sleep(0.2)
         self._connector.handshake()
@@ -61,7 +69,14 @@ class MainWindow(QMainWindow):
         # self._show_popup_window()
 
     def closeEvent(self, event):
-        """Close the main window."""
+        """
+        Close the main window.
+        
+        Parameters
+        ----------
+        event : QEvent
+            The close event.
+        """
         self._stop_event_handeler()
         self._connector.send_sentinel()
         self.close()
@@ -80,6 +95,7 @@ class MainWindow(QMainWindow):
         self._q.put("G28")
 
     def _show_popup_window(self):
+        """Show a popup window to inform the user that the backend is starting."""
         # Create the window
         self.popup = QMainWindow(self)
         self.popup.setWindowTitle("Startup")
@@ -106,6 +122,7 @@ class MainWindow(QMainWindow):
         threading.Timer(10, self._hide_popup_window).start()
 
     def _hide_popup_window(self):
+        """Hide the popup window."""
         self.popup.close()
         self._window_visible = False
 
@@ -121,6 +138,7 @@ class MainWindow(QMainWindow):
         self._q.put("M112")
 
     def _reset_estop(self):
+        """Reset the emergency stop."""
         if VERBOSE_OUTPUT:
             print("Reset the estop")
         self._q.put("M999")
@@ -133,11 +151,13 @@ class MainWindow(QMainWindow):
         self.temperatureWidget.estop(True)
 
     def _trigger_stop(self):
+        """Trigger the stop."""
         if VERBOSE_OUTPUT:
             print("Triggered the stop")
         self._q.put("M813")
 
     def _lock_unlock_machine(self):
+        """Lock or unlock the machine."""
         # Get the button state
         state = not self._optionsMenu.actions()[0].isChecked()
 

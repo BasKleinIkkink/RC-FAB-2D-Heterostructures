@@ -13,7 +13,7 @@ class MainXYController:
     This is the main class responsible for communication with the eld controller.
 
     .. attention::
-        The controler uses steps as the unit of measurement. This means all values from
+        The controller uses steps as the unit of measurement. This means all values from
         the user should be converted from um to steps. This is not done in this class
         and is the responsibility of the overlaying class
     """
@@ -56,7 +56,7 @@ class MainXYController:
         """
         Send a command to the base controller and receive the response.
 
-        Parameters:
+        Parameters
         -----------
         command: str
             The command to send to the tango desktop.
@@ -65,7 +65,7 @@ class MainXYController:
         expect_response: bool
             If the command should expect a response.
 
-        Raises:
+        Raises
         -------
         HardwareNotConnectedError:
             If the tango desktop is not connected.
@@ -158,17 +158,33 @@ class MainXYController:
             raise ValueError("The axis {} is not supported.".format(axis))
 
     def start_check_error(self):
+        """Start the error checking thread."""
         self._check_error_flag = tr.Event()
         self.error_thread = tr.Thread(target=self._check_error, args=(0.2, self._check_error_flag))
         self.error_thread.setDaemon(True)
         self.error_thread.start()
 
     def stop_check_error(self):
+        """Stop the error checking thread."""
         self._check_error_flag.set()
         self.error_thread.join()
     
     def _check_error(self, interval : Union[float, int], stop_flag : tr.Event()) -> ...:
-        """Check if the controller has an error."""
+        """
+        Check if the controller has an error.
+        
+        Parameters
+        ----------
+        interval: float
+            The interval in seconds to check for errors.
+        stop_flag: tr.Event
+            The stop flag.
+
+        Raises
+        ------
+        HardwareError
+            If the controller has an error.
+        """
         while not stop_flag.is_set() or self._em_event.is_set():
             # Does not capture the serial lock because there is no further interaction with the class
             res = self._send_and_receive("ge", expect_response=True)
@@ -315,7 +331,19 @@ class MainXYController:
         return res
 
     def is_moving(self, axis=Union[str, None]) -> bool:
-        """Check if the hardware is moving."""
+        """
+        Check if the hardware is moving.
+        
+        Parameters
+        ----------
+        axis : str, optional
+            The axis to check if moving, by default None. If None, check if any axis is moving.
+
+        Returns
+        -------
+        bool
+            True if the hardware is moving, False otherwise.
+        """
         self._lock.acquire()
         res = self._send_and_receive("gb", expect_response=True)
         self._lock.release()
@@ -431,9 +459,8 @@ class MainXYController:
         ----------
         axis : str
             The axis to jog.
-        direction : str
-            The direction to jog, this can be + or -.
-
+        velocity : float or int
+            The velocity to jog at.
         """
         if self._em_event.is_set():
             return
@@ -505,9 +532,8 @@ class MainXYController:
         """
         Unconditionally stop the hardware.
 
-        .. note::
-            This function intentionally does not capture the lock. This is
-            because the function should be able to run at all times
+        This function intentionally does not capture the lock. This is
+        because the function should be able to run at all times
 
         .. attention::
             This method will set the emergency flag that all controllers
@@ -518,7 +544,15 @@ class MainXYController:
         self._send_and_receive('fp0')  # Stop temp control
         self._em_event.set()
 
-    def toggle_vacuum(self, state: bool):
+    def toggle_vacuum(self, state: bool) -> ...:
+        """
+        Toggle the vacuum on or off.
+
+        Parameters
+        ----------
+        state : bool
+            The state to set the vacuum to.
+        """
         self._lock.acquire()
         if state:
             self._send_and_receive("su1")
@@ -526,7 +560,15 @@ class MainXYController:
             self._send_and_receive("su0")
         self._lock.release()
 
-    def toggle_temp_control(self, state: bool):
+    def toggle_temp_control(self, state: bool) -> ...:
+        """
+        Toggle the temperature control on or off.
+
+        Parameters
+        ----------
+        state : bool
+            The state to set the temperature control to.
+        """
         self._lock.acquire()
         if state:
             self._send_and_receive("fp1")

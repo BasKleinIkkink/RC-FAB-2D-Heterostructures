@@ -334,7 +334,18 @@ class MaskControlWidget(ControlWidget):
     min_size = max_size
 
     def __init__(self, settings, q, parent=None) -> ...:
-        """Create the mask control widget."""
+        """
+        Create the mask control widget.
+        
+        Parameters
+        ----------
+        settings : Settings
+            The settings object.
+        q : Queue
+            The queue object.
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(settings, q, parent)
         self._add_extra_buttons()
         self._add_extra_positions()
@@ -644,7 +655,14 @@ class MaskControlWidget(ControlWidget):
         self.moveZDown.setEnabled(not button_state)
 
     def update_positions(self, dict) -> ...:
-        """Update the position displays."""
+        """
+        Update the position displays.
+        
+        Parameters
+        ----------
+        dict : dict
+            A dictionary containing the new positions.
+        """
         if "X" in dict:
             self.xPosDisplay.display(dict["X"])
         if "Y" in dict:
@@ -655,7 +673,14 @@ class MaskControlWidget(ControlWidget):
             self.rPosDisplay.display(dict["L"])
 
     def estop(self, state=False) -> ...:
-        """Disable all buttons."""
+        """
+        Disable all buttons.
+        
+        Parameters
+        ----------
+        state : bool, optional
+            The state of the buttons, by default False
+        """
         self.moveUp.setEnabled(state)
         self.moveDown.setEnabled(state)
         self.moveLeft.setEnabled(state)
@@ -680,7 +705,18 @@ class BaseControlWidget(ControlWidget):
     name = "Base Control"
 
     def __init__(self, settings, q, parent=None) -> ...:
-        """Initialize the base control widget."""
+        """
+        Initialize the base control widget.
+        
+        Parameters
+        ----------
+        settings : Settings
+            The settings object.
+        q : Queue
+            The queue to send commands to the backend.
+        parent : QWidget, optional
+            The parent widget, by default None
+        """
         super().__init__(settings, q, parent)
         self.add_vel_presets(self.setting.base_vel_presets)
         self._slider_changed()
@@ -788,14 +824,28 @@ class BaseControlWidget(ControlWidget):
         self.moveRight.setEnabled(not button_state)
 
     def update_positions(self, dict) -> ...:
-        """Update the position labels."""
+        """
+        Update the position labels.
+        
+        Parameters
+        ----------
+        dict : dict
+            The dictionary of the positions.
+        """
         if "H" in dict:
             self.xPosDisplay.display(str(dict["J"]))
         if "J" in dict:
             self.yPosDisplay.display(str(dict["H"]))
 
     def estop(self, state=False) -> ...:
-        """Disable all the buttons."""
+        """
+        Disable all the buttons.
+        
+        Parameters
+        ----------
+        state : bool, optional
+            The state of the buttons, by default False
+        """
         self.moveLeft.setEnabled(state)
         self.moveRight.setEnabled(state)
         self.moveUp.setEnabled(state)

@@ -26,37 +26,37 @@ class StackingSetupBackend:
     The main backend class for the stacking setup.
 
     The class is the main backend class for the stacking setup. It handles the
-    communication from the user (frondend) to the hardware. The class is a
-    multiprocessing class, so it can be used in a seperate process.
+    communication from the user (frontend) to the hardware. The class is a
+    multiprocessing class, so it can be used in a separate process.
 
     Used Gcode commands
     -------------------
-    - G0 : Lineair movement
-    - G1 : Rotational movement
-    - G2 : Jogging movement (velocity control)
-    - G28 : Home all axes
-    - G90 : Set to absolute coordinates
-    - G91 : Set to relative coordinates
+    * G0 : Linear movement
+    * G1 : Rotational movement
+    * G2 : Jogging movement (velocity control)
+    * G28 : Home all axes
+    * G90 : Set to absolute coordinates
+    * G91 : Set to relative coordinates
 
-    - X, Y, Z : Move the mask holder
-    - I, J, K : Move the base plate
-    - L : Move or control the sample holder
+    * X, Y, Z : Move the mask holder
+    * I, J, K : Move the base plate
+    * L : Move or control the sample holder
 
-    - M0 : Unconditional stop
-    - M105 : Report current temperature
-    - M112 : Emergency stop
-    - M113 : Keep host alive
-    - M114 : Report current position
-    - M140 : Set bed temperature
-    - M154 : Position auto report
-    - M155 : Temperature auto report
-    - M190 : Wait for bed temperature
-    - M503 : Report settings
-    - M510 : Lock machine
-    - M511 : Unlock machine
-    - M512 : Set password
-    - M810 - M819 : G-code macros
-    - M999 : STOP restart
+    * M0 : Unconditional stop
+    * M105 : Report current temperature
+    * M112 : Emergency stop
+    * M113 : Keep host alive
+    * M114 : Report current position
+    * M140 : Set bed temperature
+    * M154 : Position auto report
+    * M155 : Temperature auto report
+    * M190 : Wait for bed temperature
+    * M503 : Report settings
+    * M510 : Lock machine
+    * M511 : Unlock machine
+    * M512 : Set password
+    * M810 - M819 : G-code macros
+    * M999 : STOP restart
     """
 
     _emergency_breaker = None
@@ -72,7 +72,7 @@ class StackingSetupBackend:
             The pipe to the main process.
 
             .. note::
-                All middelware methods that inherit from the base middleware class
+                All middleware methods that inherit from the base middleware class
                 can be used as a as a middleware connection.
         """
         self._con_to_main = to_main
@@ -111,7 +111,7 @@ class StackingSetupBackend:
 
         .. attention::
             Actions have to be done in a separate thread so the backend stays responsive and can 
-            respond to the emergency stop command (M112)
+            respond to the emergency stop command (:func:`M112`)
 
         Parameters
         ----------
@@ -133,6 +133,20 @@ class StackingSetupBackend:
         return
 
     def _threaded_excecution(self, q : Queue, func : callable, command_id : str, command : Union[dict, None]=None) -> ...:
+        """
+        Execute the command in a separate thread.
+
+        Parameters
+        ----------
+        q : Queue
+            The queue to send the message to the main thread.
+        func : function
+            The function to execute.
+        command_id : str
+            The command id.
+        command : dict, None
+            The command.
+        """
         if command is not None:
             exit_code, msg = func(command)
         else:
@@ -270,7 +284,7 @@ class StackingSetupBackend:
         """
         Echo the command response (error code and msg) to the main process.
 
-        The goal of this function is to excecute actions in a seperate thread and pass the status
+        The goal of this function is to execute actions in a separate thread and pass the status
         messages to the main process.
 
         Parameters
@@ -521,8 +535,8 @@ class StackingSetupBackend:
         machine commands (start with M), then the 'physical' commands (start with G).
 
         .. attention::
-            The priority commands are M112 (emergency stop), M999 (reset) and
-            M0 (stop all movement).
+            The priority commands are :func:`M112` (emergency stop), :func:`M999` (reset) and
+            :func:`M0` (stop all movement).
             if one of these commands is in the parsed_command dict it will be
             executed first and the rest of the commands will be ignored.
         """
@@ -791,13 +805,6 @@ class StackingSetupBackend:
         .. note::
             Even though simultaneous homing is way more efficient for now
             there is no way to do this safely (see :func:`G0`)
-
-        Returns
-        -------
-        exit_code : int
-            0 if the command was successful, 1 if not.
-        msg : str
-            A message with the result of
         """
         for axis in self._hardware:
             try:
@@ -809,7 +816,7 @@ class StackingSetupBackend:
 
     def G90(self) -> tuple:
         """
-        Set to absolute positioning.
+        Set the system to absolute positioning.
 
         Returns
         -------
@@ -826,7 +833,7 @@ class StackingSetupBackend:
 
     def G91(self) -> tuple:
         """
-        Set to relative positioning.
+        Set the system to relative positioning.
 
         Returns
         -------
@@ -999,7 +1006,7 @@ class StackingSetupBackend:
 
     def _keep_host_alive(self, interval : int, stop_flag : tr.Event) -> ...:
         """
-        Send a keep alive message to the host. (support function for M113)
+        Send a keep alive message to the host. (support function for :func:`M113`)
 
         This method is not meant to be called directly. It is called by the
         :meth:`M113` command.
@@ -1019,7 +1026,7 @@ class StackingSetupBackend:
 
     def _keep_host_alive(self, interval : int, stop_flag : tr.Event) -> ...:
         """
-        Send a keep alive message to the host. (support function for M113)
+        Send a keep alive message to the host. (support function for :func:`M113`)
 
         This method is not meant to be called directly. It is called by the
         :meth:`M113` command.
@@ -1160,7 +1167,7 @@ class StackingSetupBackend:
 
     def _auto_position_report(self, interval : int, stop_flag : tr.Event()) -> ...:
         """
-        Send a position update to the host. (support function for M154)
+        Send a position update to the host. (support function for :class:`M154`)
         
         Parameters
         ----------
@@ -1244,7 +1251,7 @@ class StackingSetupBackend:
 
     def _auto_temperature_report(self, interval : int, stop_flag : tr.Event()) -> ...:
         """
-        Send a position update to the host. (support function for M154)
+        Send a position update to the host. (support function for :class:`M154`)
         
         Parameters
         ----------

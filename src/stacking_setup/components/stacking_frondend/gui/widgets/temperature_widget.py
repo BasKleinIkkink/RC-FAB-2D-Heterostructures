@@ -147,7 +147,14 @@ class TemperatureWidget(QGroupBox):
     #     return frame
 
     def add_temp_presets(self, presets=["0 °C", "50 °C", "100 °C", "150 °C", "200 °C"]):
-        """Add the temperature presets to the combo box."""
+        """
+        Add the temperature presets to the combo box.
+        
+        Parameters
+        ----------
+        presets : list
+            The list of presets to add to the combo box.
+        """
         for i in presets:
             self.tempPresetCombo.addItem(str(i))
 
@@ -197,13 +204,27 @@ class TemperatureWidget(QGroupBox):
         self._change_target_temp()
 
     def update_temperature(self, temp):
-        """Update the current temperature of the indicator."""
+        """
+        Update the current temperature of the indicator.
+        
+        Parameters
+        ----------
+        temp : dict
+        """
         if 'L' not in temp.keys():
             return
         self.currentTempDisp.display(temp['L']['current'])
         self.targetTempDisp.display(temp['L']['target'])
 
     def estop(self, state=False):
+        """
+        Disable the PID and the spinbox when the estop is pressed.
+
+        Parameters
+        ----------
+        state : bool
+            The state of the estop.
+        """
         # Disable the sliders and spinboxes
         self.target_spin_box.setEnabled(state)
         self.tempPresetCombo.setEnabled(state)
