@@ -18,7 +18,7 @@ from .widgets.system_messages_widget import SystemMessageWidget
 from .widgets.control_widget import BaseControlWidget, MaskControlWidget
 from .widgets.focus_widget import FocusWidget
 from .widgets.temperature_widget import TemperatureWidget
-from .configs.settings import Settings
+from .configs.gui_settings import GuiSettings
 import multiprocessing as mp
 
 
@@ -36,7 +36,7 @@ class MainWindow(QMainWindow):
         self._connector.__init_lock__()
         self._q = queue.Queue()
         self._shutdown_event = mp.Event()
-        self._settings = Settings()
+        self._settings = GuiSettings()
 
         # Resize to the screen resolution
         self.setWindowTitle("Main Window")

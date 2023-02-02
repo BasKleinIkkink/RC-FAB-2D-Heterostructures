@@ -13,10 +13,6 @@ from PySide6.QtWidgets import (
     QLCDNumber,
     QGridLayout,
 )
-from PySide6.QtCharts import QChart, QLineSeries, QValueAxis, QChart, QChartView
-from PySide6.QtCore import Qt, QTimer, Slot
-from PySide6.QtGui import QPen
-import random
 
 
 class TemperatureWidget(QGroupBox):

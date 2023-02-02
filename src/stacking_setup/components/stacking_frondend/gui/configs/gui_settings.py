@@ -7,7 +7,7 @@ from ast import literal_eval
 from typing import Tuple
 
 
-class Settings:
+class GuiSettings:
 
     @typechecked
     def __init__(self, filename : str='gui_config.ini') -> None:

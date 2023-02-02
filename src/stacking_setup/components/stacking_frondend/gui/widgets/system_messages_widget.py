@@ -21,7 +21,6 @@ from PySide6.QtWidgets import (
 from ....stacking_middleware.message import Message
 from random import randint
 import datetime
-import datetime
 
 REGULAR_EXPRESSION = 0
 WILDCARD = 1
