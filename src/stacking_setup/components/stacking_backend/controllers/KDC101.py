@@ -329,6 +329,25 @@ class KDC101:
                 self.emergency_stop()
                 break
 
+    def _get_movement_intervals(self, distance: int) -> int:
+        """
+        Get the amount of intervals that should be moved
+
+        Intervals are used to divide a distance into smaller steps.
+        This is done so the emergency flag gan be polled between movements.
+
+        Parameters
+        ----------
+        distance : int
+            The distance to move.
+
+        Returns
+        -------
+        interval
+            The amount of times the check_interval distance should be moved.
+        """
+        return distance // self._check_interval
+
     @typechecked
     def rotate_to(
         self,
@@ -352,12 +371,19 @@ class KDC101:
         hold_until_done : bool
             If True, the function will wait until the movement is done.
         """
-        if self._em_event.is_set():
-            return None
+        pos = self.get_position()
+        distance = position - pos
+        intervals = self._get_movement_intervals(distance)
         self._lock.acquire()
-        self._controller.move_to(position=position, scale=scale)
-        if hold_until_done:
-            self._wait_move()
+        for i in range(intervals):
+            if self._em_event.is_set():
+                self._lock.release()
+                self.stop()
+                self._lock.acquire()
+                break
+            self._controller.move_to(position=position, scale=scale)
+            if hold_until_done:
+                self._wait_move()
         self._lock.release()
 
     @typechecked
@@ -379,17 +405,24 @@ class KDC101:
         hold_until_done : bool
             If True, the function will wait until the movement is done.
         """
-        if self._em_event.is_set():
-            return None
+        intervals = self._get_movement_intervals(distance)
         self._lock.acquire()
-        self._controller.move_by(distance=distance, scale=scale)
-        if hold_until_done:
-            self._wait_move()
+        for i in range(intervals):
+            if self._em_event.is_set():
+                self._lock.release()
+                self.stop()
+                self._lock.acquire()
+                break
+            self._controller.move_by(distance=distance, scale=scale)
+            if hold_until_done:
+                self._wait_move()
         self._lock.release()
 
     def stop(self) -> ...:
         """Stop the motor."""
+        self._lock.acquire()
         self._controller.stop()
+        
 
     def emergency_stop(self) -> ...:
         """

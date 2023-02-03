@@ -8,6 +8,7 @@ from ..configs.settings import Settings
 import threading as tr
 import multiprocessing as mp
 from ..exceptions import HardwareNotConnectedError
+import time
 
 
 class KIM101:
@@ -36,7 +37,10 @@ class KIM101:
         """
         self._settings = settings
         self._serial_nr = self._settings.get(self._type + ".DEFAULT", "serial_nr")
-        self._serial_nr = "97101742"
+        self._serial_nr = self._settings.get(self._type + ".DEFAULT", "serial_nr")
+        self._check_interval = self._settings.get(
+            self._type + ".DEFAULT", "check_interval"
+        )
         self._connected = False
         self._lock = tr.Lock()
         self._em_event = em_event
@@ -253,6 +257,25 @@ class KIM101:
         self._controller.stop(channel=channel)
         self._lock.release()
 
+    def _get_movement_intervals(self, distance: int) -> int:
+        """
+        Get the amount of intervals that should be moved
+
+        Intervals are used to divide a distance into smaller steps.
+        This is done so the emergency flag gan be polled between movements.
+
+        Parameters
+        ----------
+        distance : int
+            The distance to move.
+
+        Returns
+        -------
+        interval
+            The amount of times the check_interval distance should be moved.
+        """
+        return distance // self._check_interval
+
     @typechecked
     def move_to(
         self, channel: int, position: Union[float, int], wait_until_done: bool = True
@@ -260,7 +283,10 @@ class KIM101:
         """
         Move one of the connected piezos.
 
-        Position is the distance in steps from the zero point (home).
+        Position is the distance in steps from the zero point (home). Due to 
+        safety issues the function does not actually call an absolute move
+        but a relative move. The position is calculated by subtracting the
+        current position from the target position.
 
         Parameters
         ----------
@@ -271,17 +297,24 @@ class KIM101:
         wait_until_done : bool
             If True, wait until the movement is done.
         """
-        if self._em_event.is_set():
-            return None
+        pos = self.get_position(channel=channel)
         self._lock.acquire()
-        self._controller.move_to(position=int(round(position, 0)), channel=channel)
-        if wait_until_done:
-            self._wait_move(channel=channel)
+        distance = position - pos
+        intervals = self._get_movement_intervals(distance=distance)
+        for i in range(intervals):
+            if self._em_event.is_set():
+                self._lock.release()
+                self.stop()
+                self._lock.acquire()
+                break
+            self._controller.move_by(distance=self._check_interval if distance > 0 else -1 * self._check_interval, channel=channel)
+            if wait_until_done:
+                self._wait_move(channel=channel)
         self._lock.release()
 
     @typechecked
     def move_by(
-        self, channel: int, distance: Union[float, int], wait_until_done: bool = True
+        self, channel: int, distance: Union[float, int], wait_until_done: bool = False
     ) -> ...:
         """
         Move one of the connected piezos.
@@ -297,13 +330,23 @@ class KIM101:
         wait_until_done : bool
             If True, wait until the movement is done.
         """
-        if self._em_event.is_set():
-            return None
+        
         self._lock.acquire()
-        # Distance has to be given in steps
-        self._controller.move_by(distance=int(round(distance, 0)), channel=channel)
-        if wait_until_done:
-            self._wait_move(channel=channel)
+        intervals = self._get_movement_intervals(distance)
+        for i in range(intervals):
+            if self._em_event.is_set():
+                self._lock.release()
+                self.stop()
+                self._lock.acquire()
+                break
+            
+            while self.is_moving(channel=channel):
+                continue
+            # Distance has to be given in steps
+            self._controller.move_by(distance=self._check_interval if distance > 0 else -1 * self._check_interval, channel=channel)
+            if wait_until_done:
+                self._wait_move(channel=channel)
+
         self._lock.release()
 
     @typechecked
@@ -326,7 +369,7 @@ class KIM101:
 
     def emergency_stop(self) -> ...:
         """Stop all connected piezos."""
-        self._controller.stop(sync=False)
+        # self._controller.stop(sync=False)
         self._em_event.set()
 
 
