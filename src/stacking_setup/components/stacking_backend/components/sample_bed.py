@@ -237,7 +237,7 @@ class SampleBed(Base):
             The kind of movement to perform (continuous or buildin).
         """
         if self._em_event.is_set():
-            return None
+            return 1, None
         self._lock.acquire()
         self._motor_controller.start_jog(direction=direction, kind=kind)
         self._lock.release()
