@@ -42,6 +42,7 @@ class KIM101:
             self._type + ".DEFAULT", "check_interval"
         )
         self._connected = False
+        self._stop_event = tr.Event()
         self._lock = tr.Lock()
         self._em_event = em_event
         if self._serial_nr == "None":
@@ -274,7 +275,7 @@ class KIM101:
         interval
             The amount of times the check_interval distance should be moved.
         """
-        return distance // self._check_interval
+        return abs(int(distance // self._check_interval))
 
     @typechecked
     def move_to(
@@ -298,23 +299,24 @@ class KIM101:
             If True, wait until the movement is done.
         """
         pos = self.get_position(channel=channel)
-        self._lock.acquire()
         distance = position - pos
         intervals = self._get_movement_intervals(distance=distance)
+        if distance < self._check_interval:
+            dist = position - pos
+        else:
+            dist = self._check_interval if distance > 0 else -1 * self._check_interval
+        self._lock.acquire()
         for i in range(intervals):
-            if self._em_event.is_set():
-                self._lock.release()
-                self.stop()
-                self._lock.acquire()
+            if self._em_event.is_set() or self._stop_event.is_set():
                 break
-            self._controller.move_by(distance=self._check_interval if distance > 0 else -1 * self._check_interval, channel=channel)
+            self._controller.move_by(distance=dist, channel=channel)
             if wait_until_done:
                 self._wait_move(channel=channel)
         self._lock.release()
 
     @typechecked
     def move_by(
-        self, channel: int, distance: Union[float, int], wait_until_done: bool = False
+        self, channel: int, distance: Union[float, int], wait_until_done: bool = True
     ) -> ...:
         """
         Move one of the connected piezos.
@@ -330,18 +332,16 @@ class KIM101:
         wait_until_done : bool
             If True, wait until the movement is done.
         """
-        
+        intervals = self._get_movement_intervals(distance=distance)
+        if distance < self._check_interval:
+            dist = distance
+        else:
+            dist = self._check_interval if distance > 0 else -1 * self._check_interval
         self._lock.acquire()
-        intervals = self._get_movement_intervals(distance)
         for i in range(intervals):
-            if self._em_event.is_set():
-                self._lock.release()
-                self.stop()
-                self._lock.acquire()
+            if self._em_event.is_set() or self._stop_event.is_set():
                 break
             
-            while self.is_moving(channel=channel):
-                continue
             # Distance has to be given in steps
             self._controller.move_by(distance=self._check_interval if distance > 0 else -1 * self._check_interval, channel=channel)
             if wait_until_done:
@@ -359,9 +359,10 @@ class KIM101:
         channel : int, None
             The channel of the piezo to stop. If None, all piezos are stopped.
         """
+        self._stop_event.set()  # Get out of the movement loop
         self._lock.acquire()
         if channel is None:
-            for i in range(4):
+            for i in range(1, 4):
                 self._controller.stop(channel=i, sync=False)
         else:
             self._controller.stop(channel=channel)

@@ -73,6 +73,7 @@ class TangoDesktop(Base):
         self._max_speed = settings.get(self._type + "." + self._id, "max_vel")
         self._check_interval = settings.get(self._type + ".DEFAULT", "check_interval")
         self._current_speed = None  # Only used for jogging
+        self._stop_event = tr.Event()
 
         if self._controller is None:
             # Controller is not initiated, check if the port can be captured
@@ -490,10 +491,7 @@ class TangoDesktop(Base):
         self._lock.acquire()
         intervals = self._get_movement_intervals(position - pos)
         for i in range(intervals):
-            if self._em_event.is_set():
-                self._lock.release()
-                self.stop()
-                self._lock.acquire()
+            if self._em_event.is_set() or self._stop_event.is_set():
                 break
             self._send_and_receive(
                 "!mor z {}".format(self._check_interval),
@@ -507,10 +505,7 @@ class TangoDesktop(Base):
         intervals = self._get_movement_intervals(distance)
         self._lock.acquire()
         for i in range(intervals):
-            if self._em_event.is_set():
-                self._lock.release()
-                self.stop()
-                self._lock.acquire()
+            if self._em_event.is_set() or self._stop_event.is_set():
                 break
             
             self._send_and_receive(
@@ -518,6 +513,18 @@ class TangoDesktop(Base):
                 expect_response=False,
                 expect_confirmation=False,
             )
+        self._lock.release()
+
+    def stop(self) -> ...:
+        """Stop the tango desktop."""
+        self._stop_event.set()
+        self._lock.acquire()
+        self._send_and_receive(
+            "!stopaccel", expect_response=False, expect_confirmation=False
+        )
+        self._send_and_receive(
+            "!stop", expect_response=False, expect_confirmation=False
+        )
         self._lock.release()
 
     def emergency_stop(self) -> ...:

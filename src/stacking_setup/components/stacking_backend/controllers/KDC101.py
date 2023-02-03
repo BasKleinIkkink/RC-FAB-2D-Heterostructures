@@ -39,6 +39,7 @@ class KDC101:
         self._settings = settings
         self._serial_nr = self._settings.get(self._type + ".DEFAULT", "serial_nr")
         self._em_event = em_event
+        self._check_interval = self._settings.get(self._type + ".DEFAULT", "check_interval")
         if self._serial_nr == "None":
             raise HardwareNotConnectedError(
                 "It could not be determined if the device is connected because of missing serial nr in config."
