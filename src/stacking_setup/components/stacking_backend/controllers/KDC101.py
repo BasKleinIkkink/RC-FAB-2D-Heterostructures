@@ -39,6 +39,7 @@ class KDC101:
         self._settings = settings
         self._serial_nr = self._settings.get(self._type + ".DEFAULT", "serial_nr")
         self._em_event = em_event
+        self._stop_event = tr.Event()
         self._check_interval = self._settings.get(self._type + ".DEFAULT", "check_interval")
         if self._serial_nr == "None":
             raise HardwareNotConnectedError(
@@ -347,7 +348,7 @@ class KDC101:
         interval
             The amount of times the check_interval distance should be moved.
         """
-        return distance // self._check_interval
+        return abs(int(distance // self._check_interval))
 
     @typechecked
     def rotate_to(
@@ -375,7 +376,7 @@ class KDC101:
         pos = self.get_position()
         distance = position - pos
         intervals = self._get_movement_intervals(distance=distance)
-        if distance < self._check_interval:
+        if abs(distance) < self._check_interval:
             dist = position - pos
         else:
             dist = self._check_interval if distance > 0 else -1 * self._check_interval
@@ -408,7 +409,7 @@ class KDC101:
             If True, the function will wait until the movement is done.
         """
         intervals = self._get_movement_intervals(distance=distance)
-        if distance < self._check_interval:
+        if abs(distance) < self._check_interval:
             dist = distance
         else:
             dist = self._check_interval if distance > 0 else -1 * self._check_interval
@@ -425,8 +426,9 @@ class KDC101:
         """Stop the motor."""
         self._stop_event.set()  # Get out of the movement loop
         self._lock.acquire()
-        self._controller.stop(channel=i, sync=False)
+        self._controller.stop()
         self._lock.release()
+        self._stop_event.clear()
 
     def emergency_stop(self) -> ...:
         """

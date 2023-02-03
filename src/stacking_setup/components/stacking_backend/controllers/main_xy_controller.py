@@ -39,6 +39,7 @@ class MainXYController:
         self._baud_rate = settings.get(self._type + ".DEFAULT", "baud_rate")
         self._timeout = settings.get(self._type + ".DEFAULT", "timeout")
         self._zero_timeout = settings.get(self._type + ".DEFAULT", "zero_timeout")
+        self._check_interval = settings.get(self._type + ".DEFAULT", "check_interval")
         self._temp_control_active = False
         self._lock = tr.Lock()
         self._ser_lock = tr.Lock()
@@ -502,7 +503,7 @@ class MainXYController:
         pos = int(self.get_position(id))
         distance = position - pos  # Distance to move
         intervals = self._get_movement_intervals(distance=distance)
-        if distance < self._check_interval:
+        if abs(distance) < self._check_interval:
             dist = distance
         else:
             dist = self._check_interval if distance > 0 else -1 * self._check_interval
@@ -547,7 +548,7 @@ class MainXYController:
         """
         pos = int(self.get_position(id))
         intervals = self._get_movement_intervals(distance=distance)
-        if distance < self._check_interval:
+        if abs(distance) < self._check_interval:
             dist = distance
         else:
             dist = self._check_interval if distance > 0 else -1 * self._check_interval
@@ -566,6 +567,7 @@ class MainXYController:
         self._lock.acquire()
         self._send_and_receive("x")
         self._lock.release()
+        self._stop_event.clear()
 
     def emergency_stop(self) -> ...:
         """
