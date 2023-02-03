@@ -486,12 +486,15 @@ class TangoDesktop(Base):
         position : Union[float, int]
             The position to move to.
         """
-        if self._em_event.is_set():
-            return None
         pos = self.position
         self._lock.acquire()
         intervals = self._get_movement_intervals(position - pos)
         for i in range(intervals):
+            if self._em_event.is_set():
+                self._lock.release()
+                self.stop()
+                self._lock.acquire()
+                break
             self._send_and_receive(
                 "!mor z {}".format(self._check_interval),
                 expect_response=False,
@@ -501,14 +504,20 @@ class TangoDesktop(Base):
 
     def move_by(self, distance: Union[float, int]) -> ...:
         """Move the tango desktop by the given distance."""
-        if self._em_event.is_set():
-            return None
+        intervals = self._get_movement_intervals(distance)
         self._lock.acquire()
-        self._send_and_receive(
-            "!mor z {}".format(distance),
-            expect_response=False,
-            expect_confirmation=False,
-        )
+        for i in range(intervals):
+            if self._em_event.is_set():
+                self._lock.release()
+                self.stop()
+                self._lock.acquire()
+                break
+            
+            self._send_and_receive(
+                "!mor z {}".format(distance),
+                expect_response=False,
+                expect_confirmation=False,
+            )
         self._lock.release()
 
     def emergency_stop(self) -> ...:

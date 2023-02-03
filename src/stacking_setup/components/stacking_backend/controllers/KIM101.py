@@ -8,6 +8,7 @@ from ..configs.settings import Settings
 import threading as tr
 import multiprocessing as mp
 from ..exceptions import HardwareNotConnectedError
+import time
 
 
 class KIM101:
@@ -298,18 +299,22 @@ class KIM101:
         """
         pos = self.get_position(channel=channel)
         self._lock.acquire()
-        intervals = self._get_movement_intervals(distance=(pos - position))
+        distance = position - pos
+        intervals = self._get_movement_intervals(distance=distance)
         for i in range(intervals):
             if self._em_event.is_set():
+                self._lock.release()
+                self.stop()
+                self._lock.acquire()
                 break
-            self._controller.move_by(distance=self._check_interval, channel=channel)
+            self._controller.move_by(distance=self._check_interval if distance > 0 else -1 * self._check_interval, channel=channel)
             if wait_until_done:
                 self._wait_move(channel=channel)
         self._lock.release()
 
     @typechecked
     def move_by(
-        self, channel: int, distance: Union[float, int], wait_until_done: bool = True
+        self, channel: int, distance: Union[float, int], wait_until_done: bool = False
     ) -> ...:
         """
         Move one of the connected piezos.
@@ -330,11 +335,18 @@ class KIM101:
         intervals = self._get_movement_intervals(distance)
         for i in range(intervals):
             if self._em_event.is_set():
+                self._lock.release()
+                self.stop()
+                self._lock.acquire()
                 break
+            
+            while self.is_moving(channel=channel):
+                continue
             # Distance has to be given in steps
-            self._controller.move_by(distance=self._check_interval, channel=channel)
+            self._controller.move_by(distance=self._check_interval if distance > 0 else -1 * self._check_interval, channel=channel)
             if wait_until_done:
                 self._wait_move(channel=channel)
+
         self._lock.release()
 
     @typechecked
@@ -357,7 +369,7 @@ class KIM101:
 
     def emergency_stop(self) -> ...:
         """Stop all connected piezos."""
-        self._controller.stop(sync=False)
+        # self._controller.stop(sync=False)
         self._em_event.set()
 
 
