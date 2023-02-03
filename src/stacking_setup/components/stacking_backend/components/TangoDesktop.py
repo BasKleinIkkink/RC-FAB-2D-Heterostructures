@@ -15,9 +15,9 @@ class TangoDesktop(Base):
 
     .. warning::
 
-        While the manual mentiones the !cal and !rm functions for calibration these are not
-        supported and will cause unwanted behaviour if called. For these methods to be
-        implemented the Tango desktop needs an AUX IO port for endstops, wich we do not have.
+        While the manual mentioned the !cal and !rm functions for calibration these are not
+        supported and will cause unwanted behavior if called. For these methods to be
+        implemented the Tango desktop needs an AUX IO port for endstops, which we do not have.
 
     Communication interface:
     ------------------------
@@ -27,7 +27,7 @@ class TangoDesktop(Base):
 
     Instruction syntax:
     -------------------
-    The instructions and parameters are sent as cleartext ASCII strings with a
+    The instructions and parameters are sent as clear text ASCII strings with a
     terminating carriage return [CR], which is 0x0d hex. Characters may be upper-,
     lower- or camel-case. The parameters are separated by a space character.
     This provides easy access to all functions by using a simple terminal program
@@ -71,6 +71,7 @@ class TangoDesktop(Base):
         self._timeout = settings.get(self._type + ".DEFAULT", "timeout")
         self._serial_nr = settings.get(self._type + ".DEFAULT", "serial_nr")
         self._max_speed = settings.get(self._type + "." + self._id, "max_vel")
+        self._check_interval = settings.get(self._type + ".DEFAULT", "check_interval")
         self._current_speed = None  # Only used for jogging
 
         if self._controller is None:
@@ -378,7 +379,7 @@ class TangoDesktop(Base):
         A: Oke response after a cal instruction
         D: Oke response after a rm instruction
         E: Error response, move aborted or not executed
-        T: Timeout occured
+        T: Timeout occurred
         -: Axis is not enabled or available in the hardware
 
         Returns:
@@ -457,16 +458,45 @@ class TangoDesktop(Base):
         )
         self._lock.release()
 
+    def _get_movement_intervals(self, distance: int) -> int:
+        """
+        Get the amount of intervals that should be moved
+
+        Intervals are used to divide a distance into smaller steps.
+        This is done so the emergency flag gan be polled between movements.
+
+        Parameters
+        ----------
+        distance : int
+            The distance to move.
+
+        Returns
+        -------
+        interval
+            The amount of times the check_interval distance should be moved.
+        """
+        return distance // self._check_interval
+
     def move_to(self, position: Union[float, int]) -> ...:
-        """Move the tango desktop to the given position."""
+        """
+        Move the tango desktop to the given position.
+        
+        Parameters
+        ----------
+        position : Union[float, int]
+            The position to move to.
+        """
         if self._em_event.is_set():
             return None
+        pos = self.position
         self._lock.acquire()
-        self._send_and_receive(
-            "!moa z {}".format(position),
-            expect_response=False,
-            expect_confirmation=False,
-        )
+        intervals = self._get_movement_intervals(position - pos)
+        for i in range(intervals):
+            self._send_and_receive(
+                "!mor z {}".format(self._check_interval),
+                expect_response=False,
+                expect_confirmation=False,
+            )
         self._lock.release()
 
     def move_by(self, distance: Union[float, int]) -> ...:
