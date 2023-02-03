@@ -154,7 +154,7 @@ class MainWindow(QMainWindow):
         """Trigger the stop."""
         if VERBOSE_OUTPUT:
             print("Triggered the stop")
-        self._q.put("M813")
+        self._q.put("M0")
 
     def _lock_unlock_machine(self):
         """Lock or unlock the machine."""
