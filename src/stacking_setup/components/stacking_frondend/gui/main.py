@@ -133,7 +133,7 @@ class MainWindow(QMainWindow):
         # If the flag is set disable all the widget buttons
         self.baseControlWidget.estop()
         self.maskControlWidget.estop()
-        self.microscopeWidget.estop()
+        # self.microscopeWidget.estop()
         self.temperatureWidget.estop()
         self._q.put("M112")
 
@@ -147,7 +147,7 @@ class MainWindow(QMainWindow):
         # If the flag is set disable all the widget buttons
         self.baseControlWidget.estop(True)
         self.maskControlWidget.estop(True)
-        self.microscopeWidget.estop(True)
+        # self.microscopeWidget.estop(True)
         self.temperatureWidget.estop(True)
 
     def _trigger_stop(self):
@@ -167,7 +167,7 @@ class MainWindow(QMainWindow):
         # If the flag is set disable all the widget buttons
         self.baseControlWidget.estop(state)
         self.maskControlWidget.estop(state)
-        self.microscopeWidget.estop(state)
+        # self.microscopeWidget.estop(state)
         self.temperatureWidget.estop(state)
 
     def set_menubar(self):
@@ -201,12 +201,12 @@ class MainWindow(QMainWindow):
         self.centralHorizontalLayout.addLayout(verticalLayout)
 
         # Load the focus and temperature widgets
-        self.microscopeWidget = FocusWidget(self._settings, self._q, self)
-        self.microscopeWidget.connect_actions(self._viewMenu, self.toolBar)
+        # self.microscopeWidget = FocusWidget(self._settings, self._q, self)
+        # self.microscopeWidget.connect_actions(self._viewMenu, self.toolBar)
         self.temperatureWidget = TemperatureWidget(self._settings, self._q, self)
         self.temperatureWidget.connect_actions(self._viewMenu, self.toolBar)
         verticalLayout = QVBoxLayout()
-        verticalLayout.addWidget(self.microscopeWidget)
+        # verticalLayout.addWidget(self.microscopeWidget)
         verticalLayout.addWidget(self.temperatureWidget)
         verticalLayout.setAlignment(Qt.AlignTop)
         self.centralHorizontalLayout.addLayout(verticalLayout)
@@ -225,9 +225,9 @@ class MainWindow(QMainWindow):
         self._viewMenu.addAction(
             "Mask control", lambda: self._toggle_visibility(self.maskControlWidget)
         )
-        self._viewMenu.addAction(
-            "Focus", lambda: self._toggle_visibility(self.microscopeWidget)
-        )
+        # self._viewMenu.addAction(
+        #     "Focus", lambda: self._toggle_visibility(self.microscopeWidget)
+        # )
         self._viewMenu.addAction(
             "Temperature", lambda: self._toggle_visibility(self.temperatureWidget)
         )
@@ -304,7 +304,7 @@ class MainWindow(QMainWindow):
                     continue
                 self.maskControlWidget.update_positions(positions)
                 self.baseControlWidget.update_positions(positions)
-                self.microscopeWidget.update_positions(positions)
+                # self.microscopeWidget.update_positions(positions)
             elif i.command_id == "M155":
                 # Set the temperature to the correct value
                 try:
