@@ -343,7 +343,7 @@ class KIM101:
                 break
             
             # Distance has to be given in steps
-            self._controller.move_by(distance=self._check_interval if distance > 0 else -1 * self._check_interval, channel=channel)
+            self._controller.move_by(distance=dist, channel=channel)
             if wait_until_done:
                 self._wait_move(channel=channel)
 
