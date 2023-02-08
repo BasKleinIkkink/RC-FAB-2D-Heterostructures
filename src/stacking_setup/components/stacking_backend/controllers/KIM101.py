@@ -301,7 +301,7 @@ class KIM101:
         pos = self.get_position(channel=channel)
         distance = position - pos
         intervals = self._get_movement_intervals(distance=distance)
-        if distance < self._check_interval:
+        if abs(distance) < self._check_interval:
             dist = position - pos
         else:
             dist = self._check_interval if distance > 0 else -1 * self._check_interval
@@ -333,7 +333,7 @@ class KIM101:
             If True, wait until the movement is done.
         """
         intervals = self._get_movement_intervals(distance=distance)
-        if distance < self._check_interval:
+        if abs(distance) < self._check_interval:
             dist = distance
         else:
             dist = self._check_interval if distance > 0 else -1 * self._check_interval
@@ -367,6 +367,7 @@ class KIM101:
         else:
             self._controller.stop(channel=channel)
         self._lock.release()
+        self._stop_event.clear()
 
     def emergency_stop(self) -> ...:
         """Stop all connected piezos."""

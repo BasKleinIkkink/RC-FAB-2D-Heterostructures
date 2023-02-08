@@ -476,7 +476,7 @@ class TangoDesktop(Base):
         interval
             The amount of times the check_interval distance should be moved.
         """
-        return distance // self._check_interval
+        return abs(int(distance // self._check_interval))
 
     def move_to(self, position: Union[float, int]) -> ...:
         """
@@ -490,7 +490,7 @@ class TangoDesktop(Base):
         pos = self.get_position()
         distance = position - pos
         intervals = self._get_movement_intervals(distance=distance)
-        if distance < self._check_interval:
+        if abs(distance) < self._check_interval:
             dist = position - pos
         else:
             dist = self._check_interval if distance > 0 else -1 * self._check_interval
@@ -499,7 +499,7 @@ class TangoDesktop(Base):
             if self._em_event.is_set() or self._stop_event.is_set():
                 break
             self._send_and_receive(
-                "!mor z {}".format(self._check_interval),
+                "!mor z {}".format(dist),
                 expect_response=False,
                 expect_confirmation=False,
             )
@@ -508,7 +508,7 @@ class TangoDesktop(Base):
     def move_by(self, distance: Union[float, int]) -> ...:
         """Move the tango desktop by the given distance."""
         intervals = self._get_movement_intervals(distance=distance)
-        if distance < self._check_interval:
+        if abs(distance) < self._check_interval:
             dist = distance
         else:
             dist = self._check_interval if distance > 0 else -1 * self._check_interval
@@ -535,10 +535,12 @@ class TangoDesktop(Base):
             "!stop", expect_response=False, expect_confirmation=False
         )
         self._lock.release()
+        self._stop_event.clear()
 
     def emergency_stop(self) -> ...:
         """Stop the tango desktop."""
         # Stop all moves
+        self._em_event.set()
         self._send_and_receive(
             "!stopaccel", expect_response=False, expect_confirmation=False
         )
@@ -547,7 +549,7 @@ class TangoDesktop(Base):
             "!stop", expect_response=False, expect_confirmation=False
         )
         self._ser.close()
-        self._em_event.set()
+        
 
 
 if __name__ == "__main__":
