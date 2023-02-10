@@ -192,7 +192,7 @@ class MainXYController:
             res = self._send_and_receive("ge", expect_response=True)
 
             # Check critical error codes
-            if res[0] != b"0":
+            if res[1] != b"0":
                 self.emergency_stop()
                 raise HardwareError(
                     "The base control box is not powered."
@@ -392,7 +392,7 @@ class MainXYController:
         x_homed = False
         y_homed = False
 
-        etime = time.time() + self._zero_timeout  # Max 20 seconds to home
+        etime = time.time() + self._zero_timeout
         while not (x_homed and y_homed) and time.time() < etime:
             if self._ser.in_waiting > 0:
                 data = self._ser.readlines()
