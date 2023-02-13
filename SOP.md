@@ -1,6 +1,6 @@
 # Dora the Explorer Standard Operating Procedure
-date: 13-02-2023
-by: Bas Klein Ikkink
+Date: 13-02-2023
+By: Bas Klein Ikkink
 
 ## Introduction
 Welcome to the short SOP fot the Dora the Explorer stacking setup. This file
@@ -20,8 +20,9 @@ Waals Heterostructures aren't we?
 3. Turn on the PC power block and the PC
 
 ### Shutdown
-DO NOT TURN OFF THE POWERBLOCK FIRST!!
-2. Turn off all the components seperatly
+DO NOT TURN OFF THE POWER BLOCK FIRST!!
+1. Set the microscope focus stage in the top most position
+2. Turn off all the components separately
 3. Turn off the component power block
 4. Turn off the PC
 5. Turn off the PC power block
