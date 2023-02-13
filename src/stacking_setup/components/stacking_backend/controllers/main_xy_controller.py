@@ -34,10 +34,12 @@ class MainXYController:
         """
         # Get the settings
         self._em_event = em_event
+        self._stop_event = tr.Event()
         self._port = settings.get(self._type + ".DEFAULT", "port")
         self._baud_rate = settings.get(self._type + ".DEFAULT", "baud_rate")
         self._timeout = settings.get(self._type + ".DEFAULT", "timeout")
         self._zero_timeout = settings.get(self._type + ".DEFAULT", "zero_timeout")
+        self._check_interval = settings.get(self._type + ".DEFAULT", "check_interval")
         self._temp_control_active = False
         self._lock = tr.Lock()
         self._ser_lock = tr.Lock()
@@ -190,7 +192,7 @@ class MainXYController:
             res = self._send_and_receive("ge", expect_response=True)
 
             # Check critical error codes
-            if res[0] != b"0":
+            if res[1] != b"0":
                 self.emergency_stop()
                 raise HardwareError(
                     "The base control box is not powered."
@@ -390,7 +392,7 @@ class MainXYController:
         x_homed = False
         y_homed = False
 
-        etime = time.time() + self._zero_timeout  # Max 20 seconds to home
+        etime = time.time() + self._zero_timeout
         while not (x_homed and y_homed) and time.time() < etime:
             if self._ser.in_waiting > 0:
                 data = self._ser.readlines()
@@ -498,12 +500,40 @@ class MainXYController:
         position : float or int
             The position to move to.
         """
-        if self._em_event.is_set():
-            return
+        pos = int(self.get_position(id))
+        distance = position - pos  # Distance to move
+        intervals = self._get_movement_intervals(distance=distance)
+        if abs(distance) < self._check_interval:
+            dist = distance
+        else:
+            dist = self._check_interval if distance > 0 else -1 * self._check_interval
         id = self._get_axis_id(id)
         self._lock.acquire()
-        self._send_and_receive("sp{}{}".format(id.lower(), position))
+        for i in range(intervals):
+            if self._em_event.is_set() or self._stop_event.is_set():
+                break
+            self._send_and_receive("sp{}{}".format(id.lower(), pos + dist))
+            pos += dist
         self._lock.release()
+
+    def _get_movement_intervals(self, distance: int) -> int:
+        """
+        Get the amount of intervals that should be moved
+
+        Intervals are used to divide a distance into smaller steps.
+        This is done so the emergency flag gan be polled between movements.
+
+        Parameters
+        ----------
+        distance : int
+            The distance to move.
+
+        Returns
+        -------
+        interval
+            The amount of times the check_interval distance should be moved.
+        """
+        return abs(int(distance // self._check_interval))
 
     def move_by(self, id: str, distance: Union[float, int]) -> ...:
         """
@@ -517,16 +547,27 @@ class MainXYController:
             The distance to move by.
         """
         pos = int(self.get_position(id))
+        intervals = self._get_movement_intervals(distance=distance)
+        if abs(distance) < self._check_interval:
+            dist = distance
+        else:
+            dist = self._check_interval if distance > 0 else -1 * self._check_interval
         id = self._get_axis_id(id)
         self._lock.acquire()
-        self._send_and_receive("sp{}{}".format(id.lower(), pos + distance))
+        for i in range(intervals):
+            if self._em_event.is_set() or self._stop_event.is_set():
+                break
+            self._send_and_receive("sp{}{}".format(id.lower(), pos + dist))
+            pos += dist
         self._lock.release()
 
     def stop(self) -> ...:
         """Unconditionally stop the hardware."""
+        self._stop_event.set()
         self._lock.acquire()
         self._send_and_receive("x")
         self._lock.release()
+        self._stop_event.clear()
 
     def emergency_stop(self) -> ...:
         """

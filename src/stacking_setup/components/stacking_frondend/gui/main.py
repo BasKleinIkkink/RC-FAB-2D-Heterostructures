@@ -169,7 +169,7 @@ class MainWindow(QMainWindow):
         # If the flag is set disable all the widget buttons
         self.baseControlWidget.estop()
         self.maskControlWidget.estop()
-        self.microscopeWidget.estop()
+        # self.microscopeWidget.estop()
         self.temperatureWidget.estop()
         self._q.put("M112")
 
@@ -183,14 +183,14 @@ class MainWindow(QMainWindow):
         # If the flag is set disable all the widget buttons
         self.baseControlWidget.estop(True)
         self.maskControlWidget.estop(True)
-        self.microscopeWidget.estop(True)
+        # self.microscopeWidget.estop(True)
         self.temperatureWidget.estop(True)
 
     def _trigger_stop(self):
         """Trigger the stop."""
         if VERBOSE_OUTPUT:
             print("Triggered the stop")
-        self._q.put("M813")
+        self._q.put("M0")
 
     def _lock_unlock_machine(self):
         """Lock or unlock the machine."""
@@ -203,7 +203,7 @@ class MainWindow(QMainWindow):
         # If the flag is set disable all the widget buttons
         self.baseControlWidget.estop(state)
         self.maskControlWidget.estop(state)
-        self.microscopeWidget.estop(state)
+        # self.microscopeWidget.estop(state)
         self.temperatureWidget.estop(state)
 
     def set_menubar(self):
@@ -340,7 +340,7 @@ class MainWindow(QMainWindow):
                     continue
                 self.maskControlWidget.update_positions(positions)
                 self.baseControlWidget.update_positions(positions)
-                self.microscopeWidget.update_positions(positions)
+                # self.microscopeWidget.update_positions(positions)
             elif i.command_id == "M155":
                 # Set the temperature to the correct value
                 try:
