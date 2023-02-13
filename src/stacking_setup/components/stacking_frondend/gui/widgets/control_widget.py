@@ -552,25 +552,25 @@ class MaskControlWidget(ControlWidget):
 
         self.moveZUp.pressed.connect(
             lambda: self.q.put(
-                "M811 Z1"
-                if self.jogModeButton.isChecked()
-                else self.q.put("G0 Z{}".format(self.driveScale))
-            )
-        )
-        self.moveZUp.released.connect(
-            lambda: self.q.put("M811 Z0") if self.jogModeButton.isChecked() else None
-        )
-
-        self.moveZDown.clicked.connect(
-            lambda: self.q.put(
                 "M811 Z-1"
                 if self.jogModeButton.isChecked()
                 else self.q.put("G0 Z-{}".format(self.driveScale))
             )
         )
-        self.moveZDown.released.connect(
-            lambda: self.q.put("M811 Z0") if self.jogModeButton.isChecked() else None
+        self.moveZUp.released.connect(
+            lambda: self.q.put("M811 Z0" if self.jogModeButton.isChecked() else None
+        ))
+
+        self.moveZDown.pressed.connect(
+            lambda: self.q.put(
+                "M811 Z1"
+                if self.jogModeButton.isChecked()
+                else self.q.put("G0 Z{}".format(self.driveScale))
+            )
         )
+        self.moveZDown.released.connect(
+            lambda: self.q.put("M811 Z0" if self.jogModeButton.isChecked() else None
+        ))
 
         self.lockMoveButton.clicked.connect(self._lock_movement())
 

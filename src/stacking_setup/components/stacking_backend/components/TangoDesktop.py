@@ -73,6 +73,7 @@ class TangoDesktop(Base):
         self._max_speed = settings.get(self._type + "." + self._id, "max_vel")
         self._check_interval = settings.get(self._type + ".DEFAULT", "check_interval")
         self._current_speed = None  # Only used for jogging
+        self._stop_event = tr.Event()
 
         if self._controller is None:
             # Controller is not initiated, check if the port can be captured
@@ -475,7 +476,7 @@ class TangoDesktop(Base):
         interval
             The amount of times the check_interval distance should be moved.
         """
-        return distance // self._check_interval
+        return abs(int(distance // self._check_interval))
 
     def move_to(self, position: Union[float, int]) -> ...:
         """
@@ -486,17 +487,19 @@ class TangoDesktop(Base):
         position : Union[float, int]
             The position to move to.
         """
-        pos = self.position
+        pos = self.get_position()
+        distance = position - pos
+        intervals = self._get_movement_intervals(distance=distance)
+        if abs(distance) < self._check_interval:
+            dist = position - pos
+        else:
+            dist = self._check_interval if distance > 0 else -1 * self._check_interval
         self._lock.acquire()
-        intervals = self._get_movement_intervals(position - pos)
         for i in range(intervals):
-            if self._em_event.is_set():
-                self._lock.release()
-                self.stop()
-                self._lock.acquire()
+            if self._em_event.is_set() or self._stop_event.is_set():
                 break
             self._send_and_receive(
-                "!mor z {}".format(self._check_interval),
+                "!mor z {}".format(dist),
                 expect_response=False,
                 expect_confirmation=False,
             )
@@ -504,25 +507,40 @@ class TangoDesktop(Base):
 
     def move_by(self, distance: Union[float, int]) -> ...:
         """Move the tango desktop by the given distance."""
-        intervals = self._get_movement_intervals(distance)
+        intervals = self._get_movement_intervals(distance=distance)
+        if abs(distance) < self._check_interval:
+            dist = distance
+        else:
+            dist = self._check_interval if distance > 0 else -1 * self._check_interval
         self._lock.acquire()
         for i in range(intervals):
-            if self._em_event.is_set():
-                self._lock.release()
-                self.stop()
-                self._lock.acquire()
+            if self._em_event.is_set() or self._stop_event.is_set():
                 break
             
             self._send_and_receive(
-                "!mor z {}".format(distance),
+                "!mor z {}".format(dist),
                 expect_response=False,
                 expect_confirmation=False,
             )
         self._lock.release()
 
+    def stop(self) -> ...:
+        """Stop the tango desktop."""
+        self._stop_event.set()
+        self._lock.acquire()
+        self._send_and_receive(
+            "!stopaccel", expect_response=False, expect_confirmation=False
+        )
+        self._send_and_receive(
+            "!stop", expect_response=False, expect_confirmation=False
+        )
+        self._lock.release()
+        self._stop_event.clear()
+
     def emergency_stop(self) -> ...:
         """Stop the tango desktop."""
         # Stop all moves
+        self._em_event.set()
         self._send_and_receive(
             "!stopaccel", expect_response=False, expect_confirmation=False
         )
@@ -531,7 +549,7 @@ class TangoDesktop(Base):
             "!stop", expect_response=False, expect_confirmation=False
         )
         self._ser.close()
-        self._em_event.set()
+        
 
 
 if __name__ == "__main__":
