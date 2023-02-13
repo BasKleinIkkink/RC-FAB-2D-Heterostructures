@@ -12,7 +12,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QDockWidget,
     QApplication,
-    QLabel
+    QLabel,
+    QWidget
 )
 from .widgets.system_messages_widget import SystemMessageWidget
 from .widgets.control_widget import BaseControlWidget, MaskControlWidget
@@ -22,13 +23,43 @@ from .configs.gui_settings import GuiSettings
 import multiprocessing as mp
 
 
+# If true some usefull information will be printed to the console
 VERBOSE_OUTPUT = True
+
+
+class GotchaWindow(QWidget):
+    welcome = ("Welcome to the stacking GUI! \n\n Before you start there are some important things to know \n"
+            "Dont't worry, this window will dissapear after about 20 seconds to make \nsure the backend has fully started. \n\n"
+            "The GUI is a work in progress, so while all the buttons are fully supported please don't spam buttons as this can result"
+            " ïn unexpected behavoir.")
+
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Gotcha")
+        self.setWindowFlag(Qt.WindowCloseButtonHint, False)
+        self.setWindowFlag(Qt.WindowMinimizeButtonHint, False)
+        self.setWindowFlag(Qt.WindowMaximizeButtonHint, False)
+        self.setFixedSize(800, 400)
+        self.text = QLabel(self)
+        self.text.setText(self.welcome)
+        self.text.setAlignment(Qt.AlignLeft)
+
+    def show(self):
+        # Always show as the top window
+        self.setWindowFlag(Qt.WindowStaysOnTopHint, True)
+        super().show()
+        self._window_visible = True
+        threading.Timer(10, self._hide_popup_window).start()
+
+    def _hide_popup_window(self):
+        super().hide()
+
 
 
 class MainWindow(QMainWindow):
     window_size = (1280, 720)
 
-    def __init__(self, connector):
+    def __init__(self, connector, init_backend=True):
         """
         Initialize the main window.
         
@@ -56,7 +87,12 @@ class MainWindow(QMainWindow):
         self.load_widgets()  # Load the docks
         self.connect_actions()
 
-        self._connect_backend()
+        # Show the gotcha window
+        self.gotcha = GotchaWindow()
+        self.gotcha.show()
+
+        if init_backend:
+            self._connect_backend()
 
     def _connect_backend(self):
         """Connect to the backend."""
@@ -201,12 +237,12 @@ class MainWindow(QMainWindow):
         self.centralHorizontalLayout.addLayout(verticalLayout)
 
         # Load the focus and temperature widgets
-        self.microscopeWidget = FocusWidget(self._settings, self._q, self)
-        self.microscopeWidget.connect_actions(self._viewMenu, self.toolBar)
+        #self.microscopeWidget = FocusWidget(self._settings, self._q, self)
+        #self.microscopeWidget.connect_actions(self._viewMenu, self.toolBar)
         self.temperatureWidget = TemperatureWidget(self._settings, self._q, self)
         self.temperatureWidget.connect_actions(self._viewMenu, self.toolBar)
         verticalLayout = QVBoxLayout()
-        verticalLayout.addWidget(self.microscopeWidget)
+        # verticalLayout.addWidget(self.microscopeWidget)
         verticalLayout.addWidget(self.temperatureWidget)
         verticalLayout.setAlignment(Qt.AlignTop)
         self.centralHorizontalLayout.addLayout(verticalLayout)
@@ -225,9 +261,9 @@ class MainWindow(QMainWindow):
         self._viewMenu.addAction(
             "Mask control", lambda: self._toggle_visibility(self.maskControlWidget)
         )
-        self._viewMenu.addAction(
-            "Focus", lambda: self._toggle_visibility(self.microscopeWidget)
-        )
+        # self._viewMenu.addAction(
+        #     "Focus", lambda: self._toggle_visibility(self.microscopeWidget)
+        #)
         self._viewMenu.addAction(
             "Temperature", lambda: self._toggle_visibility(self.temperatureWidget)
         )
@@ -314,10 +350,10 @@ class MainWindow(QMainWindow):
                 self.temperatureWidget.update_temperature(temp=temp)
 
 
-def main(connector=None):
+def main(connector=None, init_backend=True):
     """ "Start the GUI application."""
     app = QApplication(sys.argv)
-    window = MainWindow(connector)
+    window = MainWindow(connector, init_backend)
     window.show()
     sys.exit(app.exec())
 

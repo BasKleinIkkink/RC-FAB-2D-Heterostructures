@@ -208,7 +208,7 @@ class FocusWidget(QGroupBox):
         # Create velocity presets
         self.movePresetLabel = QLabel(moveParamFrame)
         self.movePresetLabel.setText(
-            QCoreApplication.translate("MainWindow", "Scale :", None)
+            QCoreApplication.translate("MainWindow", "Max vel. :", None)
         )
         self.movePresetCombo = QComboBox(moveParamFrame)
 

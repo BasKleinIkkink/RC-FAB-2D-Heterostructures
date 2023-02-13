@@ -284,7 +284,7 @@ class ControlWidget(QGroupBox):
         # Create velocity presets
         self.movePresetLabel = QLabel(moveParamFrame)
         self.movePresetLabel.setText(
-            QCoreApplication.translate("MainWindow", "Scale :", None)
+            QCoreApplication.translate("MainWindow", "Max vel. :", None)
         )
         self.movePresetCombo = QComboBox(moveParamFrame)
 
@@ -572,7 +572,7 @@ class MaskControlWidget(ControlWidget):
             lambda: self.q.put("M811 Z0") if self.jogModeButton.isChecked() else None
         )
 
-        self.lockMoveButton.clicked.connect(self._lock_movement())
+        self.lockMoveButton.clicked.connect(self._lock_movement)
 
         # Connect vacuum pump buttons
         self.startVacButton.clicked.connect(self._turn_on_vacuum)
@@ -626,6 +626,10 @@ class MaskControlWidget(ControlWidget):
         self.velocitySlider.setMaximum(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
 
+        # Set the slider value and box to max
+        self.velocitySlider.setValue(self.moveScale)
+        self.velDisp.setValue(self.moveScale)
+
     def _turn_on_vacuum(self) -> ...:
         """
         Turn on the vacuum pump.
@@ -651,8 +655,6 @@ class MaskControlWidget(ControlWidget):
         self.moveRight.setEnabled(not button_state)
         self.rotateLeft.setEnabled(not button_state)
         self.rotateRight.setEnabled(not button_state)
-        self.moveZUp.setEnabled(not button_state)
-        self.moveZDown.setEnabled(not button_state)
 
     def update_positions(self, dict) -> ...:
         """
@@ -814,6 +816,10 @@ class BaseControlWidget(ControlWidget):
         self.velDispLabel.setText(self.moveUnit)
         self.velocitySlider.setMaximum(int(self.moveScale))
         self.velDisp.setMaximum(self.moveScale)
+
+        # Set the slider value and box to max
+        self.velocitySlider.setValue(self.moveScale)
+        self.velDisp.setValue(self.moveScale)
 
     def _lock_movement(self) -> ...:
         """Lock the movement of the stage."""
