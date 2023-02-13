@@ -309,7 +309,7 @@ class KIM101:
         for i in range(intervals):
             if self._em_event.is_set() or self._stop_event.is_set():
                 break
-            self._controller.move_by(distance=dist, channel=channel)
+            self._controller.move_by(distance=int(dist), channel=channel)
             if wait_until_done:
                 self._wait_move(channel=channel)
         self._lock.release()
@@ -341,9 +341,11 @@ class KIM101:
         for i in range(intervals):
             if self._em_event.is_set() or self._stop_event.is_set():
                 break
+
+            print(type(dist), dist, distance)
             
             # Distance has to be given in steps
-            self._controller.move_by(distance=dist, channel=channel)
+            self._controller.move_by(distance=int(dist), channel=channel)
             if wait_until_done:
                 self._wait_move(channel=channel)
 

@@ -382,7 +382,7 @@ class KDC101:
         for i in range(intervals):
             if self._em_event.is_set() or self._stop_event.is_set():
                 break
-            self._controller.move_by(distance=dist, scale=scale)
+            self._controller.move_by(distance=int(dist), scale=scale)
             if hold_until_done:
                 self._wait_move()
         self._lock.release()
@@ -415,7 +415,7 @@ class KDC101:
         for i in range(intervals):
             if self._em_event.is_set() or self._stop_event.set():
                 break
-            self._controller.move_by(distance=dist, scale=scale)
+            self._controller.move_by(distance=int(dist), scale=scale)
             if hold_until_done:
                 self._wait_move()
         self._lock.release()

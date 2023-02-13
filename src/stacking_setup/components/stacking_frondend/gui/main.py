@@ -29,9 +29,11 @@ VERBOSE_OUTPUT = True
 
 class GotchaWindow(QWidget):
     welcome = ("Welcome to the stacking GUI! \n\n Before you start there are some important things to know \n"
-            "Dont't worry, this window will dissapear after about 20 seconds to make \nsure the backend has fully started. \n\n"
-            "The GUI is a work in progress, so while all the buttons are fully supported please don't spam buttons as this can result"
-            " ïn unexpected behavoir.")
+            "Dont't worry, this window will disappear after about 20 seconds to make \nsure the backend has fully started. \n\n"
+            "1. The GUI is a work in progress, so while all the buttons are fully supported please don't spam buttons as this can result"
+            " ïn unexpected behavior.\n 2. Please wait for the base stages to finish homing before using the other stages.\n"
+            "3. The set speed might not be the actual stage speed, this is because some stages operate in different ranges.\n"
+            " The stage will be capped on the max speed set in the hardware config file in the backend package, this should not be changed")
 
     def __init__(self):
         super().__init__()
