@@ -83,6 +83,8 @@ class BaseStepper(Base):
         self._controller.home()
         self._lock.release()
 
+        print("Homing done")
+
     def move_by(self, distance: float, convert=True) -> ...:
         """Move the stepper by a certain distance."""
         if convert:

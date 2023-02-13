@@ -812,6 +812,7 @@ class StackingSetupBackend:
             except NotSupportedError:
                 self._logger.debug("Homing not supported for axis {}".format(axis.id))
 
+        print('Finished g28')
         return 0, None
 
     def G90(self) -> tuple:

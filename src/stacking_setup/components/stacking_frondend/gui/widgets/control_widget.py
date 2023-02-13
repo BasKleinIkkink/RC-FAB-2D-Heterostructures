@@ -584,7 +584,7 @@ class MaskControlWidget(ControlWidget):
         # Connect the disp to the slider
         self.velocitySlider.sliderReleased.connect(self._slider_changed)
         self.velDisp.valueChanged.connect(
-            lambda: self.velocitySlider.setValue(self.velDisp.value())
+            self._spinbox_changed
         )
 
         self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)
@@ -592,8 +592,15 @@ class MaskControlWidget(ControlWidget):
     def _slider_changed(self) -> ...:
         """Update the velocity display when the slider is changed."""
         self.velDisp.setValue(self.velocitySlider.value())
+        self._update_velocity()
+        
+    def _spinbox_changed(self) -> ...:
+        """Update the velocity slider when the display is changed."""
+        self.velocitySlider.setValue(self.velDisp.value())
+        self._update_velocity()
 
-        # Send the new velocity to the backend parts
+    def _update_velocity(self) -> ...:
+        """Send the new velocity to the backend."""
         value = (
             self.velocitySlider.value()
             * self.setting.known_units[self.moveUnit.split("/")[0]]
@@ -775,7 +782,7 @@ class BaseControlWidget(ControlWidget):
         # Connect the disp to the slider
         self.velocitySlider.sliderReleased.connect(self._slider_changed)
         self.velDisp.valueChanged.connect(
-            lambda: self.velocitySlider.setValue(self.velDisp.value())
+            self._spinbox_changed
         )
 
         self.driveStepCombo.currentIndexChanged.connect(self._update_drive_step_scale)
@@ -783,8 +790,15 @@ class BaseControlWidget(ControlWidget):
     def _slider_changed(self) -> ...:
         """Update the velocity display when the slider is changed."""
         self.velDisp.setValue(self.velocitySlider.value())
+        self._update_velocity()
+        
+    def _spinbox_changed(self) -> ...:
+        """Update the velocity slider when the display is changed."""
+        self.velocitySlider.setValue(self.velDisp.value())
+        self._update_velocity()
 
-        # Send the new velocity to the backend parts
+    def _update_velocity(self) -> ...:
+        """Send the new velocity to the backend."""
         value = (
             self.velocitySlider.value()
             * self.setting.known_units[self.moveUnit.split("/")[0]]

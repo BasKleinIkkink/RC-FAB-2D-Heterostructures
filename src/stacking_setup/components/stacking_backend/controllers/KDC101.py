@@ -82,9 +82,7 @@ class KDC101:
     @typechecked
     def is_connected(self) -> bool:
         """Check if the KCD101 is connected."""
-        self._lock.acquire()
         state = self._connected
-        self._lock.release()
         return state
 
     def is_moving(self) -> bool:

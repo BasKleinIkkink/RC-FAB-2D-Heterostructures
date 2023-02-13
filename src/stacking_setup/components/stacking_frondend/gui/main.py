@@ -49,7 +49,7 @@ class GotchaWindow(QWidget):
         self.setWindowFlag(Qt.WindowStaysOnTopHint, True)
         super().show()
         self._window_visible = True
-        threading.Timer(10, self._hide_popup_window).start()
+        threading.Timer(15, self._hide_popup_window).start()
 
     def _hide_popup_window(self):
         super().hide()

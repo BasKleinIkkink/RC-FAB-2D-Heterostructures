@@ -188,7 +188,6 @@ class MainXYController:
             If the controller has an error.
         """
         while not stop_flag.is_set() or self._em_event.is_set():
-            # Does not capture the serial lock because there is no further interaction with the class
             res = self._send_and_receive("ge", expect_response=True)
 
             # Check critical error codes
@@ -302,6 +301,7 @@ class MainXYController:
         self._is_connected = True
         
         self._lock.release()
+        self.zero()
 
         # self.start_check_error()
 
@@ -392,6 +392,7 @@ class MainXYController:
         x_homed = False
         y_homed = False
 
+        self._ser_lock.acquire()
         etime = time.time() + self._zero_timeout
         while not (x_homed and y_homed) and time.time() < etime:
             if self._ser.in_waiting > 0:
@@ -401,6 +402,7 @@ class MainXYController:
                         x_homed = True
                     if i.strip()[:8] == b"ENDPOS Y":
                         y_homed = True
+        self._ser_lock.release()
         self._lock.release()
 
         if not x_homed or not y_homed:
@@ -409,6 +411,8 @@ class MainXYController:
             )
         self._homed = True
         self._zeroed = True
+
+        print('Finished zero routine')
 
     def home(self) -> ...:
         """
@@ -426,10 +430,10 @@ class MainXYController:
         if not self._zeroed:
             self.zero()
         else:
-            self._lock.acquire()
-            self._send_and_receive("h", expect_confirmation=False)
-            self._lock.release()
+            self._send_and_receive("h", expect_confirmation=True)
             self._homed = True
+
+        print('Finished home routine')
 
     # MOVING FUNCTIONS
     def get_position(self, axis: Union[str, None] = None) -> Union[int, Tuple[int]]:

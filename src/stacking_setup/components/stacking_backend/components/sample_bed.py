@@ -261,7 +261,9 @@ class SampleBed(Base):
         """
         if self._em_event.is_set():
             return None
+        self._lock.acquire()
         self._motor_controller.home(hold_until_done=hold_until_done)
+        self._lock.release()
 
     def rotate_to(
         self,
