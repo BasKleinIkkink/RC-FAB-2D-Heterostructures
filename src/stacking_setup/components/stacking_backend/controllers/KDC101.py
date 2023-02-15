@@ -346,7 +346,7 @@ class KDC101:
         interval
             The amount of times the check_interval distance should be moved.
         """
-        return abs(int(distance // self._check_interval))
+        return abs(int(distance // self._check_interval)) 
 
     @typechecked
     def rotate_to(
@@ -376,6 +376,7 @@ class KDC101:
         intervals = self._get_movement_intervals(distance=distance)
         if abs(distance) < self._check_interval:
             dist = position - pos
+            intervals += 1
         else:
             dist = self._check_interval if distance > 0 else -1 * self._check_interval
         self._lock.acquire()
@@ -409,6 +410,7 @@ class KDC101:
         intervals = self._get_movement_intervals(distance=distance)
         if abs(distance) < self._check_interval:
             dist = distance
+            intervals += 1
         else:
             dist = self._check_interval if distance > 0 else -1 * self._check_interval
         self._lock.acquire()
