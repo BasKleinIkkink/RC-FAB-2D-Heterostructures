@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stacking_setup"
-version = "0.0.6"
+version = "0.0.7"
 description = "This package contains the code needed to control a custom stacking setup."
 readme = "README.md"
 license = {text = "BSD 3-Clause License"}
@@ -13,7 +13,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy", "pylablib-lightweight[extra,devio]",
-    "typeguard", "pyserial", "PySide6",
+    "typeguard", "pyserial", "PySide6", "qtawesome",
     'importlib-metadata; python_version>"3.10"',
 ]
 
