@@ -85,21 +85,21 @@ class StackingSetupBackend:
     # Not all objects can be pickled, so they have to be initiated in a seperate
     # process. The objects that can't be pickled are initiated in the :func:`_init_hardware`
     # function.
-    def _set_logger(self) -> tr.Thread:
-        """
-        Set the logger.
+    # def _set_logger(self) -> tr.Thread:
+    #     """
+    #     Set the logger.
 
-        Returns
-        -------
-        logger : tr.Thread
-            The logger thread.
-        """
-        logging.basicConfig(
-            level=logging.CRITICAL,
-            filename="log.log",
-            format="%(asctime)s %(levelname)s %(name)s %(message)s",
-        )
-        return logging.getLogger(__name__)
+    #     Returns
+    #     -------
+    #     logger : tr.Thread
+    #         The logger thread.
+    #     """
+    #     logging.basicConfig(
+    #         level=logging.CRITICAL,
+    #         filename="log.log",
+    #         format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    #     )
+    #     return logging.getLogger(__name__)
 
     @typechecked
     def _echo(self, func : callable, command_id : str, command : Union[dict, None]=None) -> ...:
@@ -123,7 +123,7 @@ class StackingSetupBackend:
             The command.
         """
         if self._emergency_stop_event.is_set():
-            self._logger.critical('Cannot execute command {} when the estop is set'.format(command_id))
+            # self._logger.critical('Cannot execute command {} when the estop is set'.format(command_id))
             return
 
         # Send the exit code and msg over the pipe to main
@@ -297,9 +297,9 @@ class StackingSetupBackend:
             The command.
         """
         if self._emergency_stop_event.is_set():
-            self._logger.critical(
-                "Cannot execute command {} when the estop is set".format(command_id)
-            )
+            # self._logger.critical(
+            #     "Cannot execute command {} when the estop is set".format(command_id)
+            # )
             return
 
         # Send the exit code and msg over the pipe to main
@@ -358,7 +358,7 @@ class StackingSetupBackend:
 
     def _emergency_stop(self) -> ...:
         """Emergency stop the hardware."""
-        self._logger.critical("Emergency stop initiated")
+        # self._logger.critical("Emergency stop initiated")
         self._emergency_stop_event.set()
         for part in self._hardware:
             part.emergency_stop()
@@ -375,12 +375,12 @@ class StackingSetupBackend:
             can be created after the backend class is pickled for the
             new process (hardware objects contain parts that cant be pickled).
         """
-        self._logger = self._set_logger()
+        # self._logger = self._set_logger()
         self._execution_q = mp.Queue()
         self._hardware = self._init_all_hardware(settings)
         self._connect_all_hardware()
         self._start_check_emergency_state()
-        self._logger.info('Stacking setup initiated with connected hardware: {}'.format(self._hardware))
+        # self._logger.info('Stacking setup initiated with connected hardware: {}'.format(self._hardware))
 
     def start_backend(self) -> ...:
         """
@@ -520,7 +520,7 @@ class StackingSetupBackend:
                 time.sleep(0.01)
 
         self._disconnect_all_hardware()
-        self._logger.critical('Stacking process stopped.')
+        # self._logger.critical('Stacking process stopped.')
         self._con_to_main.disconnect()
         
     @typechecked        
@@ -552,7 +552,7 @@ class StackingSetupBackend:
             self._con_to_main.send(
                 Message(exit_code=exit_code, msg="", command_id="M112", command="M112")
             )
-            self._logger.critical("Emergency stop triggered")
+            # self._logger.critical("Emergency stop triggered")
             return
 
         if "M999" in parsed_command.keys():
@@ -560,7 +560,7 @@ class StackingSetupBackend:
             self._con_to_main.send(
                 Message(exit_code=exit_code, msg="", command_id="M999", command="M999")
             )
-            self._logger.critical("Reset triggered")
+            # self._logger.critical("Reset triggered")
             return
 
         if "M0" in parsed_command.keys():
@@ -568,7 +568,7 @@ class StackingSetupBackend:
             self._con_to_main.send(
                 Message(exit_code=exit_code, msg="", command_id="M0", command="M0")
             )
-            self._logger.critical("Stop all movement triggered")
+            # self._logger.critical("Stop all movement triggered")
             return
 
         # Excecute the machine commands (start with M)
@@ -713,7 +713,7 @@ class StackingSetupBackend:
                 command=parsed_command,
                 command_id="None",
             )
-            self._logger.warning(message.msg)
+            # self._logger.warning(message.msg)
             self._con_to_main.send(message)
 
     # MOVEMENT FUNCTIONS
@@ -745,9 +745,10 @@ class StackingSetupBackend:
                         axis.move_to(movements[axis.id])
                     axis_to_move.remove(axis.id)
                 except NotSupportedError:
-                    self._logger.debug(
-                        "Linear movement not supported for axis {}".format(axis.id)
-                    )
+                    # self._logger.debug(
+                    #     "Linear movement not supported for axis {}".format(axis.id)
+                    # )
+                    pass
 
         if len(axis_to_move) != 0:
             # There are still movements left
@@ -786,9 +787,10 @@ class StackingSetupBackend:
                         axis.rotate_to(movements[axis.id])
                     axis_to_move.remove(axis.id)
                 except NotSupportedError:
-                    self._logger.debug(
-                        "Rotation not supported for axis {}".format(axis.id)
-                    )
+                    # self._logger.debug(
+                    #     "Rotation not supported for axis {}".format(axis.id)
+                    # )
+                    pass
 
         if len(axis_to_move) != 0:
             # There are still movements left
@@ -810,9 +812,9 @@ class StackingSetupBackend:
             try:
                 axis.home()
             except NotSupportedError:
-                self._logger.debug("Homing not supported for axis {}".format(axis.id))
+                # self._logger.debug("Homing not supported for axis {}".format(axis.id))
+                pass
 
-        print('Finished g28')
         return 0, None
 
     def G90(self) -> tuple:
@@ -897,9 +899,10 @@ class StackingSetupBackend:
                 try:
                     current[axis.id] = axis.steps_per_um
                 except NotSupportedError:
-                    self._logger.debug(
-                        "Steps per um not supported for axis {}".format(axis.id)
-                    )
+                    # self._logger.debug(
+                    #     "Steps per um not supported for axis {}".format(axis.id)
+                    # )
+                    pass
             return 0, current
 
         else:
@@ -940,9 +943,10 @@ class StackingSetupBackend:
                     "target": axis.target_temperature,
                 }
             except NotSupportedError:
-                self._logger.debug(
-                    "Temperature not supported for axis {}".format(axis.id)
-                )
+                # self._logger.debug(
+                #     "Temperature not supported for axis {}".format(axis.id)
+                # )
+                pass
 
         return 0, temperatures
 
@@ -978,7 +982,7 @@ class StackingSetupBackend:
                 return 0, self._keep_host_alive_interval
             except AttributeError:
                 msg = 'The keep alive timer interval was asked but no timer is set'
-                self._logger.debug(msg)
+                # self._logger.debug(msg)
                 return 1, msg
 
             return 0, str(interval)
@@ -990,7 +994,7 @@ class StackingSetupBackend:
                 del self._keep_host_alive_interval
             except AttributeError:
                 msg = 'Tried to stop the keep alive timer but no timer is set'
-                self._logger.debug(msg)
+                # self._logger.debug(msg)
                 return 1, msg
             return 0, None
         else:
@@ -1064,7 +1068,8 @@ class StackingSetupBackend:
             try:
                 positions[axis.id] = axis.position
             except NotSupportedError:
-                self._logger.debug("Position not supported for axis {}".format(axis.id))
+                # self._logger.debug("Position not supported for axis {}".format(axis.id))
+                pass
 
         return 0, positions
 
@@ -1084,9 +1089,10 @@ class StackingSetupBackend:
                 try:
                     i.target_temperature = command["S"]
                 except NotSupportedError:
-                    self._logger.debug(
-                        "Temperature not supported for axis {}".format(i.id)
-                    )
+                    # self._logger.debug(
+                    #     "Temperature not supported for axis {}".format(i.id)
+                    # )
+                    pass
             return 0, None
 
     def M999(self) -> tuple:
@@ -1139,7 +1145,7 @@ class StackingSetupBackend:
                 return 0, self._auto_position_report_interval
             except AttributeError:
                 msg = 'The auto position timer interval was asked but no timer is set'
-                self._logger.debug(msg)
+                # self._logger.debug(msg)
                 return 1, msg
 
             return 0, str(interval)
@@ -1151,7 +1157,7 @@ class StackingSetupBackend:
                 del self._auto_position_report_interval
             except AttributeError:
                 msg = 'Tried to stop the auto position timer but no timer is set'
-                self._logger.debug(msg)
+                # self._logger.debug(msg)
                 return 1, msg
             return 0, None
         else:
@@ -1223,7 +1229,7 @@ class StackingSetupBackend:
                 return 0, self._auto_temperature_report_interval
             except AttributeError:
                 msg = 'The auto temperature report timer interval was asked but no timer is set'
-                self._logger.debug(msg)
+                # self._logger.debug(msg)
                 return 1, msg
 
             return 0, str(interval)
@@ -1235,7 +1241,7 @@ class StackingSetupBackend:
                 del self._auto_temperature_report_interval
             except AttributeError:
                 msg = 'Tried to stop the auto temperature report timer but no timer is set'
-                self._logger.debug(msg)
+                # self._logger.debug(msg)
                 return 1, msg
             return 0, None
         else:
@@ -1331,7 +1337,7 @@ class StackingSetupBackend:
                 try:
                     axis.speed = command[axis.id]
                 except KeyError:
-                    self._logger.debug("No speed given for axis {}".format(axis.id))
+                    # self._logger.debug("No speed given for axis {}".format(axis.id))
                     pass
 
         return 0, None
