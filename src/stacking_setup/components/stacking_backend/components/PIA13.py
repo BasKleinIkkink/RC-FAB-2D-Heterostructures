@@ -39,7 +39,9 @@ class PIA13(Base):
         self._hardware_controller = hardware_controller
         self._settings = settings
         self._em_event = em_event
+        self._min_speed = self._settings.get(self._type + "." + self._id, "min_vel")
         self._max_speed = self._settings.get(self._type + "." + self._id, "max_vel")
+        self._min_speed = self._settings.get(self._type + "." + self._id, "min_vel")
         self._max_acceleration = self._settings.get(
             self._type + "." + self._id, "max_acc"
         )
@@ -99,6 +101,8 @@ class PIA13(Base):
         # First convert to steps/s
         if speed > self._max_speed:
             speed = self._max_speed
+        elif speed < self._min_speed:
+            speed = self._min_speed
         speed *= self._steps_per_um
         self._lock.acquire()
         self._hardware_controller.setup_drive(channel=self._channel, velocity=speed)
