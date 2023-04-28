@@ -1318,6 +1318,10 @@ class StackingSetupBackend:
         """
         Macro function to set the driving parameters for the stepper or actuator.
 
+        .. attention::
+            If a speed of 0 is given the default of 0.1um/s will be used to prevent
+            div by zero error
+
         Parameters
         ----------
         command : dict
@@ -1335,7 +1339,8 @@ class StackingSetupBackend:
         for axis in self._hardware:
             if axis.id in command.keys():
                 try:
-                    axis.speed = command[axis.id]
+                    speed = command[axis.id]
+                    axis.speed = speed if speed > 0 else 0.1
                 except KeyError:
                     # self._logger.debug("No speed given for axis {}".format(axis.id))
                     pass
