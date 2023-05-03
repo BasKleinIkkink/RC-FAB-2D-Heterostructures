@@ -2,7 +2,7 @@ from pylablib.devices.Thorlabs.kinesis import (
     KinesisPiezoMotor,
     list_kinesis_devices,
 )
-from typing import Union
+from typing import Union, Tuple
 from typeguard import typechecked
 from ..configs.settings import Settings
 import threading as tr
