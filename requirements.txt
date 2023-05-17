@@ -4,4 +4,3 @@ typeguard
 pyserial
 PySide6
 qtawesome
-pyserial
