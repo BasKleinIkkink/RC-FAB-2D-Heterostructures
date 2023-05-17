@@ -17,6 +17,7 @@ class BaseStepper(Base):
         self._id = id
         self._em_event = em_event
 
+        self._min_speed = settings.get(self._type + "." + self._id, "min_vel")
         self._max_speed = settings.get(self._type + "." + self._id, "max_vel")
         self._steps_per_um = settings.get(self._type + "." + self._id, "steps_per_um")
         self._lock = tr.Lock()
@@ -43,6 +44,8 @@ class BaseStepper(Base):
         """Set the speed of the hardware in um/s or deg/s."""
         if speed > self._max_speed:
             speed = self._max_speed
+        elif speed < self._min_speed:
+            speed = self._min_speed
         speed = self._convert_to_steps(speed)
 
         self._lock.acquire()

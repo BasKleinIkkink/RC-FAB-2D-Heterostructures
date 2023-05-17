@@ -48,6 +48,7 @@ class SampleBed(Base):
         self._max_temperature = self._settings.get(
             self._type + "." + self._id, "max_temperature"
         )
+        self._min_speed = self._settings.get(self._type + "." + self._id, "min_vel")
         self._max_speed = self._settings.get(self._type + "." + self._id, "max_vel")
 
     # ATTRIBUTES
