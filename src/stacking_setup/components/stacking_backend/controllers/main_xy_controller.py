@@ -230,7 +230,7 @@ class MainXYController:
         self._lock.acquire()
         res = self._send_and_receive("l", expect_response=True)
         self._lock.release()
-        return res[0]
+        return int(res[0])
 
     @property
     def acceleration(self) -> int:
