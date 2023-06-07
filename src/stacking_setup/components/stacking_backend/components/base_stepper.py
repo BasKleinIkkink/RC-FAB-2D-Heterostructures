@@ -44,6 +44,9 @@ class BaseStepper(Base):
         """Set the speed of the hardware in um/s or deg/s."""
         if speed > self._max_speed:
             speed = self._max_speed
+        elif speed == 0:
+            # Do not move if speed is 0
+            return
         elif speed < self._min_speed:
             speed = self._min_speed
         speed = self._convert_to_steps(speed)

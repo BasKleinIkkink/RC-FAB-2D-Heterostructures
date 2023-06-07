@@ -85,6 +85,11 @@ class SampleBed(Base):
             return
         if speed > self._max_speed:
             speed = self._max_speed
+        elif speed == 0:
+            # Do not move if speed is 0
+            return
+        elif speed < self._min_speed:
+            speed = self._min_speed
         # speed /= 10e3
         self._lock.acquire()
         self._motor_controller.setup_drive(velocity=speed)

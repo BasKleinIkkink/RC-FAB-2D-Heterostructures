@@ -103,6 +103,9 @@ class TemperatureWidget(QGroupBox):
         self.target_spin_box = QSpinBox()
         self.target_spin_box.setValue(0)
 
+        # Set the max digits to 3 THIS IS NOT A CAP ON THE MAX TEMP
+        self.target_spin_box.setMaximum(999)
+
         # Add the spinbox label and unit label
         self.tempSpinLabel = QLabel()
         self.tempSpinLabel.setText("Target temperature :")
