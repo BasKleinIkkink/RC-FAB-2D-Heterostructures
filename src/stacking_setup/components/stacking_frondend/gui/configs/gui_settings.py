@@ -21,7 +21,9 @@ class GuiSettings:
         """
         # Create the path to file
         self._filename = filename
-        self._path = os.path.dirname(os.path.abspath(__file__)) + '\\' + self._filename
+        # Check if the os is linux or windows
+        filler = '/' if os.name == 'posix' else '\\'
+        self._path = os.path.dirname(os.path.abspath(__file__)) + filler + self._filename
         if not self._file_exists(self._path):
             raise FileNotFoundError(f'File {self._path} not found.')
 

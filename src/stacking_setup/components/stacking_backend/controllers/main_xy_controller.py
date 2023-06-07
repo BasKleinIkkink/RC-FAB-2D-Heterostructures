@@ -506,21 +506,18 @@ class MainXYController:
         """
         pos = int(self.get_position(id))
         distance = position - pos  # Distance to move
-        intervals = self._get_movement_intervals(distance=distance)
-        if abs(distance) < self._check_interval:
-            dist = distance
-        else:
-            dist = self._check_interval if distance > 0 else -1 * self._check_interval
+        step_size, intervals = self._get_movement_intervals(distance=distance)
+        
         id = self._get_axis_id(id)
         self._lock.acquire()
         for i in range(intervals):
             if self._em_event.is_set() or self._stop_event.is_set():
                 break
-            self._send_and_receive("sp{}{}".format(id.lower(), pos + dist))
-            pos += dist
+            self._send_and_receive("sp{}{}".format(id.lower(), pos + step_size))
+            pos += step_size
         self._lock.release()
 
-    def _get_movement_intervals(self, distance: int) -> int:
+    def _get_movement_intervals(self, distance: int) -> Tuple[int, int]:
         """
         Get the amount of intervals that should be moved
 
@@ -534,10 +531,22 @@ class MainXYController:
 
         Returns
         -------
-        interval
-            The amount of times the check_interval distance should be moved.
+        distance : int
+            The distance of one interval step
+        intervals : int
+            The amount of intervals to move
         """
-        return abs(int(distance // self._check_interval))
+        # If the distance is smaller than the check interval, only move once
+        if  abs(distance) < self._check_interval * self.speed:
+            return distance, 1
+        
+        # Determine the step size by using the check interval time and set velocity
+        # The step size is the distance that is moved in one interval
+        step_size = self._check_interval * self.speed
+        # Determine the amount of intervals by dividing the distance by the step size
+        intervals = abs(int(distance // step_size))
+        step_size = step_size if distance > 0 else -1 * step_size
+        return step_size, intervals
 
     def move_by(self, id: str, distance: Union[float, int]) -> ...:
         """
@@ -551,18 +560,15 @@ class MainXYController:
             The distance to move by.
         """
         pos = int(self.get_position(id))
-        intervals = self._get_movement_intervals(distance=distance)
-        if abs(distance) < self._check_interval:
-            dist = distance
-        else:
-            dist = self._check_interval if distance > 0 else -1 * self._check_interval
+        step_size, intervals = self._get_movement_intervals(distance=distance)
+
         id = self._get_axis_id(id)
         self._lock.acquire()
         for i in range(intervals):
             if self._em_event.is_set() or self._stop_event.is_set():
                 break
-            self._send_and_receive("sp{}{}".format(id.lower(), pos + dist))
-            pos += dist
+            self._send_and_receive("sp{}{}".format(id.lower(), pos + step_size))
+            pos += step_size
         self._lock.release()
 
     def stop(self) -> ...:

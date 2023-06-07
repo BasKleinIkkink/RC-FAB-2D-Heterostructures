@@ -738,7 +738,7 @@ class BaseControlWidget(ControlWidget):
             lambda: self.q.put(
                 "M811 H-1"
                 if self.jogModeButton.isChecked()
-                else self.q.put("G0 H{}".format(self.driveScale))
+                else self.q.put("G0 H-{}".format(self.driveScale))
             )
         )
         self.moveLeft.released.connect(
@@ -748,7 +748,7 @@ class BaseControlWidget(ControlWidget):
             lambda: self.q.put(
                 "M811 H1"
                 if self.jogModeButton.isChecked()
-                else self.q.put("G0 H-{}".format(self.driveScale))
+                else self.q.put("G0 H{}".format(self.driveScale))
             )
         )
         self.moveRight.released.connect(

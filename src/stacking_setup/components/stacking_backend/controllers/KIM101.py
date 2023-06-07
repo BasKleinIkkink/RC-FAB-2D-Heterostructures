@@ -2,7 +2,7 @@ from pylablib.devices.Thorlabs.kinesis import (
     KinesisPiezoMotor,
     list_kinesis_devices,
 )
-from typing import Union
+from typing import Union, Tuple
 from typeguard import typechecked
 from ..configs.settings import Settings
 import threading as tr
@@ -258,7 +258,7 @@ class KIM101:
         self._controller.stop(channel=channel)
         self._lock.release()
 
-    def _get_movement_intervals(self, distance: int) -> int:
+    def _get_movement_intervals(self, distance: int) -> Tuple[int, int]:
         """
         Get the amount of intervals that should be moved
 
@@ -272,10 +272,23 @@ class KIM101:
 
         Returns
         -------
-        interval
-            The amount of times the check_interval distance should be moved.
+        distance : int
+            The distance of one interval step
+        intervals : int
+            The amount of intervals to move
         """
-        return abs(int(distance // self._check_interval))
+        # If the distance is smaller than the check interval, only move once
+        speed = self.get_drive_parameters()["vel"]
+        if  abs(distance) < self._check_interval * speed:
+            return distance, 1
+        
+        # Determine the step size by using the check interval time and set velocity
+        # The step size is the distance that is moved in one interval
+        step_size = self._check_interval * self.speed
+        # Determine the amount of intervals by dividing the distance by the step size
+        intervals = abs(int(distance // step_size))
+        step_size = step_size if distance > 0 else -1 * step_size
+        return step_size, intervals
 
     @typechecked
     def move_to(
@@ -300,17 +313,12 @@ class KIM101:
         """
         pos = self.get_position(channel=channel)
         distance = position - pos
-        intervals = self._get_movement_intervals(distance=distance)
-        if abs(distance) < self._check_interval:
-            dist = position - pos
-            intervals += 1
-        else:
-            dist = self._check_interval if distance > 0 else -1 * self._check_interval
+        step_size, intervals = self._get_movement_intervals(distance=distance)
         self._lock.acquire()
         for i in range(intervals):
             if self._em_event.is_set() or self._stop_event.is_set():
                 break
-            self._controller.move_by(distance=int(dist), channel=channel)
+            self._controller.move_by(distance=step_size, channel=channel)
             if wait_until_done:
                 self._wait_move(channel=channel)
         self._lock.release()
@@ -333,21 +341,14 @@ class KIM101:
         wait_until_done : bool
             If True, wait until the movement is done.
         """
-        intervals = self._get_movement_intervals(distance=distance)
-        if abs(distance) < self._check_interval:
-            dist = distance
-            intervals += 1
-        else:
-            dist = self._check_interval if distance > 0 else -1 * self._check_interval
+        step_size, intervals = self._get_movement_intervals(distance=distance)
         self._lock.acquire()
         for i in range(intervals):
             if self._em_event.is_set() or self._stop_event.is_set():
                 break
-
-            print(type(dist), dist, distance)
             
             # Distance has to be given in steps
-            self._controller.move_by(distance=int(dist), channel=channel)
+            self._controller.move_by(distance=step_size, channel=channel)
             if wait_until_done:
                 self._wait_move(channel=channel)
 
