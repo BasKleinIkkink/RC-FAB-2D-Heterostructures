@@ -278,7 +278,8 @@ class KIM101:
             The amount of intervals to move
         """
         # If the distance is smaller than the check interval, only move once
-        if  abs(distance) < self._check_interval * self.speed:
+        speed = self.get_drive_parameters()["vel"]
+        if  abs(distance) < self._check_interval * speed:
             return distance, 1
         
         # Determine the step size by using the check interval time and set velocity
